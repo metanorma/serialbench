@@ -1,0 +1,592 @@
+= Serialbench: Comprehensive serialization benchmarking suite for Ruby
+
+image:https://img.shields.io/gem/v/serialbench.svg["Gem Version", link="https://rubygems.org/gems/serialbench"]
+image:https://github.com/example/serialbench/actions/workflows/rake.yml/badge.svg["Build Status", link="https://github.com/example/serialbench/actions/workflows/rake.yml"]
+image:https://img.shields.io/github/issues-pr-raw/example/serialbench.svg["Pull Requests", link="https://github.com/example/serialbench/pulls"]
+image:https://img.shields.io/github/commits-since/example/serialbench/latest.svg["Commits since latest",link="https://github.com/example/serialbench/releases"]
+
+== Purpose
+
+Serialbench is a comprehensive benchmarking suite that evaluates the performance of popular Ruby serialization libraries across multiple formats and dimensions including parsing speed, generation speed, memory usage, and feature completeness.
+
+This tool helps developers make informed decisions when choosing serialization libraries for their Ruby applications by providing detailed performance comparisons and analysis across XML, JSON, and TOML formats.
+
+=== Tested XML libraries
+
+==== Core XML Libraries
+* **Ox** - High-performance XML parser optimized for speed and low memory usage
+* **Nokogiri** - Feature-rich XML/HTML parser with XPath support and comprehensive DOM manipulation
+* **LibXML** - Ruby bindings for the libxml2 C library with excellent performance characteristics
+* **Oga** - Pure Ruby XML parser with XPath support and streaming capabilities
+* **REXML** - Ruby's built-in XML parser with streaming support (reference implementation)
+
+==== Additional Format Support
+* **JSON** - Ruby's built-in JSON parser (for comparison baseline)
+* **Oj** - High-performance JSON parser with streaming support (for comparison baseline)
+* **YAJL** - Yet Another JSON Library with streaming support (for comparison baseline)
+* **TOML-RB** - Ruby TOML parser (for comparison baseline)
+* **Tomlib** - Fast TOML parser (for comparison baseline)
+
+== Installation
+
+Add this line to your application's Gemfile:
+
+[source,ruby]
+----
+gem 'serialbench'
+----
+
+And then execute:
+
+[source,shell]
+----
+$ bundle install
+----
+
+Or install it yourself as:
+
+[source,shell]
+----
+$ gem install serialbench
+----
+
+=== XML library dependencies
+
+To run benchmarks for all supported XML libraries, install the following gems:
+
+[source,shell]
+----
+# Core XML libraries
+$ gem install ox nokogiri libxml-ruby oga
+
+# Additional format libraries (for comparison)
+$ gem install oj toml-rb
+
+# Memory profiling support
+$ gem install memory_profiler
+----
+
+NOTE: REXML and JSON are included with Ruby and require no additional installation.
+
+=== Library-specific installation notes
+
+==== Ox
+High-performance C extension requiring compilation:
+[source,shell]
+----
+$ gem install ox
+----
+
+==== Nokogiri
+May require system dependencies on some platforms:
+[source,shell]
+----
+# macOS with Homebrew
+$ brew install libxml2 libxslt
+$ gem install nokogiri
+
+# Ubuntu/Debian
+$ sudo apt-get install libxml2-dev libxslt1-dev
+$ gem install nokogiri
+----
+
+==== LibXML
+Ruby bindings for libxml2:
+[source,shell]
+----
+# macOS with Homebrew
+$ brew install libxml2
+$ gem install libxml-ruby
+
+# Ubuntu/Debian
+$ sudo apt-get install libxml2-dev
+$ gem install libxml-ruby
+----
+
+==== Oga
+Pure Ruby implementation with no system dependencies:
+[source,shell]
+----
+$ gem install oga
+----
+
+== Usage
+
+=== Command line interface
+
+Run the complete XML benchmark suite:
+
+[source,shell]
+----
+$ serialbench benchmark
+----
+
+Run XML-only benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml
+----
+
+Run benchmarks with comparison formats:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml json
+$ serialbench benchmark --formats xml json toml
+----
+
+Run only DOM parsing benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --parsing-only
+----
+
+Run only XML generation benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --generation-only
+----
+
+Run only streaming/SAX parsing benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --streaming-only
+----
+
+Output results in JSON format only:
+
+[source,shell]
+----
+$ serialbench benchmark --output-format json
+----
+
+List available XML parsers:
+
+[source,shell]
+----
+$ serialbench list
+$ serialbench list --format xml
+----
+
+Show help information:
+
+[source,shell]
+----
+$ serialbench help
+$ serialbench help benchmark
+----
+
+Show version:
+
+[source,shell]
+----
+$ serialbench version
+----
+
+=== XML-specific benchmark options
+
+Run benchmarks for specific XML libraries only:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml --parsers ox,nokogiri
+$ serialbench benchmark --formats xml --parsers rexml,oga
+----
+
+Run memory-intensive benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml --memory-profiling
+----
+
+Generate detailed XML processing reports:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml --detailed-reports
+----
+
+=== Multi-Ruby Version Comparison
+
+Merge benchmark results from multiple Ruby versions:
+
+[source,shell]
+----
+$ serialbench merge_results ruby-3.0/results ruby-3.1/results ruby-3.2/results merged_output/
+----
+
+Generate GitHub Pages HTML from multiple benchmark runs:
+
+[source,shell]
+----
+$ serialbench github_pages ruby-3.0/results ruby-3.1/results ruby-3.2/results docs/
+----
+
+This creates an interactive HTML report with:
+
+* **Multi-version charts**: Compare performance across Ruby versions
+* **Interactive navigation**: Switch between parsing, generation, streaming, and memory usage
+* **Environment details**: Ruby versions, platforms, and serializer versions
+* **GitHub Pages ready**: Deploy directly to GitHub Pages for public sharing
+
+=== Programmatic usage
+
+==== Basic benchmark execution
+
+[source,ruby]
+----
+require 'serialbench'
+
+# Run all benchmarks for all formats
+results = Serialbench.run_benchmarks
+
+# Run benchmarks for specific formats
+results = Serialbench.run_benchmarks(formats: [:xml, :json])
+
+# Generate comprehensive reports
+report_files = Serialbench.generate_reports(results)
+
+puts "HTML report: #{report_files[:html]}"
+puts "Charts generated: #{report_files[:charts].length}"
+----
+
+==== Custom benchmark configuration
+
+[source,ruby]
+----
+require 'serialbench'
+
+# Create a custom benchmark runner
+runner = Serialbench::BenchmarkRunner.new(formats: [:json, :xml])
+
+# Run specific benchmark categories
+parsing_results = runner.run_parsing_benchmarks
+generation_results = runner.run_generation_benchmarks
+memory_results = runner.run_memory_benchmarks
+
+# Format and display results
+formatter = Serialbench::ResultFormatter.new(runner.results)
+puts formatter.summary
+----
+
+==== Individual serializer testing
+
+[source,ruby]
+----
+require 'serialbench'
+
+# Test a specific JSON serializer
+oj_serializer = Serialbench::Serializers::Json::OjSerializer.new
+
+if oj_serializer.available?
+  json_content = '{"users": [{"name": "Alice", "age": 30}]}'
+
+  # Parse JSON
+  data = oj_serializer.parse(json_content)
+
+  # Generate JSON
+  json_output = oj_serializer.generate(data, pretty: true)
+
+  # Stream parsing (if supported)
+  if oj_serializer.supports_streaming?
+    oj_serializer.stream_parse(json_content) do |event, data|
+      puts "Event: #{event}, Data: #{data}"
+    end
+  end
+
+  puts "Serializer: #{oj_serializer.name}"
+  puts "Version: #{oj_serializer.version}"
+  puts "Format: #{oj_serializer.format}"
+  puts "Features: #{oj_serializer.features}"
+end
+----
+
+==== Check available serializers
+
+[source,ruby]
+----
+require 'serialbench'
+
+# List all available serializers
+Serialbench.available_serializers.each do |serializer_class|
+  serializer = serializer_class.new
+  puts "#{serializer.format}: #{serializer.name} v#{serializer.version}"
+end
+
+# List serializers for specific format
+Serialbench.available_serializers(:json).each do |serializer_class|
+  serializer = serializer_class.new
+  puts "JSON: #{serializer.name} v#{serializer.version}"
+end
+----
+
+== Benchmark categories
+
+=== Parsing performance
+
+Measures the time required to parse serialized data into Ruby objects.
+
+* **Small files**: ~1KB configuration-style documents
+* **Medium files**: ~1MB API responses with 1,000 records
+* **Large files**: ~10MB data exports with 10,000 records
+
+=== Generation performance
+
+Tests how quickly libraries can convert Ruby objects into serialized strings.
+
+=== Streaming performance
+
+Evaluates streaming event-based parsing performance for libraries that support it, which processes data sequentially and is memory-efficient for large files.
+
+=== Memory usage analysis
+
+Profiles memory allocation and retention during serialization operations using the `memory_profiler` gem.
+
+== Output and reports
+
+=== Generated files
+
+Running benchmarks creates the following output structure:
+
+[source]
+----
+results/
+├── reports/
+│   ├── benchmark_report.html    # Main HTML report
+│   └── benchmark_report.adoc    # AsciiDoc source
+├── charts/
+│   ├── parsing_performance.svg
+│   ├── generation_performance.svg
+│   ├── streaming_performance.svg
+│   ├── memory_usage_comparison.svg
+│   └── format_comparison.svg
+├── data/
+│   ├── results.json             # Raw benchmark data
+│   └── results.csv              # CSV export
+└── assets/
+    └── css/
+        └── benchmark_report.css # Report styling
+----
+
+=== Report features
+
+* **Multi-format comparison**: Compare XML, JSON, and TOML performance
+* **Interactive charts**: SVG-based performance visualizations
+* **Comparative analysis**: Side-by-side library comparisons
+* **Performance rankings**: Fastest to slowest for each category
+* **Memory profiling**: Detailed memory allocation analysis
+* **Feature matrix**: Capability comparison across libraries
+* **Recommendations**: Use-case specific library suggestions
+* **Environment details**: Ruby version, platform, and library versions
+
+=== Sample output
+
+[source]
+----
+Serialbench - Comprehensive Serialization Performance Tests
+===========================================================
+Environment: Ruby 3.3.2 on arm64-darwin23
+Timestamp: 2024-01-15T10:30:00Z
+
+Available serializers: rexml, json, oj, toml-rb
+Test formats: xml, json, toml
+Test data sizes: small, medium, large
+
+Parsing Performance:
+  Small files:
+    JSON/oj: 0.08ms
+    JSON/json: 0.12ms
+    XML/rexml: 0.45ms
+    TOML/toml-rb: 0.52ms
+
+  Medium files:
+    JSON/oj: 8.23ms
+    JSON/json: 12.67ms
+    XML/rexml: 28.45ms
+    TOML/toml-rb: 35.21ms
+----
+
+== Methodology
+
+=== Performance measurement
+
+* Each test runs multiple iterations with warmup iterations
+* Memory profiling uses 10 iterations to reduce noise
+* Results show average performance across all iterations
+* Benchmarks use Ruby's `Benchmark.realtime` for precise timing
+
+=== Test data
+
+==== Synthetic datasets
+
+The benchmark suite uses carefully crafted synthetic data that represents common real-world scenarios:
+
+* **Configuration files**: Small, nested structures typical of application settings
+* **API responses**: Medium-sized documents with repeated record structures
+* **Data exports**: Large documents with extensive hierarchical data
+
+==== Multi-format consistency
+
+* Equivalent data structures across XML, JSON, and TOML formats
+* Consistent complexity and nesting levels
+* Representative of real-world usage patterns
+
+=== Statistical considerations
+
+* Multiple iterations reduce timing variance
+* Warmup iterations eliminate JIT compilation effects
+* Memory measurements account for garbage collection
+* Results include both absolute and relative performance metrics
+
+== Library comparison matrix
+
+[cols="1,1,1,1,1,1,1"]
+|===
+|Format |Library |Parsing |Generation |Streaming |Memory |Features
+
+|XML |REXML |⭐⭐ |⭐⭐ |⭐⭐⭐ |⭐⭐ |Built-in
+|XML |Ox |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |High-performance
+|XML |Nokogiri |⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |Feature-rich
+|XML |LibXML |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |High-performance
+|XML |Oga |⭐⭐ |⭐⭐ |⭐⭐⭐ |⭐⭐ |Pure Ruby
+|JSON |JSON |⭐⭐⭐ |⭐⭐⭐ |❌ |⭐⭐⭐ |Built-in
+|JSON |Oj |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |High-performance
+|JSON |YAJL |⭐⭐⭐⭐ |⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |Streaming
+|TOML |TOML-RB |⭐⭐⭐ |⭐⭐⭐ |❌ |⭐⭐⭐ |Standard
+|TOML |Tomlib |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |❌ |⭐⭐⭐⭐⭐ |High-performance
+|===
+
+_Performance ratings: ⭐⭐⭐⭐⭐ Excellent, ⭐⭐⭐⭐ Good, ⭐⭐⭐ Average, ⭐⭐ Below average, ⭐ Poor, ❌ Not supported_
+
+== Recommendations
+
+=== For high-performance JSON applications
+
+**Oj** is recommended for applications where JSON parsing/generation speed is critical. It consistently outperforms the built-in JSON library.
+
+=== For configuration files
+
+**TOML** provides human-readable configuration with good parsing performance. **JSON** is faster but less readable for configuration.
+
+=== For data interchange
+
+**JSON** offers the best balance of performance, compatibility, and tooling support across different systems.
+
+=== For document processing
+
+**XML** with **REXML** provides built-in support, though performance is lower than JSON alternatives.
+
+=== For memory-constrained environments
+
+**Oj** demonstrates superior memory efficiency. For large file processing, streaming approaches are recommended where available.
+
+=== For minimal dependencies
+
+**JSON** and **REXML** are included with Ruby and require no additional gems, making them suitable for environments with strict dependency constraints.
+
+== Development
+
+=== Running tests
+
+[source,shell]
+----
+$ bundle exec rake
+$ bundle exec rspec
+----
+
+=== Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin feature/my-new-feature`)
+5. Create a new Pull Request
+
+=== Adding new serializers
+
+To add support for additional serialization libraries:
+
+1. Create a new serializer class in `lib/serialbench/serializers/{format}/`
+2. Inherit from the appropriate base class (`BaseXmlSerializer`, `BaseJsonSerializer`, etc.)
+3. Implement the required methods: `parse`, `generate`, `name`, `version`
+4. Add the serializer to the registry in `lib/serialbench/serializers.rb`
+5. Update documentation and tests
+
+==== Example: Adding a new JSON serializer
+
+[source,ruby]
+----
+# lib/serialbench/serializers/json/yajl_serializer.rb
+class YajlSerializer < BaseJsonSerializer
+  def available?
+    require_library('yajl')
+  end
+
+  def name
+    'yajl'
+  end
+
+  def version
+    require 'yajl'
+    Yajl::VERSION
+  end
+
+  def parse(json_string)
+    require 'yajl'
+    Yajl::Parser.parse(json_string)
+  end
+
+  def generate(object, options = {})
+    require 'yajl'
+    Yajl::Encoder.encode(object)
+  end
+end
+----
+
+== Architecture
+
+=== Serializer hierarchy
+
+[source]
+----
+BaseSerializer
+├── BaseXmlSerializer
+│   └── RexmlSerializer
+├── BaseJsonSerializer
+│   ├── JsonSerializer
+│   └── OjSerializer
+└── BaseTomlSerializer
+    └── TomlRbSerializer
+----
+
+=== Key components
+
+* **Serializers**: Individual library implementations
+* **BenchmarkRunner**: Orchestrates benchmark execution
+* **ResultFormatter**: Formats and displays results
+* **ReportGenerator**: Creates HTML/AsciiDoc reports
+* **ChartGenerator**: Creates performance visualizations
+* **MemoryProfiler**: Analyzes memory usage patterns
+
+== Research and references
+
+This benchmarking suite was developed based on research from:
+
+* https://www.ohler.com/dev/xml_with_ruby/xml_with_ruby.html[XML with Ruby performance analysis]
+* https://gist.github.com/danneu/3977120[Ruby XML parser comparison]
+* https://gist.github.com/adilosa/d4277dc1c683da91990515352ffe5420[XML parsing benchmarks]
+
+== Copyright
+
+This gem is developed, maintained and funded by
+https://www.ribose.com[Ribose Inc.]
+
+== License
+
+The gem is available as open source under the terms of the
+https://opensource.org/licenses/BSD-2-Clause[2-Clause BSD License].

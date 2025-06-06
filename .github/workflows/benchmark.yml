@@ -1,0 +1,125 @@
+name: SerialBench XML Benchmarks
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Run benchmarks weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    # Allow manual triggering
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      ruby-versions: ${{ steps.set-matrix.outputs.ruby-versions }}
+      ruby-versions-list: ${{ steps.set-matrix.outputs.ruby-versions-list }}
+    steps:
+    - name: Set Ruby version matrix
+      id: set-matrix
+      run: |
+        echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
+        echo 'ruby-versions-list=3.1 3.2 3.3 3.4' >> $GITHUB_OUTPUT
+
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      matrix:
+        ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+        bundler-cache: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxml2-dev libxslt1-dev
+
+    - name: List available serializers
+      run: |
+        bundle exec ruby exe/serialbench list
+
+    - name: Run tests
+      run: bundle exec rspec
+
+    - name: Run XML benchmarks
+      run: |
+        mkdir -p results-ruby-${{ matrix.ruby-version }}
+        bundle exec ruby exe/serialbench benchmark --formats xml
+        # Copy results to versioned directory
+        cp -r results/* results-ruby-${{ matrix.ruby-version }}/
+
+    - name: Upload benchmark results as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results-ruby-${{ matrix.ruby-version }}
+        path: results-ruby-${{ matrix.ruby-version }}/
+        retention-days: 30
+
+  merge-and-deploy:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    needs: [setup, benchmark]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby (for report generation)
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxml2-dev libxslt1-dev
+
+    - name: Download all benchmark artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: benchmark-results-ruby-*
+        path: artifacts/
+
+    - name: Generate GitHub Pages
+      run: |
+        mkdir -p docs
+        # Generate GitHub Pages from all Ruby version results dynamically
+        RUBY_VERSIONS="${{ needs.setup.outputs.ruby-versions-list }}"
+        ARTIFACT_PATHS=""
+        for version in $RUBY_VERSIONS; do
+          ARTIFACT_PATHS="$ARTIFACT_PATHS artifacts/benchmark-results-ruby-$version/"
+        done
+        bundle exec ruby exe/serialbench github_pages $ARTIFACT_PATHS docs/
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: Upload to GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: docs
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
