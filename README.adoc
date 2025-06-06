@@ -1,31 +1,49 @@
-= Serialbench: Comprehensive serialization benchmarking suite for Ruby
+= SerialBench: Ruby Serialization Library Performance Benchmarker
 
 image:https://img.shields.io/gem/v/serialbench.svg["Gem Version", link="https://rubygems.org/gems/serialbench"]
-image:https://github.com/example/serialbench/actions/workflows/rake.yml/badge.svg["Build Status", link="https://github.com/example/serialbench/actions/workflows/rake.yml"]
-image:https://img.shields.io/github/issues-pr-raw/example/serialbench.svg["Pull Requests", link="https://github.com/example/serialbench/pulls"]
-image:https://img.shields.io/github/commits-since/example/serialbench/latest.svg["Commits since latest",link="https://github.com/example/serialbench/releases"]
+image:https://github.com/metanorma/serialbench/actions/workflows/ci.yml/badge.svg["Build Status", link="https://github.com/metanorma/serialbench/actions/workflows/ci.yml"]
+image:https://github.com/metanorma/serialbench/actions/workflows/benchmark.yml/badge.svg["Benchmark Status", link="https://github.com/metanorma/serialbench/actions/workflows/benchmark.yml"]
+image:https://img.shields.io/github/issues-pr-raw/metanorma/serialbench.svg["Pull Requests", link="https://github.com/metanorma/serialbench/pulls"]
 
-== Purpose
+== Overview
 
-Serialbench is a comprehensive benchmarking suite that evaluates the performance of popular Ruby serialization libraries across multiple formats and dimensions including parsing speed, generation speed, memory usage, and feature completeness.
+SerialBench is a comprehensive benchmarking suite that evaluates the performance of popular Ruby serialization libraries across multiple formats. It provides detailed performance comparisons and analysis to help developers make informed decisions when choosing serialization libraries for their Ruby applications.
 
-This tool helps developers make informed decisions when choosing serialization libraries for their Ruby applications by providing detailed performance comparisons and analysis across XML, JSON, and TOML formats.
+**Supported Formats**: XML, JSON, TOML, and more
 
-=== Tested XML libraries
+**Key Metrics**: Parsing speed, generation speed, memory usage, streaming capabilities, and feature completeness
 
-==== Core XML Libraries
-* **Ox** - High-performance XML parser optimized for speed and low memory usage
-* **Nokogiri** - Feature-rich XML/HTML parser with XPath support and comprehensive DOM manipulation
-* **LibXML** - Ruby bindings for the libxml2 C library with excellent performance characteristics
-* **Oga** - Pure Ruby XML parser with XPath support and streaming capabilities
-* **REXML** - Ruby's built-in XML parser with streaming support (reference implementation)
+== Supported Serialization Libraries
 
-==== Additional Format Support
-* **JSON** - Ruby's built-in JSON parser (for comparison baseline)
-* **Oj** - High-performance JSON parser with streaming support (for comparison baseline)
-* **YAJL** - Yet Another JSON Library with streaming support (for comparison baseline)
-* **TOML-RB** - Ruby TOML parser (for comparison baseline)
-* **Tomlib** - Fast TOML parser (for comparison baseline)
+=== XML Serialization Libraries
+
+==== High-Performance Libraries
+* **Ox** v2.14.23 - Ultra-fast C extension optimized for speed and low memory usage
+* **LibXML** v4.1.2 - Ruby bindings for libxml2 with excellent performance characteristics
+
+==== Feature-Rich Libraries
+* **Nokogiri** v1.18.8 - Most popular XML/HTML parser with XPath, CSS selectors, and comprehensive DOM manipulation
+* **Oga** v3.4 - Pure Ruby XML parser with XPath support and streaming capabilities
+
+==== Built-in Libraries
+* **REXML** v3.4.1 - Ruby's standard library XML parser with streaming support (reference implementation)
+
+=== JSON Serialization Libraries
+
+==== High-Performance Libraries
+* **Oj** v3.16.11 - Ultra-fast JSON parser with multiple parsing modes and streaming support
+* **YAJL** v1.4.3 - Yet Another JSON Library with excellent streaming capabilities
+
+==== Built-in Libraries
+* **JSON** v2.12.2 - Ruby's standard library JSON parser (reference implementation)
+
+=== TOML Serialization Libraries
+
+==== High-Performance Libraries
+* **Tomlib** v0.7.3 - Fast TOML parser implemented in C
+
+==== Standard Libraries
+* **TOML-RB** v2.2.0 - Pure Ruby TOML parser with good compatibility
 
 == Installation
 
@@ -114,62 +132,20 @@ $ gem install oga
 
 === Command line interface
 
-Run the complete XML benchmark suite:
+==== Basic Usage
+
+Run benchmarks for all available formats:
 
 [source,shell]
 ----
 $ serialbench benchmark
 ----
 
-Run XML-only benchmarks:
-
-[source,shell]
-----
-$ serialbench benchmark --formats xml
-----
-
-Run benchmarks with comparison formats:
-
-[source,shell]
-----
-$ serialbench benchmark --formats xml json
-$ serialbench benchmark --formats xml json toml
-----
-
-Run only DOM parsing benchmarks:
-
-[source,shell]
-----
-$ serialbench benchmark --parsing-only
-----
-
-Run only XML generation benchmarks:
-
-[source,shell]
-----
-$ serialbench benchmark --generation-only
-----
-
-Run only streaming/SAX parsing benchmarks:
-
-[source,shell]
-----
-$ serialbench benchmark --streaming-only
-----
-
-Output results in JSON format only:
-
-[source,shell]
-----
-$ serialbench benchmark --output-format json
-----
-
-List available XML parsers:
+List all available serializers:
 
 [source,shell]
 ----
 $ serialbench list
-$ serialbench list --format xml
 ----
 
 Show help information:
@@ -187,28 +163,123 @@ Show version:
 $ serialbench version
 ----
 
-=== XML-specific benchmark options
+==== Format-Specific Benchmarks
 
-Run benchmarks for specific XML libraries only:
+===== XML Benchmarks
+
+Run all XML library benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml
+----
+
+Test specific XML libraries:
 
 [source,shell]
 ----
 $ serialbench benchmark --formats xml --parsers ox,nokogiri
-$ serialbench benchmark --formats xml --parsers rexml,oga
+$ serialbench benchmark --formats xml --parsers rexml,oga,libxml
 ----
 
-Run memory-intensive benchmarks:
-
-[source,shell]
-----
-$ serialbench benchmark --formats xml --memory-profiling
-----
-
-Generate detailed XML processing reports:
+XML-only parsing performance:
 
 [source,shell]
 ----
-$ serialbench benchmark --formats xml --detailed-reports
+$ serialbench benchmark --formats xml --parsing-only
+----
+
+XML generation benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml --generation-only
+----
+
+XML streaming/SAX parsing:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml --streaming-only
+----
+
+===== JSON Benchmarks
+
+Run all JSON library benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --formats json
+----
+
+Test specific JSON libraries:
+
+[source,shell]
+----
+$ serialbench benchmark --formats json --parsers oj,json
+$ serialbench benchmark --formats json --parsers yajl,oj
+----
+
+===== TOML Benchmarks
+
+Run all TOML library benchmarks:
+
+[source,shell]
+----
+$ serialbench benchmark --formats toml
+----
+
+Test specific TOML libraries:
+
+[source,shell]
+----
+$ serialbench benchmark --formats toml --parsers tomlib,toml-rb
+----
+
+==== Cross-Format Comparisons
+
+Compare XML vs JSON performance:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml json
+----
+
+Compare all supported formats:
+
+[source,shell]
+----
+$ serialbench benchmark --formats xml json toml
+----
+
+==== Advanced Options
+
+Memory profiling across formats:
+
+[source,shell]
+----
+$ serialbench benchmark --memory-profiling
+----
+
+Generate detailed reports:
+
+[source,shell]
+----
+$ serialbench benchmark --detailed-reports
+----
+
+Output results in JSON format:
+
+[source,shell]
+----
+$ serialbench benchmark --output-format json
+----
+
+Custom data sizes and iterations:
+
+[source,shell]
+----
+$ serialbench benchmark --data-sizes small,medium --iterations 100
 ----
 
 === Multi-Ruby Version Comparison
@@ -463,31 +534,92 @@ The benchmark suite uses carefully crafted synthetic data that represents common
 
 _Performance ratings: ⭐⭐⭐⭐⭐ Excellent, ⭐⭐⭐⭐ Good, ⭐⭐⭐ Average, ⭐⭐ Below average, ⭐ Poor, ❌ Not supported_
 
-== Recommendations
+== Format-Specific Recommendations
 
-=== For high-performance JSON applications
+=== XML Serialization
 
-**Oj** is recommended for applications where JSON parsing/generation speed is critical. It consistently outperforms the built-in JSON library.
+==== For High-Performance XML Processing
+* **Ox** - Best choice for speed-critical applications requiring fast XML parsing/generation
+* **LibXML** - Excellent performance with robust C library backing
 
-=== For configuration files
+==== For Feature-Rich XML Applications
+* **Nokogiri** - Industry standard with comprehensive XPath, CSS selectors, and DOM manipulation
+* **Oga** - Pure Ruby alternative with good XPath support
 
-**TOML** provides human-readable configuration with good parsing performance. **JSON** is faster but less readable for configuration.
+==== For Built-in/Minimal Dependencies
+* **REXML** - Included with Ruby, suitable for simple XML processing without external dependencies
 
-=== For data interchange
+==== XML Use Case Recommendations
+* **Web scraping**: Nokogiri (CSS selectors, robust HTML parsing)
+* **Configuration files**: REXML (built-in, simple structure)
+* **High-volume data processing**: Ox or LibXML (performance)
+* **Document transformation**: Nokogiri (comprehensive DOM manipulation)
+* **Streaming large files**: Ox or REXML (memory efficiency)
 
-**JSON** offers the best balance of performance, compatibility, and tooling support across different systems.
+=== JSON Serialization
 
-=== For document processing
+==== For High-Performance JSON Processing
+* **Oj** - Superior performance for speed-critical JSON applications
+* **YAJL** - Excellent streaming capabilities for large JSON files
 
-**XML** with **REXML** provides built-in support, though performance is lower than JSON alternatives.
+==== For Built-in/Standard Use
+* **JSON** - Ruby standard library, good for general-purpose JSON handling
 
-=== For memory-constrained environments
+==== JSON Use Case Recommendations
+* **API responses**: Oj (speed) or JSON (compatibility)
+* **Configuration files**: JSON (readability and tooling)
+* **Real-time applications**: Oj (performance)
+* **Large file processing**: YAJL (streaming) or Oj (speed)
+* **Cross-platform data exchange**: JSON (universal support)
 
-**Oj** demonstrates superior memory efficiency. For large file processing, streaming approaches are recommended where available.
+=== TOML Serialization
 
-=== For minimal dependencies
+==== For High-Performance TOML Processing
+* **Tomlib** - C implementation offering superior performance
 
-**JSON** and **REXML** are included with Ruby and require no additional gems, making them suitable for environments with strict dependency constraints.
+==== For Standard TOML Use
+* **TOML-RB** - Pure Ruby implementation with good compatibility
+
+==== TOML Use Case Recommendations
+* **Configuration files**: TOML-RB (human-readable, good for config)
+* **Application settings**: Tomlib (performance) or TOML-RB (simplicity)
+* **Package manifests**: TOML-RB (standard compliance)
+
+=== Cross-Format Recommendations
+
+==== By Application Type
+
+===== Web Applications
+* **APIs**: JSON with Oj for performance
+* **Configuration**: TOML for readability, JSON for speed
+* **Data exchange**: JSON (universal compatibility)
+
+===== Data Processing Applications
+* **ETL pipelines**: XML with Ox/LibXML, JSON with Oj
+* **Log processing**: JSON with YAJL (streaming)
+* **Report generation**: XML with Nokogiri (document manipulation)
+
+===== Configuration Management
+* **Human-editable**: TOML with TOML-RB
+* **Machine-generated**: JSON with built-in JSON library
+* **Legacy systems**: XML with REXML
+
+==== By Performance Requirements
+
+===== Speed-Critical Applications
+1. **JSON**: Oj
+2. **XML**: Ox or LibXML
+3. **TOML**: Tomlib
+
+===== Memory-Constrained Environments
+1. **Streaming**: YAJL (JSON), Ox (XML)
+2. **Low memory**: Oj (JSON), Ox (XML)
+3. **Built-in only**: JSON, REXML
+
+===== Minimal Dependencies
+1. **No external gems**: JSON, REXML
+2. **Pure Ruby**: Oga (XML), TOML-RB (TOML)
+3. **Standard libraries**: JSON, REXML
 
 == Development
 
