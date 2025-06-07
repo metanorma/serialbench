@@ -35,7 +35,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'memory_profiler'
   spec.add_dependency 'thor'
 
+  # Reporting dependencies
+  spec.add_dependency 'csv' # Required from Ruby 3.4+
+
   # XML serializers
+  spec.add_dependency 'rexml' # needed for Ruby 3.4+
   spec.add_dependency 'libxml-ruby'
   spec.add_dependency 'nokogiri'
   spec.add_dependency 'oga'
@@ -43,6 +47,7 @@ Gem::Specification.new do |spec|
 
   # JSON serializers
   spec.add_dependency 'oj'
+  spec.add_dependency 'rapidjson'
   spec.add_dependency 'yajl-ruby'
 
   # YAML serializers

@@ -41,8 +41,8 @@ module Serialbench
       json: [
         Json::JsonSerializer,
         Json::OjSerializer,
-        Json::YajlSerializer,
-        Json::RapidjsonSerializer
+        Json::RapidjsonSerializer,
+        Json::YajlSerializer
       ],
       yaml: [
         Yaml::PsychSerializer,

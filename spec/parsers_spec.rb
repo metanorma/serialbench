@@ -229,6 +229,22 @@ RSpec.describe 'Serialbench Serializers' do
       end
     end
 
+    describe Serialbench::Serializers::Json::RapidjsonSerializer do
+      include_examples 'a JSON serializer', Serialbench::Serializers::Json::RapidjsonSerializer, 'rapidjson'
+
+      let(:serializer) { Serialbench::Serializers::Json::RapidjsonSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'RapidJSON not available' unless serializer.available?
+        end
+
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
+
     describe Serialbench::Serializers::Json::YajlSerializer do
       include_examples 'a JSON serializer', Serialbench::Serializers::Json::YajlSerializer, 'yajl'
 
@@ -245,21 +261,6 @@ RSpec.describe 'Serialbench Serializers' do
       end
     end
 
-    describe Serialbench::Serializers::Json::RapidjsonSerializer do
-      include_examples 'a JSON serializer', Serialbench::Serializers::Json::RapidjsonSerializer, 'rapidjson'
-
-      let(:serializer) { Serialbench::Serializers::Json::RapidjsonSerializer.new }
-
-      context 'when available' do
-        before do
-          skip 'RapidJSON not available' unless serializer.available?
-        end
-
-        it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
-        end
-      end
-    end
   end
 
   describe 'YAML Serializers' do
@@ -427,7 +428,7 @@ RSpec.describe 'Serialbench Serializers' do
 
       it 'includes all expected JSON serializers' do
         json_serializers = Serialbench::Serializers.for_format(:json)
-        expected_json = %w[json oj yajl rapidjson]
+        expected_json = %w[json oj rapidjson yajl]
         actual_json = json_serializers.map { |s| s.new.name }
         expect(actual_json).to match_array(expected_json)
       end
