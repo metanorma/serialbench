@@ -29,7 +29,7 @@ module Serialbench
 
         def generate(object, options = {})
           require 'rapidjson'
-          RapidJSON.generate(object)
+          RapidJSON.dump(object)
         end
 
         def features

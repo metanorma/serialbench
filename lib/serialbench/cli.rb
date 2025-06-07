@@ -216,13 +216,13 @@ module Serialbench
 
     desc 'analyze_performance INPUT_DIRS... OUTPUT_FILE', 'Analyze performance across multiple benchmark results'
     long_desc <<~DESC
-      Analyze performance data from multiple benchmark runs and generate CSV analysis.
+      Analyze performance data from multiple benchmark runs and generate JSON analysis.
 
       INPUT_DIRS should contain results.json files from different benchmark runs.
-      OUTPUT_FILE will be a CSV file with detailed performance analysis.
+      OUTPUT_FILE will be a JSON file with detailed performance analysis.
 
       Example:
-        serialbench analyze_performance artifacts/benchmark-results-*/ performance_analysis.csv
+        serialbench analyze_performance artifacts/benchmark-results-*/ performance_analysis.json
     DESC
     def analyze_performance(*args)
       if args.length < 2
@@ -237,7 +237,6 @@ module Serialbench
       say "Analyzing performance from #{input_dirs.length} directories", :green
 
       begin
-        require 'csv'
         results = []
 
         input_dirs.each do |input_dir|
@@ -265,8 +264,9 @@ module Serialbench
                     serializer: serializer,
                     size: size,
                     operation: 'parsing',
-                    time: metrics['average_time'] || 0,
-                    memory: metrics['memory_usage'] || 0
+                    time_ms: metrics['average_time'] || 0,
+                    memory_mb: metrics['memory_usage'] || 0,
+                    iterations_per_second: metrics['iterations_per_second'] || 0
                   }
                 end
               end
@@ -283,8 +283,9 @@ module Serialbench
                     serializer: serializer,
                     size: size,
                     operation: 'generation',
-                    time: metrics['average_time'] || 0,
-                    memory: metrics['memory_usage'] || 0
+                    time_ms: metrics['average_time'] || 0,
+                    memory_mb: metrics['memory_usage'] || 0,
+                    iterations_per_second: metrics['iterations_per_second'] || 0
                   }
                 end
               end
@@ -294,27 +295,26 @@ module Serialbench
           end
         end
 
-        # Write CSV for analysis
-        CSV.open(output_file, 'w') do |csv|
-          csv << ['platform', 'ruby_version', 'format', 'serializer', 'size', 'operation', 'time_ms', 'memory_mb']
-          results.each do |result|
-            csv << [
-              result[:platform],
-              result[:ruby_version],
-              result[:format],
-              result[:serializer],
-              result[:size],
-              result[:operation],
-              result[:time],
-              result[:memory]
-            ]
-          end
-        end
+        # Generate analysis report
+        analysis_report = {
+          'summary' => 'Cross-platform performance analysis',
+          'generated_at' => Time.now.iso8601,
+          'total_data_points' => results.length,
+          'platforms' => results.map { |r| r[:platform] }.uniq.sort,
+          'ruby_versions' => results.map { |r| r[:ruby_version] }.uniq.sort,
+          'formats' => results.map { |r| r[:format] }.uniq.sort,
+          'serializers' => results.map { |r| r[:serializer] }.uniq.sort,
+          'operations' => results.map { |r| r[:operation] }.uniq.sort,
+          'data' => results
+        }
+
+        # Write JSON analysis
+        File.write(output_file, JSON.pretty_generate(analysis_report))
 
         say "Performance analysis generated with #{results.length} data points", :green
-        say "Platforms: #{results.map { |r| r[:platform] }.uniq.sort.join(', ')}", :cyan
-        say "Ruby versions: #{results.map { |r| r[:ruby_version] }.uniq.sort.join(', ')}", :cyan
-        say "Formats: #{results.map { |r| r[:format] }.uniq.sort.join(', ')}", :cyan
+        say "Platforms: #{analysis_report['platforms'].join(', ')}", :cyan
+        say "Ruby versions: #{analysis_report['ruby_versions'].join(', ')}", :cyan
+        say "Formats: #{analysis_report['formats'].join(', ')}", :cyan
         say "Output saved to: #{output_file}", :green
       rescue StandardError => e
         say "Error analyzing performance: #{e.message}", :red
@@ -322,38 +322,37 @@ module Serialbench
       end
     end
 
-    desc 'platform_comparison CSV_FILE OUTPUT_FILE', 'Generate platform comparison report from CSV analysis'
+    desc 'platform_comparison JSON_FILE OUTPUT_FILE', 'Generate platform comparison report from performance analysis'
     long_desc <<~DESC
-      Generate a platform comparison report from performance analysis CSV.
+      Generate a platform comparison report from performance analysis JSON.
 
-      CSV_FILE should be the output from analyze_performance command.
+      JSON_FILE should be the output from analyze_performance command.
       OUTPUT_FILE will be a JSON file with platform comparison statistics.
 
       Example:
-        serialbench platform_comparison performance_analysis.csv platform_comparison.json
+        serialbench platform_comparison performance_analysis.json platform_comparison.json
     DESC
-    def platform_comparison(csv_file, output_file)
-      say "Generating platform comparison from #{csv_file}", :green
+    def platform_comparison(json_file, output_file)
+      say "Generating platform comparison from #{json_file}", :green
 
-      unless File.exist?(csv_file)
-        say "CSV file does not exist: #{csv_file}", :red
+      unless File.exist?(json_file)
+        say "JSON file does not exist: #{json_file}", :red
         exit 1
       end
 
       begin
-        require 'csv'
-
-        # Read the performance analysis CSV
-        data = CSV.read(csv_file, headers: true)
+        # Read the performance analysis JSON
+        analysis_data = JSON.parse(File.read(json_file))
+        data_points = analysis_data['data']
 
         # Group by platform and calculate averages
         platform_stats = {}
 
-        data.each do |row|
-          platform = row['platform']
-          format = row['format']
-          operation = row['operation']
-          time = row['time_ms'].to_f
+        data_points.each do |point|
+          platform = point['platform']
+          format = point['format']
+          operation = point['operation']
+          time = point['time_ms'].to_f
 
           platform_stats[platform] ||= {}
           platform_stats[platform][format] ||= {}
@@ -365,6 +364,8 @@ module Serialbench
         report = {
           'summary' => 'Cross-platform performance comparison',
           'generated_at' => Time.now.iso8601,
+          'source_analysis' => json_file,
+          'total_platforms' => platform_stats.keys.length,
           'platforms' => {}
         }
 
@@ -378,7 +379,8 @@ module Serialbench
                 'average_time_ms' => avg_time.round(3),
                 'sample_count' => times.length,
                 'min_time_ms' => times.min.round(3),
-                'max_time_ms' => times.max.round(3)
+                'max_time_ms' => times.max.round(3),
+                'std_deviation' => calculate_std_deviation(times).round(3)
               }
             end
           end
@@ -615,6 +617,14 @@ module Serialbench
           say "    #{serializer_name}: #{memory_mb} MB", :white
         end
       end
+    end
+
+    def calculate_std_deviation(values)
+      return 0.0 if values.length <= 1
+
+      mean = values.sum.to_f / values.length
+      variance = values.map { |v| (v - mean)**2 }.sum / values.length
+      Math.sqrt(variance)
     end
   end
 end

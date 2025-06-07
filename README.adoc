@@ -17,52 +17,266 @@ Serialbench is a comprehensive benchmarking suite that evaluates the performance
 
 == Supported serialization libraries
 
-=== XML serialization libraries
+[cols="1,3,1,4", options="header"]
+|===
+| Format | Name | Version | Description
 
-==== High-performance libraries
+| XML
+| https://github.com/ohler55/ox[Ox]
+| v2.14.23
+| C extension XML parser
 
-* **https://github.com/ohler55/ox[Ox]** v2.14.23 - Ultra-fast C extension optimized for speed and low memory usage
-* **https://github.com/xml4r/libxml-ruby[LibXML]** v4.1.2 - Ruby bindings for libxml2 with excellent performance characteristics
+| XML
+| https://github.com/xml4r/libxml-ruby[LibXML]
+| v4.1.2
+| Ruby bindings for libxml2
 
-==== Feature-rich libraries
+| XML
+| https://github.com/sparklemotion/nokogiri[Nokogiri]
+| v1.18.8
+| XML/HTML parser with XPath and CSS selectors
 
-* **https://github.com/sparklemotion/nokogiri[Nokogiri]** v1.18.8 - Most popular XML/HTML parser with XPath, CSS selectors, and comprehensive DOM manipulation
-* **https://github.com/YorickPeterse/oga[Oga]** v3.4 - Pure Ruby XML parser with XPath support and streaming capabilities
+| XML
+| https://github.com/YorickPeterse/oga[Oga]
+| v3.4
+| Pure Ruby XML parser with XPath support
 
-==== Built-in libraries
+| XML
+| https://github.com/ruby/rexml[REXML]
+| v3.4.1
+| Ruby's standard library XML parser
 
-* **https://github.com/ruby/rexml[REXML]** v3.4.1 - Ruby's standard library XML parser with streaming support (reference implementation)
+| JSON
+| https://github.com/ohler55/oj[Oj]
+| v3.16.11
+| JSON parser with multiple parsing modes
 
-=== JSON serialization libraries
+| JSON
+| https://github.com/brianmario/yajl-ruby[YAJL]
+| v1.4.3
+| JSON library with streaming capabilities
 
-==== High-performance libraries
+| JSON
+| https://github.com/flori/json[JSON]
+| v2.12.2
+| Ruby's standard library JSON parser
 
-* **https://github.com/ohler55/oj[Oj]** v3.16.11 - Ultra-fast JSON parser with multiple parsing modes and streaming support
-* **https://github.com/brianmario/yajl-ruby[YAJL]** v1.4.3 - Yet Another JSON Library with excellent streaming capabilities
+| YAML
+| https://github.com/ruby/psych[Psych]
+| v5.1.2
+| Ruby's standard library YAML parser
 
-==== Built-in libraries
+| YAML
+| https://github.com/ruby/syck[Syck]
+| v1.5.1.1
+| Legacy YAML parser
 
-* **https://github.com/flori/json[JSON]** v2.12.2 - Ruby's standard library JSON parser (reference implementation)
+| TOML
+| https://github.com/fbernier/tomlib[Tomlib]
+| v0.7.3
+| TOML parser implemented in C
 
-=== YAML serialization libraries
+| TOML
+| https://github.com/emancu/toml-rb[TOML-RB]
+| v2.2.0
+| Pure Ruby TOML parser
+|===
 
-==== Built-in libraries
+== Benchmark report JSON format
 
-* **https://github.com/ruby/psych[Psych]** v5.1.2 - Ruby's standard library YAML parser with excellent performance and full YAML 1.1 support
+=== Single Ruby version results
 
-==== Legacy libraries
+The benchmark results are saved as JSON files with the following structure:
 
-* **https://github.com/ruby/syck[Syck]** v1.5.1.1 - Legacy YAML parser (Ruby < 1.9.3) with fast parsing for simple documents
+[source,json]
+----
+{
+  "environment": {
+    "ruby_version": "3.3.8",
+    "ruby_platform": "aarch64-linux",
+    "serializer_versions": {
+      "rexml": "3.4.1",
+      "ox": "2.14.23",
+      "nokogiri": "1.18.8",
+      "oga": "3.4",
+      "libxml": "4.1.2",
+      "json": "2.12.2",
+      "oj": "3.16.11",
+      "yajl": "1.4.3",
+      "psych": "5.1.2",
+      "syck": "1.5.1.1",
+      "toml-rb": "2.2.0",
+      "tomlib": "0.7.3"
+    },
+    "timestamp": "2025-06-07T09:00:25+00:00"
+  },
+  "parsing": {
+    "small": {
+      "xml": {
+        "rexml": {
+          "time_per_iterations": 0.002514416000053643,
+          "time_per_iteration": 0.00012572080000268216,
+          "iterations_per_second": 7954.133285650949,
+          "iterations_count": 20
+        },
+        "ox": {
+          "time_per_iterations": 0.00005258399994545471,
+          "time_per_iteration": 0.0000026291999972727353,
+          "iterations_per_second": 380343.83121759404,
+          "iterations_count": 20
+        }
+      },
+      "json": {
+        "json": {
+          "time_per_iterations": 0.000029707999942729657,
+          "time_per_iteration": 0.000001485399997136483,
+          "iterations_per_second": 673219.3361571126,
+          "iterations_count": 20
+        },
+        "oj": {
+          "time_per_iterations": 0.00003158300000905001,
+          "time_per_iteration": 0.0000015791500004525006,
+          "iterations_per_second": 633252.0658034089,
+          "iterations_count": 20
+        }
+      }
+    },
+    "medium": {
+      "xml": { /* ... */ },
+      "json": { /* ... */ }
+    },
+    "large": {
+      "xml": { /* ... */ },
+      "json": { /* ... */ }
+    }
+  },
+  "ruby_version": "3.3.8",
+  "ruby_platform": "aarch64-linux",
+  "timestamp": "2025-06-07T09:01:02+00:00"
+}
+----
 
-=== TOML serialization libraries
+=== Multi-Ruby version merged results
 
-==== High-performance libraries
+When results from multiple Ruby versions are merged, the structure becomes:
 
-* **https://github.com/fbernier/tomlib[Tomlib]** v0.7.3 - Fast TOML parser implemented in C
+[source,json]
+----
+{
+  "environments": {
+    "3_3_8_aarch64_linux": {
+      "ruby_version": "3.3.8",
+      "ruby_platform": "aarch64-linux",
+      "source_file": "docker-results/ruby-3.3/data/results.json",
+      "timestamp": "2025-06-07T09:01:02+00:00",
+      "environment": {
+        "ruby_version": "3.3.8",
+        "ruby_platform": "aarch64-linux",
+        "serializer_versions": { /* ... */ },
+        "timestamp": "2025-06-07T09:00:25+00:00"
+      }
+    },
+    "3_4_4_aarch64_linux": {
+      "ruby_version": "3.4.4",
+      "ruby_platform": "aarch64-linux",
+      /* ... */
+    }
+  },
+  "combined_results": {
+    "parsing": {
+      "small": {
+        "xml": {
+          "rexml": {
+            "3_3_8_aarch64_linux": {
+              "time_per_iterations": 0.002514416000053643,
+              "time_per_iteration": 0.00012572080000268216,
+              "iterations_per_second": 7954.133285650949,
+              "iterations_count": 20
+            },
+            "3_4_4_aarch64_linux": {
+              "time_per_iterations": 0.0025308329999234047,
+              "time_per_iteration": 0.00012654164999617023,
+              "iterations_per_second": 7902.536437846866,
+              "iterations_count": 20
+            }
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "merged_at": "2025-06-07T17:01:48+08:00",
+    "ruby_versions": ["3.3.8", "3.4.4"],
+    "platforms": ["aarch64-linux"]
+  }
+}
+----
 
-==== Standard libraries
+=== JSON schema specification
 
-* **https://github.com/emancu/toml-rb[TOML-RB]** v2.2.0 - Pure Ruby TOML parser with good compatibility
+The benchmark results follow this schema:
+
+[source,json]
+----
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Serialbench Results",
+  "type": "object",
+  "properties": {
+    "environment": {
+      "type": "object",
+      "properties": {
+        "ruby_version": { "type": "string" },
+        "ruby_platform": { "type": "string" },
+        "serializer_versions": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ruby_version", "ruby_platform", "serializer_versions", "timestamp"]
+    },
+    "parsing": {
+      "type": "object",
+      "properties": {
+        "small": { "$ref": "#/definitions/sizeResults" },
+        "medium": { "$ref": "#/definitions/sizeResults" },
+        "large": { "$ref": "#/definitions/sizeResults" }
+      }
+    },
+    "ruby_version": { "type": "string" },
+    "ruby_platform": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "definitions": {
+    "sizeResults": {
+      "type": "object",
+      "properties": {
+        "xml": { "$ref": "#/definitions/formatResults" },
+        "json": { "$ref": "#/definitions/formatResults" },
+        "yaml": { "$ref": "#/definitions/formatResults" },
+        "toml": { "$ref": "#/definitions/formatResults" }
+      }
+    },
+    "formatResults": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/serializerResults"
+      }
+    },
+    "serializerResults": {
+      "type": "object",
+      "properties": {
+        "time_per_iterations": { "type": "number" },
+        "time_per_iteration": { "type": "number" },
+        "iterations_per_second": { "type": "number" },
+        "iterations_count": { "type": "integer" }
+      },
+      "required": ["time_per_iterations", "time_per_iteration", "iterations_per_second", "iterations_count"]
+    }
+  }
+}
+----
 
 == Installation
 
@@ -91,6 +305,7 @@ $ gem install serialbench
 
 To run benchmarks for all supported XML libraries, install the following gems:
 
+
 [source]
 ----
 # Core XML libraries
@@ -102,6 +317,7 @@ $ gem install oj toml-rb
 # Memory profiling support
 $ gem install memory_profiler
 ----
+
 
 NOTE: REXML, JSON, and Psych (YAML) are included with Ruby and require no additional installation.
 
@@ -825,6 +1041,70 @@ This creates an interactive HTML report with:
 * **Interactive navigation**: Switch between parsing, generation, streaming, and memory usage
 * **Environment details**: Ruby versions, platforms, and serializer versions
 * **GitHub Pages ready**: Deploy directly to GitHub Pages for public sharing
+
+=== Cross-platform performance analysis
+
+Analyze performance data from multiple benchmark runs across different platforms and Ruby versions:
+
+[source]
+----
+$ serialbench analyze_performance artifacts/benchmark-results-*/ performance_analysis.json
+----
+
+This command:
+
+* **Processes multiple result directories** from different platforms and Ruby versions
+* **Extracts platform and Ruby version** information from directory names
+* **Generates comprehensive JSON** with detailed performance metrics
+* **Handles both parsing and generation** benchmark results
+* **Provides summary statistics** about processed data
+
+Generate platform comparison reports:
+
+[source]
+----
+$ serialbench platform_comparison performance_analysis.json platform_comparison.json
+----
+
+This creates a JSON report with:
+
+* **Cross-platform statistics**: Average, min, max performance by platform
+* **Format-specific analysis**: Performance breakdown by serialization format
+* **Operation comparison**: Separate analysis for parsing vs generation
+* **Sample counts**: Number of data points for statistical confidence
+* **Standard deviation**: Statistical variance for performance consistency
+
+==== Example workflow for cross-platform analysis
+
+[source]
+----
+# 1. Run benchmarks on different platforms (or use CI artifacts)
+$ serialbench benchmark --formats xml json yaml toml
+
+# 2. Collect results from multiple platforms/Ruby versions
+$ mkdir analysis
+$ cp -r platform1-ruby3.2/results analysis/benchmark-results-ubuntu-ruby-3.2
+$ cp -r platform2-ruby3.3/results analysis/benchmark-results-macos-ruby-3.3
+$ cp -r platform3-ruby3.4/results analysis/benchmark-results-windows-ruby-3.4
+
+# 3. Generate performance analysis
+$ serialbench analyze_performance analysis/benchmark-results-*/ performance_analysis.json
+
+# 4. Create platform comparison report
+$ serialbench platform_comparison performance_analysis.json platform_comparison.json
+
+# 5. View results
+$ cat performance_analysis.json | jq '.summary'
+$ cat performance_analysis.json | jq '.platforms'
+$ cat platform_comparison.json | jq '.platforms'
+----
+
+The analysis commands are particularly useful for:
+
+* **CI/CD integration**: Automated cross-platform performance tracking
+* **Performance regression detection**: Compare results across builds
+* **Platform optimization**: Identify platform-specific performance characteristics
+* **Ruby version migration**: Analyze performance impact of Ruby upgrades
 
 === Programmatic usage
 
