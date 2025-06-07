@@ -85,7 +85,7 @@ jobs:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch,suffix=-ruby-${{ matrix.ruby-version }}
-          type=ref,event=pr,suffix=-ruby-${{ matrix.ruby-version }}
+          type=ref,event=pr,prefix=pr-,suffix=-ruby-${{ matrix.ruby-version }}
           type=sha,suffix=-ruby-${{ matrix.ruby-version }}
           type=raw,value=latest,suffix=-ruby-${{ matrix.ruby-version }},enable={{is_default_branch}}
 
@@ -105,19 +105,27 @@ jobs:
 
     - name: Test Docker image
       run: |
+        # Get the first tag from the metadata output
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Testing image: $IMAGE_TAG"
+
         # Test that the image works correctly
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+        docker run --rm "$IMAGE_TAG" \
           bundle exec serialbench list
 
     - name: Run basic functionality test
       run: |
+        # Get the first tag from the metadata output
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Testing functionality with image: $IMAGE_TAG"
+
         # Create a temporary results directory
         mkdir -p test-results
 
         # Run a quick benchmark test
         docker run --rm \
           -v $(pwd)/test-results:/app/results \
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          "$IMAGE_TAG" \
           bundle exec serialbench benchmark \
             --formats json \
             --iterations 1 \
@@ -153,14 +161,28 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Extract metadata for testing
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch,suffix=-ruby-${{ matrix.ruby-version }}
+          type=ref,event=pr,prefix=pr-,suffix=-ruby-${{ matrix.ruby-version }}
+          type=sha,suffix=-ruby-${{ matrix.ruby-version }}
+          type=raw,value=latest,suffix=-ruby-${{ matrix.ruby-version }},enable={{is_default_branch}}
+
     - name: Pull Docker image
       run: |
-        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }}
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Pulling image: $IMAGE_TAG"
+        docker pull "$IMAGE_TAG"
 
     - name: Test serializer availability
       run: |
-        echo "Testing Ruby ${{ matrix.ruby-version }} container..."
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Testing Ruby ${{ matrix.ruby-version }} container: $IMAGE_TAG"
+        docker run --rm "$IMAGE_TAG" \
           bundle exec ruby -e "
             require 'serialbench'
             puts 'Available serializers:'
@@ -172,17 +194,21 @@ jobs:
 
     - name: Run comprehensive tests
       run: |
-        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Running tests with image: $IMAGE_TAG"
+        docker run --rm "$IMAGE_TAG" \
           bundle exec rspec --format progress
 
     - name: Test benchmark execution
       run: |
+        IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+        echo "Testing benchmark execution with image: $IMAGE_TAG"
         mkdir -p docker-test-results
 
         # Run a comprehensive but quick benchmark
         docker run --rm \
           -v $(pwd)/docker-test-results:/app/results \
-          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          "$IMAGE_TAG" \
           bundle exec serialbench benchmark \
             --formats xml json yaml toml \
             --iterations 2 \
