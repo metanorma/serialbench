@@ -26,8 +26,19 @@ module Serialbench
           REXML::Document.new(xml_string)
         end
 
-        def generate(document, options = {})
+        def generate(data, options = {})
           require 'rexml/document'
+
+          # If data is already a REXML::Document, use it directly
+          if data.is_a?(REXML::Document)
+            document = data
+          else
+            # Convert Hash/other data to XML document
+            document = REXML::Document.new
+            root = document.add_element('root')
+            hash_to_xml(data, root)
+          end
+
           indent = options.fetch(:indent, 0)
           output = String.new
           if indent > 0
@@ -63,7 +74,7 @@ module Serialbench
         end
 
         def supports_streaming?
-          true
+          false
         end
 
         protected
@@ -78,6 +89,25 @@ module Serialbench
 
         def supports_validation?
           false
+        end
+
+        private
+
+        def hash_to_xml(data, parent)
+          case data
+          when Hash
+            data.each do |key, value|
+              element = parent.add_element(key.to_s)
+              hash_to_xml(value, element)
+            end
+          when Array
+            data.each_with_index do |item, index|
+              element = parent.add_element("item_#{index}")
+              hash_to_xml(item, element)
+            end
+          else
+            parent.text = data.to_s
+          end
         end
       end
 

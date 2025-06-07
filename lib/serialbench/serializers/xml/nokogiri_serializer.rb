@@ -60,9 +60,9 @@ module Serialbench
         def build_xml_from_data(xml, data, root_name = 'root')
           case data
           when Hash
-            xml.send(root_name) do
+            xml.send(sanitize_element_name(root_name)) do
               data.each do |key, value|
-                build_xml_from_data(xml, value, key)
+                build_xml_from_data(xml, value, sanitize_element_name(key.to_s))
               end
             end
           when Array
@@ -70,8 +70,26 @@ module Serialbench
               build_xml_from_data(xml, item, "item_#{index}")
             end
           else
-            xml.send(root_name, data.to_s)
+            # Use a safe method that always works
+            element_name = sanitize_element_name(root_name)
+            if xml.respond_to?(element_name)
+              xml.send(element_name, data.to_s)
+            else
+              # Fallback: create element manually
+              xml.tag!(element_name, data.to_s)
+            end
           end
+        end
+
+        def sanitize_element_name(name)
+          # Ensure element name is valid XML and safe to use as method name
+          sanitized = name.to_s.gsub(/[^a-zA-Z0-9_]/, '_')
+          # Ensure it starts with a letter
+          sanitized = "element_#{sanitized}" if sanitized.empty? || sanitized =~ /\A\d/
+          # Avoid conflicts with common Nokogiri methods
+          reserved_words = %w[text comment cdata parent children attributes namespace]
+          sanitized = "data_#{sanitized}" if reserved_words.include?(sanitized)
+          sanitized
         end
 
         # SAX handler for streaming

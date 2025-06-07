@@ -218,18 +218,18 @@ jobs:
 
     - name: Generate performance analysis
       run: |
-        bundle exec serialbench analyze_performance analysis/benchmark-results-*/ performance_analysis.csv
+        bundle exec serialbench analyze_performance analysis/benchmark-results-*/ performance_analysis.json
 
     - name: Generate platform comparison report
       run: |
-        bundle exec serialbench platform_comparison performance_analysis.csv platform_comparison.json
+        bundle exec serialbench platform_comparison performance_analysis.json platform_comparison.json
 
     - name: Upload performance analysis
       uses: actions/upload-artifact@v4
       with:
         name: performance-analysis
         path: |
-          performance_analysis.csv
+          performance_analysis.json
           platform_comparison.json
         retention-days: 90
 

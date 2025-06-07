@@ -15,9 +15,13 @@ module Serialbench
           Yajl::Parser.parse(json_string)
         end
 
-        def generate(data)
+        def generate(data, options = {})
           require 'yajl'
-          Yajl::Encoder.encode(data)
+          if options[:pretty]
+            Yajl::Encoder.encode(data, pretty: true, indent: '  ')
+          else
+            Yajl::Encoder.encode(data)
+          end
         end
 
         def parse_streaming(json_string, &block)
