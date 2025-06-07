@@ -1,0 +1,246 @@
+name: docker
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # Build Docker images weekly on Saturdays at 1 AM UTC
+    - cron: '0 1 * * 6'
+  workflow_dispatch:
+    # Allow manual triggering
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/serialbench
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      ruby-versions: ${{ steps.set-matrix.outputs.ruby-versions }}
+      should-build: ${{ steps.check-changes.outputs.should-build }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Set Ruby version matrix
+      id: set-matrix
+      run: |
+        echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
+
+    - name: Check if Docker build is needed
+      id: check-changes
+      run: |
+        # Always build on workflow_dispatch or schedule
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ] || [ "${{ github.event_name }}" == "schedule" ]; then
+          echo "should-build=true" >> $GITHUB_OUTPUT
+          echo "Manual or scheduled build triggered"
+          exit 0
+        fi
+
+        # Check if code has changed since last commit
+        if git diff --name-only HEAD~1 | grep -E '\.(rb|gemspec|yml|yaml)$|Gemfile|Dockerfile' > /dev/null; then
+          echo "should-build=true" >> $GITHUB_OUTPUT
+          echo "Code changes detected, will build new Docker images"
+        else
+          echo "should-build=false" >> $GITHUB_OUTPUT
+          echo "No relevant code changes, skipping Docker build"
+        fi
+
+  build-docker-images:
+    runs-on: ubuntu-latest
+    needs: setup
+    if: needs.setup.outputs.should-build == 'true'
+    strategy:
+      matrix:
+        ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
+      fail-fast: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch,suffix=-ruby-${{ matrix.ruby-version }}
+          type=ref,event=pr,suffix=-ruby-${{ matrix.ruby-version }}
+          type=sha,suffix=-ruby-${{ matrix.ruby-version }}
+          type=raw,value=latest,suffix=-ruby-${{ matrix.ruby-version }},enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/Dockerfile.benchmark
+        build-args: |
+          RUBY_VERSION=${{ matrix.ruby-version }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+    - name: Test Docker image
+      run: |
+        # Test that the image works correctly
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          bundle exec serialbench list
+
+    - name: Run basic functionality test
+      run: |
+        # Create a temporary results directory
+        mkdir -p test-results
+
+        # Run a quick benchmark test
+        docker run --rm \
+          -v $(pwd)/test-results:/app/results \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          bundle exec serialbench benchmark \
+            --formats json \
+            --iterations 1 \
+            --warmup 0 \
+            --output-dir /app/results
+
+        # Verify results were generated
+        ls -la test-results/
+
+        # Clean up
+        rm -rf test-results
+
+  test-docker-images:
+    runs-on: ubuntu-latest
+    needs: [setup, build-docker-images]
+    if: needs.setup.outputs.should-build == 'true'
+    strategy:
+      matrix:
+        ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
+      fail-fast: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull Docker image
+      run: |
+        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }}
+
+    - name: Test serializer availability
+      run: |
+        echo "Testing Ruby ${{ matrix.ruby-version }} container..."
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          bundle exec ruby -e "
+            require 'serialbench'
+            puts 'Available serializers:'
+            Serialbench::Serializers.available.each do |s|
+              serializer = s.new
+              puts \"  #{serializer.format}: #{serializer.name} v#{serializer.version}\"
+            end
+          "
+
+    - name: Run comprehensive tests
+      run: |
+        docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          bundle exec rspec --format progress
+
+    - name: Test benchmark execution
+      run: |
+        mkdir -p docker-test-results
+
+        # Run a comprehensive but quick benchmark
+        docker run --rm \
+          -v $(pwd)/docker-test-results:/app/results \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }} \
+          bundle exec serialbench benchmark \
+            --formats xml json yaml toml \
+            --iterations 2 \
+            --warmup 1 \
+            --output-dir /app/results
+
+        # Verify all expected files were created
+        echo "Generated files:"
+        find docker-test-results -type f -name "*.json" -o -name "*.html" -o -name "*.csv"
+
+        # Clean up
+        rm -rf docker-test-results
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [setup, build-docker-images, test-docker-images]
+    if: always() && github.event_name != 'pull_request'
+    steps:
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Clean up old Docker images
+      run: |
+        echo "Docker image cleanup would be implemented here"
+        # Note: Actual cleanup requires additional GitHub API calls
+        # For now, we rely on GitHub's automatic cleanup policies
+        echo "Current images are tagged and will be managed by GitHub's retention policies"
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [setup, build-docker-images, test-docker-images]
+    if: always()
+    steps:
+    - name: Build Summary
+      run: |
+        echo "## Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Build Status**: ${{ needs.build-docker-images.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Test Status**: ${{ needs.test-docker-images.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Should Build**: ${{ needs.setup.outputs.should-build }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Available Images" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Ruby Version | Image Tag |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------------|-----------|" >> $GITHUB_STEP_SUMMARY
+        echo "| 3.1 | \`ghcr.io/metanorma/serialbench:main-ruby-3.1\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| 3.2 | \`ghcr.io/metanorma/serialbench:main-ruby-3.2\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| 3.3 | \`ghcr.io/metanorma/serialbench:main-ruby-3.3\` |" >> $GITHUB_STEP_SUMMARY
+        echo "| 3.4 | \`ghcr.io/metanorma/serialbench:main-ruby-3.4\` |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Usage" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "# Pull and run latest Ruby 3.3 container" >> $GITHUB_STEP_SUMMARY
+        echo "docker pull ghcr.io/metanorma/serialbench:main-ruby-3.3" >> $GITHUB_STEP_SUMMARY
+        echo "docker run --rm -v \$(pwd)/results:/app/results ghcr.io/metanorma/serialbench:main-ruby-3.3" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

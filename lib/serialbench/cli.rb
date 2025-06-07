@@ -214,6 +214,188 @@ module Serialbench
       end
     end
 
+    desc 'analyze_performance INPUT_DIRS... OUTPUT_FILE', 'Analyze performance across multiple benchmark results'
+    long_desc <<~DESC
+      Analyze performance data from multiple benchmark runs and generate CSV analysis.
+
+      INPUT_DIRS should contain results.json files from different benchmark runs.
+      OUTPUT_FILE will be a CSV file with detailed performance analysis.
+
+      Example:
+        serialbench analyze_performance artifacts/benchmark-results-*/ performance_analysis.csv
+    DESC
+    def analyze_performance(*args)
+      if args.length < 2
+        say 'Error: Need at least one input directory and one output file', :red
+        say 'Usage: serialbench analyze_performance INPUT_DIRS... OUTPUT_FILE', :yellow
+        exit 1
+      end
+
+      output_file = args.pop
+      input_dirs = args
+
+      say "Analyzing performance from #{input_dirs.length} directories", :green
+
+      begin
+        require 'csv'
+        results = []
+
+        input_dirs.each do |input_dir|
+          results_file = File.join(input_dir, 'data', 'results.json')
+          next unless File.exist?(results_file)
+
+          # Extract platform and ruby version from directory name
+          match = input_dir.match(/benchmark-results-([^-]+)-ruby-([^\/]+)/)
+          next unless match
+
+          platform = match[1]
+          ruby_version = match[2]
+
+          begin
+            data = JSON.parse(File.read(results_file))
+
+            # Process parsing results
+            data['parsing']&.each do |format, serializers|
+              serializers.each do |serializer, sizes|
+                sizes.each do |size, metrics|
+                  results << {
+                    platform: platform,
+                    ruby_version: ruby_version,
+                    format: format,
+                    serializer: serializer,
+                    size: size,
+                    operation: 'parsing',
+                    time: metrics['average_time'] || 0,
+                    memory: metrics['memory_usage'] || 0
+                  }
+                end
+              end
+            end
+
+            # Process generation results
+            data['generation']&.each do |format, serializers|
+              serializers.each do |serializer, sizes|
+                sizes.each do |size, metrics|
+                  results << {
+                    platform: platform,
+                    ruby_version: ruby_version,
+                    format: format,
+                    serializer: serializer,
+                    size: size,
+                    operation: 'generation',
+                    time: metrics['average_time'] || 0,
+                    memory: metrics['memory_usage'] || 0
+                  }
+                end
+              end
+            end
+          rescue JSON::ParserError => e
+            say "Warning: Could not parse #{results_file}: #{e.message}", :yellow
+          end
+        end
+
+        # Write CSV for analysis
+        CSV.open(output_file, 'w') do |csv|
+          csv << ['platform', 'ruby_version', 'format', 'serializer', 'size', 'operation', 'time_ms', 'memory_mb']
+          results.each do |result|
+            csv << [
+              result[:platform],
+              result[:ruby_version],
+              result[:format],
+              result[:serializer],
+              result[:size],
+              result[:operation],
+              result[:time],
+              result[:memory]
+            ]
+          end
+        end
+
+        say "Performance analysis generated with #{results.length} data points", :green
+        say "Platforms: #{results.map { |r| r[:platform] }.uniq.sort.join(', ')}", :cyan
+        say "Ruby versions: #{results.map { |r| r[:ruby_version] }.uniq.sort.join(', ')}", :cyan
+        say "Formats: #{results.map { |r| r[:format] }.uniq.sort.join(', ')}", :cyan
+        say "Output saved to: #{output_file}", :green
+      rescue StandardError => e
+        say "Error analyzing performance: #{e.message}", :red
+        exit 1
+      end
+    end
+
+    desc 'platform_comparison CSV_FILE OUTPUT_FILE', 'Generate platform comparison report from CSV analysis'
+    long_desc <<~DESC
+      Generate a platform comparison report from performance analysis CSV.
+
+      CSV_FILE should be the output from analyze_performance command.
+      OUTPUT_FILE will be a JSON file with platform comparison statistics.
+
+      Example:
+        serialbench platform_comparison performance_analysis.csv platform_comparison.json
+    DESC
+    def platform_comparison(csv_file, output_file)
+      say "Generating platform comparison from #{csv_file}", :green
+
+      unless File.exist?(csv_file)
+        say "CSV file does not exist: #{csv_file}", :red
+        exit 1
+      end
+
+      begin
+        require 'csv'
+
+        # Read the performance analysis CSV
+        data = CSV.read(csv_file, headers: true)
+
+        # Group by platform and calculate averages
+        platform_stats = {}
+
+        data.each do |row|
+          platform = row['platform']
+          format = row['format']
+          operation = row['operation']
+          time = row['time_ms'].to_f
+
+          platform_stats[platform] ||= {}
+          platform_stats[platform][format] ||= {}
+          platform_stats[platform][format][operation] ||= []
+          platform_stats[platform][format][operation] << time
+        end
+
+        # Calculate averages and generate report
+        report = {
+          'summary' => 'Cross-platform performance comparison',
+          'generated_at' => Time.now.iso8601,
+          'platforms' => {}
+        }
+
+        platform_stats.each do |platform, formats|
+          report['platforms'][platform] = {}
+          formats.each do |format, operations|
+            report['platforms'][platform][format] = {}
+            operations.each do |operation, times|
+              avg_time = times.sum / times.length
+              report['platforms'][platform][format][operation] = {
+                'average_time_ms' => avg_time.round(3),
+                'sample_count' => times.length,
+                'min_time_ms' => times.min.round(3),
+                'max_time_ms' => times.max.round(3)
+              }
+            end
+          end
+        end
+
+        # Write JSON report
+        File.write(output_file, JSON.pretty_generate(report))
+
+        say "Platform comparison report generated", :green
+        say "Platforms analyzed: #{platform_stats.keys.sort.join(', ')}", :cyan
+        say "Output saved to: #{output_file}", :green
+      rescue StandardError => e
+        say "Error generating platform comparison: #{e.message}", :red
+        exit 1
+      end
+    end
+
     private
 
     def show_available_serializers(formats)

@@ -155,31 +155,167 @@ Pure Ruby implementation with no system dependencies:
 $ gem install oga
 ----
 
-== Docker multi-Ruby version benchmarking
+== Docker containers and cross-platform benchmarking
 
-Serialbench includes comprehensive Docker support for running benchmarks across multiple Ruby versions in isolated environments. This enables accurate performance comparisons and ensures consistent results across different Ruby implementations.
+Serialbench provides pre-built Docker containers and supports cross-platform benchmarking on Windows, macOS, and Linux. Our containers are automatically built and published to GitHub Container Registry for easy access.
+
+=== Published Docker containers
+
+We publish multi-architecture Docker containers for all supported Ruby versions:
+
+**Registry**: `ghcr.io/metanorma/serialbench`
+
+**Available tags**:
+* `ghcr.io/metanorma/serialbench:main-ruby-3.1` - Ruby 3.1 (linux/amd64, linux/arm64)
+* `ghcr.io/metanorma/serialbench:main-ruby-3.2` - Ruby 3.2 (linux/amd64, linux/arm64)
+* `ghcr.io/metanorma/serialbench:main-ruby-3.3` - Ruby 3.3 (linux/amd64, linux/arm64)
+* `ghcr.io/metanorma/serialbench:main-ruby-3.4` - Ruby 3.4 (linux/amd64, linux/arm64)
+
+**Container features**:
+* All serialization libraries pre-installed (XML, JSON, YAML, TOML)
+* Multi-architecture support (Intel x64 and ARM64)
+* Optimized for CI/CD and local development
+* Automatic updates on code changes
+
+=== Running benchmarks on your computer
+
+==== Windows (PowerShell/Command Prompt)
+
+[source,powershell]
+----
+# Pull and run latest Ruby 3.3 container
+docker pull ghcr.io/metanorma/serialbench:main-ruby-3.3
+
+# Create results directory
+mkdir results
+
+# Run benchmarks with volume mounting
+docker run --rm -v ${PWD}/results:/app/results ghcr.io/metanorma/serialbench:main-ruby-3.3
+
+# View results
+dir results
+----
+
+==== macOS (Terminal)
+
+[source,bash]
+----
+# Pull and run latest Ruby 3.3 container
+docker pull ghcr.io/metanorma/serialbench:main-ruby-3.3
+
+# Create results directory
+mkdir -p results
+
+# Run benchmarks with volume mounting
+docker run --rm -v $(pwd)/results:/app/results ghcr.io/metanorma/serialbench:main-ruby-3.3
+
+# View results
+ls -la results/
+----
+
+==== Ubuntu/Linux (Terminal)
+
+[source,bash]
+----
+# Pull and run latest Ruby 3.3 container
+docker pull ghcr.io/metanorma/serialbench:main-ruby-3.3
+
+# Create results directory
+mkdir -p results
+
+# Run benchmarks with volume mounting
+docker run --rm -v $(pwd)/results:/app/results ghcr.io/metanorma/serialbench:main-ruby-3.3
+
+# View results
+ls -la results/
+----
+
+=== Multi-Ruby version comparison
+
+Run benchmarks across all supported Ruby versions:
+
+==== Windows (PowerShell)
+
+[source,powershell]
+----
+# Create results directories
+$versions = @("3.1", "3.2", "3.3", "3.4")
+foreach ($version in $versions) {
+    mkdir "results-ruby-$version" -Force
+    docker pull "ghcr.io/metanorma/serialbench:main-ruby-$version"
+    docker run --rm -v "${PWD}/results-ruby-${version}:/app/results" "ghcr.io/metanorma/serialbench:main-ruby-$version"
+}
+
+# View all results
+dir results-ruby-*
+----
+
+==== macOS/Linux (Bash)
+
+[source,bash]
+----
+# Run benchmarks for all Ruby versions
+for version in 3.1 3.2 3.3 3.4; do
+    echo "Running benchmarks for Ruby $version..."
+    mkdir -p "results-ruby-$version"
+    docker pull "ghcr.io/metanorma/serialbench:main-ruby-$version"
+    docker run --rm \
+        -v "$(pwd)/results-ruby-$version:/app/results" \
+        "ghcr.io/metanorma/serialbench:main-ruby-$version"
+done
+
+# View all results
+ls -la results-ruby-*/
+----
+
+=== Custom benchmark configuration
+
+Run benchmarks with custom parameters:
+
+[source,bash]
+----
+# Run specific formats only
+docker run --rm \
+    -v $(pwd)/results:/app/results \
+    ghcr.io/metanorma/serialbench:main-ruby-3.3 \
+    bundle exec serialbench benchmark --formats xml json --iterations 10
+
+# Run with memory profiling
+docker run --rm \
+    -v $(pwd)/results:/app/results \
+    ghcr.io/metanorma/serialbench:main-ruby-3.3 \
+    bundle exec serialbench benchmark --memory-profiling
+
+# List available serializers
+docker run --rm ghcr.io/metanorma/serialbench:main-ruby-3.3 \
+    bundle exec serialbench list
+----
 
 === Quick start with Docker
 
 ==== Prerequisites
 
 * Docker installed and running
-* Bash shell (Linux/macOS/WSL)
+* Command line access (PowerShell, Terminal, or Bash)
 
 ==== Running multi-Ruby benchmarks
 
 [source]
 ----
-# From the project root directory
+# From the project root directory (if you have the source)
 $ ./docker/run-benchmarks.sh
+
+# Or using published containers directly
+$ docker pull ghcr.io/metanorma/serialbench:main-ruby-3.3
+$ docker run --rm -v $(pwd)/results:/app/results ghcr.io/metanorma/serialbench:main-ruby-3.3
 ----
 
-This automated script will:
+This will:
 
-. **Build Docker images** for Ruby 3.0, 3.1, 3.2, 3.3, and 3.4
-. **Run comprehensive benchmarks** in each isolated environment
-. **Merge results** from all Ruby versions into comparative datasets
-. **Generate GitHub Pages** with interactive multi-version reports
+. **Pull pre-built containers** from GitHub Container Registry
+. **Run comprehensive benchmarks** in isolated environments
+. **Generate detailed reports** with performance comparisons
+. **Output results** to your local `results/` directory
 
 ==== Results structure
 
