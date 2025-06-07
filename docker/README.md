@@ -22,10 +22,39 @@ This directory contains Docker infrastructure for running Serialbench across mul
 ```
 
 This will:
-1. Build Docker images for Ruby 3.1, 3.2, 3.3, and 3.4
+1. Build Docker images for Ruby 3.1, 3.2, 3.3, and 3.4 (skipping existing images)
 2. Run comprehensive benchmarks in each environment
 3. Merge results from all Ruby versions
 4. Generate GitHub Pages with comparative results
+
+#### Force Rebuild Images
+
+To force rebuild all Docker images (even if they already exist):
+
+```bash
+# Force rebuild all images
+./docker/run-benchmarks.sh --force-rebuild
+
+# Or use the short form
+./docker/run-benchmarks.sh -f
+```
+
+This is useful when:
+- Dependencies have been updated
+- Dockerfile has been modified
+- You want to ensure fresh builds
+- Troubleshooting build-related issues
+
+#### Command Line Options
+
+```bash
+# Show help and available options
+./docker/run-benchmarks.sh --help
+
+# Available options:
+#   --force-rebuild, -f    Force rebuild of Docker images even if they exist
+#   --help, -h             Show help message
+```
 
 ### Results
 
