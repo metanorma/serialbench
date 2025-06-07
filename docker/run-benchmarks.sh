@@ -10,6 +10,7 @@ RUBY_VERSIONS=("3.0" "3.1" "3.2" "3.3" "3.4")
 OUTPUT_DIR="docker-results"
 CONFIG_FILE="config/full.yml"
 DOCKERFILE="docker/Dockerfile.benchmark"
+FORCE_REBUILD=false
 
 # Colors for output
 RED='\033[0;31m'
@@ -33,6 +34,45 @@ log_warning() {
 
 log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Show usage information
+show_usage() {
+    echo "Usage: $0 [OPTIONS]"
+    echo
+    echo "Run comprehensive benchmarks across multiple Ruby versions using Docker"
+    echo
+    echo "OPTIONS:"
+    echo "  --force-rebuild, -f    Force rebuild of Docker images even if they exist"
+    echo "  --help, -h             Show this help message"
+    echo
+    echo "EXAMPLES:"
+    echo "  $0                     Run benchmarks (skip building existing images)"
+    echo "  $0 --force-rebuild     Run benchmarks and rebuild all images"
+    echo "  $0 -f                  Same as --force-rebuild"
+    echo
+}
+
+# Parse command line arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --force-rebuild|-f)
+                FORCE_REBUILD=true
+                log_info "Force rebuild enabled - will rebuild all Docker images"
+                shift
+                ;;
+            --help|-h)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
 }
 
 # Check if Docker is available
@@ -64,10 +104,15 @@ build_image() {
     local ruby_version=$1
     local image_name="serialbench:ruby-${ruby_version}"
 
-    # Check if image already exists
-    if docker image inspect "${image_name}" >/dev/null 2>&1; then
+    # Check if image already exists (unless force rebuild is enabled)
+    if [ "$FORCE_REBUILD" = false ] && docker image inspect "${image_name}" >/dev/null 2>&1; then
         log_success "Image ${image_name} already exists, skipping build"
         return 0
+    fi
+
+    if [ "$FORCE_REBUILD" = true ] && docker image inspect "${image_name}" >/dev/null 2>&1; then
+        log_info "Force rebuild enabled, removing existing image ${image_name}..."
+        docker rmi "${image_name}" >/dev/null 2>&1 || true
     fi
 
     log_info "Building Docker image for Ruby ${ruby_version}..."
@@ -272,6 +317,9 @@ print_summary() {
 
 # Main execution
 main() {
+    # Parse command line arguments first
+    parse_arguments "$@"
+
     echo "=========================================="
     echo "Serialbench Docker Multi-Ruby Benchmarks"
     echo "=========================================="
