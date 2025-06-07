@@ -15,10 +15,15 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  packages: write
 
 concurrency:
   group: "pages"
   cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/serialbench
 
 jobs:
   setup:
@@ -26,48 +31,156 @@ jobs:
     outputs:
       ruby-versions: ${{ steps.set-matrix.outputs.ruby-versions }}
       ruby-versions-list: ${{ steps.set-matrix.outputs.ruby-versions-list }}
+      should-build: ${{ steps.check-changes.outputs.should-build }}
     steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
     - name: Set Ruby version matrix
       id: set-matrix
       run: |
         echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
         echo 'ruby-versions-list=3.1 3.2 3.3 3.4' >> $GITHUB_OUTPUT
 
-  benchmark:
+    - name: Check if Docker build is needed
+      id: check-changes
+      run: |
+        # Check if code has changed since last successful benchmark
+        if git diff --name-only HEAD~1 | grep -E '\.(rb|gemspec|yml|yaml)$|Gemfile|Dockerfile' > /dev/null; then
+          echo "should-build=true" >> $GITHUB_OUTPUT
+          echo "Code changes detected, will build new Docker images"
+        else
+          echo "should-build=false" >> $GITHUB_OUTPUT
+          echo "No relevant code changes, will try to use existing images"
+        fi
+
+  build-images:
     runs-on: ubuntu-latest
     needs: setup
+    if: needs.setup.outputs.should-build == 'true' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
         ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - name: Set up Ruby ${{ matrix.ruby-version }}
-      uses: ruby/setup-ruby@v1
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
       with:
-        ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch,suffix=-ruby-${{ matrix.ruby-version }}
+          type=ref,event=pr,suffix=-ruby-${{ matrix.ruby-version }}
+          type=sha,suffix=-ruby-${{ matrix.ruby-version }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/Dockerfile.benchmark
+        build-args: |
+          RUBY_VERSION=${{ matrix.ruby-version }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: [setup, build-images]
+    if: always() && (needs.build-images.result == 'success' || needs.build-images.result == 'skipped')
+    strategy:
+      matrix:
+        ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
+      fail-fast: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Determine image tag
+      id: image-tag
+      run: |
+        if [ "${{ needs.setup.outputs.should-build }}" == "true" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          # Use newly built image
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:pr-${{ github.event.number }}-ruby-${{ matrix.ruby-version }}"
+          else
+            TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-ruby-${{ matrix.ruby-version }}"
+          fi
+        else
+          # Try to use existing image from main branch
+          TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-ruby-${{ matrix.ruby-version }}"
+        fi
+        echo "image-tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Using Docker image: $TAG"
+
+    - name: Pull Docker image
+      run: |
+        docker pull ${{ steps.image-tag.outputs.image-tag }} || {
+          echo "Failed to pull image, falling back to local build"
+          docker build \
+            --build-arg RUBY_VERSION=${{ matrix.ruby-version }} \
+            -t ${{ steps.image-tag.outputs.image-tag }} \
+            -f docker/Dockerfile.benchmark \
+            .
+        }
+
+    - name: Create results directory
+      run: mkdir -p results-ruby-${{ matrix.ruby-version }}
+
+    - name: Run benchmarks in Docker
+      run: |
+        docker run \
+          --rm \
+          -v $(pwd)/results-ruby-${{ matrix.ruby-version }}:/app/results \
+          ${{ steps.image-tag.outputs.image-tag }} \
+          bundle exec serialbench benchmark \
+            --formats xml json yaml toml \
+            --iterations 3 \
+            --warmup 1 \
+            --output-dir /app/results
 
     - name: List available serializers
       run: |
-        bundle exec serialbench list
+        docker run \
+          --rm \
+          ${{ steps.image-tag.outputs.image-tag }} \
+          bundle exec serialbench list
 
-    - name: Run tests
-      run: bundle exec rspec
-
-    - name: Run XML benchmarks
+    - name: Run tests in Docker
       run: |
-        mkdir -p results-ruby-${{ matrix.ruby-version }}
-        bundle exec serialbench benchmark --formats xml
-        # Copy results to versioned directory
-        cp -r results/* results-ruby-${{ matrix.ruby-version }}/
+        docker run \
+          --rm \
+          ${{ steps.image-tag.outputs.image-tag }} \
+          bundle exec rspec --format documentation
 
     - name: Upload benchmark results as artifact
       uses: actions/upload-artifact@v4
@@ -82,18 +195,29 @@ jobs:
     needs: [setup, benchmark]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-    - name: Set up Ruby (for report generation)
-      uses: ruby/setup-ruby@v1
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
       with:
-        ruby-version: '3.3'
-        bundler-cache: true
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull latest Docker image for report generation
+      run: |
+        docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-ruby-3.3 || {
+          echo "Building image for report generation"
+          docker build \
+            --build-arg RUBY_VERSION=3.3 \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-ruby-3.3 \
+            -f docker/Dockerfile.benchmark \
+            .
+        }
 
     - name: Download all benchmark artifacts
       uses: actions/download-artifact@v4
@@ -104,13 +228,23 @@ jobs:
     - name: Generate GitHub Pages
       run: |
         mkdir -p docs
-        # Generate GitHub Pages from all Ruby version results dynamically
+
+        # Prepare artifact paths for the Docker command
         RUBY_VERSIONS="${{ needs.setup.outputs.ruby-versions-list }}"
         ARTIFACT_PATHS=""
         for version in $RUBY_VERSIONS; do
-          ARTIFACT_PATHS="$ARTIFACT_PATHS artifacts/benchmark-results-ruby-$version/"
+          if [ -d "artifacts/benchmark-results-ruby-$version" ]; then
+            ARTIFACT_PATHS="$ARTIFACT_PATHS /app/artifacts/benchmark-results-ruby-$version/"
+          fi
         done
-        bundle exec serialbench github_pages $ARTIFACT_PATHS docs/
+
+        # Generate GitHub Pages using Docker
+        docker run \
+          --rm \
+          -v $(pwd)/artifacts:/app/artifacts \
+          -v $(pwd)/docs:/app/docs \
+          ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main-ruby-3.3 \
+          bundle exec serialbench github_pages $ARTIFACT_PATHS /app/docs/
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
@@ -123,3 +257,24 @@ jobs:
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
+
+  cleanup:
+    runs-on: ubuntu-latest
+    needs: [setup, benchmark, merge-and-deploy]
+    if: always() && github.event_name != 'pull_request'
+    steps:
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Clean up old images
+      run: |
+        # Keep only the 5 most recent images per Ruby version
+        for version in 3.1 3.2 3.3 3.4; do
+          echo "Cleaning up old images for Ruby $version"
+          # This would require additional API calls to clean up old images
+          # For now, we rely on GitHub's automatic cleanup policies
+        done
