@@ -31,21 +31,24 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   # Runtime dependencies
-  spec.add_dependency 'benchmark-ips', '~> 2.10'
-  spec.add_dependency 'memory_profiler', '~> 1.0'
-  spec.add_dependency 'thor', '~> 1.2'
+  spec.add_dependency 'benchmark-ips'
+  spec.add_dependency 'memory_profiler'
+  spec.add_dependency 'thor'
 
-  # XML serializers (optional)
-  spec.add_dependency 'libxml-ruby', '~> 4.0'
-  spec.add_dependency 'nokogiri', '~> 1.15'
-  spec.add_dependency 'oga', '~> 3.4'
-  spec.add_dependency 'ox', '~> 2.14'
+  # XML serializers
+  spec.add_dependency 'libxml-ruby'
+  spec.add_dependency 'nokogiri'
+  spec.add_dependency 'oga'
+  spec.add_dependency 'ox'
 
-  # JSON serializers (optional)
-  spec.add_dependency 'oj', '~> 3.13'
-  spec.add_dependency 'yajl-ruby', '~> 1.4'
+  # JSON serializers
+  spec.add_dependency 'oj'
+  spec.add_dependency 'yajl-ruby'
 
-  # TOML serializers (optional)
-  spec.add_dependency 'tomlib', '~> 0.6'
-  spec.add_dependency 'toml-rb', '~> 2.2'
+  # YAML serializers
+  spec.add_dependency 'syck'
+
+  # TOML serializers
+  spec.add_dependency 'tomlib'
+  spec.add_dependency 'toml-rb'
 end

@@ -15,6 +15,12 @@ require_relative 'serializers/json/base_json_serializer'
 require_relative 'serializers/json/json_serializer'
 require_relative 'serializers/json/oj_serializer'
 require_relative 'serializers/json/yajl_serializer'
+require_relative 'serializers/json/rapidjson_serializer'
+
+# YAML Serializers
+require_relative 'serializers/yaml/base_yaml_serializer'
+require_relative 'serializers/yaml/psych_serializer'
+require_relative 'serializers/yaml/syck_serializer'
 
 # TOML Serializers
 require_relative 'serializers/toml/base_toml_serializer'
@@ -35,7 +41,12 @@ module Serialbench
       json: [
         Json::JsonSerializer,
         Json::OjSerializer,
-        Json::YajlSerializer
+        Json::YajlSerializer,
+        Json::RapidjsonSerializer
+      ],
+      yaml: [
+        Yaml::PsychSerializer,
+        Yaml::SyckSerializer
       ],
       toml: [
         Toml::TomlRbSerializer,

@@ -1,4 +1,4 @@
-name: CI
+name: ci
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
         sudo apt-get install -y libxml2-dev libxslt1-dev
 
     - name: List available serializers
-      run: bundle exec ruby exe/serialbench list
+      run: bundle exec serialbench list
 
     - name: Run tests
       run: bundle exec rspec
@@ -48,7 +48,7 @@ jobs:
     - name: Run quick benchmark test
       run: |
         # Run a quick benchmark to ensure the CLI works
-        bundle exec ruby exe/serialbench benchmark --formats xml --data-sizes small --iterations 5
+        bundle exec serialbench benchmark --formats xml --data-sizes small --iterations 5
 
   lint:
     runs-on: ubuntu-latest

@@ -180,14 +180,14 @@ module Serialbench
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>SerialBench - Multi-Ruby Version Comparison</title>
+            <title>Serialbench - Multi-Ruby Version Comparison</title>
             <link rel="stylesheet" href="styles.css">
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         </head>
         <body>
             <div class="container">
                 <header>
-                    <h1>SerialBench - Multi-Ruby Version Comparison</h1>
+                    <h1>Serialbench - Multi-Ruby Version Comparison</h1>
                     <p class="subtitle">Comprehensive serialization performance benchmarks across Ruby versions</p>
                     <div class="metadata">
                         <p><strong>Generated:</strong> #{@merged_results[:metadata][:merged_at]}</p>
@@ -531,14 +531,14 @@ module Serialbench
         <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>SerialBench - Performance Report</title>
+            <title>Serialbench - Performance Report</title>
             <link rel="stylesheet" href="../assets/css/benchmark_report.css">
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         </head>
         <body>
             <div class="container">
                 <header>
-                    <h1>SerialBench - Performance Report</h1>
+                    <h1>Serialbench - Performance Report</h1>
                     <p class="subtitle">Comprehensive serialization performance benchmarks</p>
                     <div class="metadata">
                         <p><strong>Generated:</strong> #{Time.now.strftime('%B %d, %Y at %H:%M')}</p>
@@ -949,7 +949,7 @@ module Serialbench
 
     def generate_css
       css_content = <<~CSS
-        /* SerialBench Report Styles */
+        /* Serialbench Report Styles */
         :root {
           --primary-color: #2c3e50;
           --secondary-color: #3498db;
