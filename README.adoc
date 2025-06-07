@@ -1,4 +1,4 @@
-= SerialBench: Ruby Serialization Library Performance Benchmarker
+= Serialbench: Ruby serialization library performance benchmarker
 
 image:https://img.shields.io/gem/v/serialbench.svg["Gem Version", link="https://rubygems.org/gems/serialbench"]
 image:https://github.com/metanorma/serialbench/actions/workflows/ci.yml/badge.svg["Build Status", link="https://github.com/metanorma/serialbench/actions/workflows/ci.yml"]
@@ -7,43 +7,62 @@ image:https://img.shields.io/github/issues-pr-raw/metanorma/serialbench.svg["Pul
 
 == Overview
 
-SerialBench is a comprehensive benchmarking suite that evaluates the performance of popular Ruby serialization libraries across multiple formats. It provides detailed performance comparisons and analysis to help developers make informed decisions when choosing serialization libraries for their Ruby applications.
+Serialbench is a comprehensive benchmarking suite that evaluates the performance of popular Ruby serialization libraries across multiple formats. It provides detailed performance comparisons and analysis to help developers make informed decisions when choosing serialization libraries for their Ruby applications.
 
-**Supported Formats**: XML, JSON, TOML, and more
+**Supported Formats**: XML, JSON, YAML, TOML, and more
 
 **Key Metrics**: Parsing speed, generation speed, memory usage, streaming capabilities, and feature completeness
 
-== Supported Serialization Libraries
+**Docker Support**: Multi-Ruby version benchmarking with automated result aggregation and GitHub Pages generation
 
-=== XML Serialization Libraries
+== Supported serialization libraries
 
-==== High-Performance Libraries
-* **Ox** v2.14.23 - Ultra-fast C extension optimized for speed and low memory usage
-* **LibXML** v4.1.2 - Ruby bindings for libxml2 with excellent performance characteristics
+=== XML serialization libraries
 
-==== Feature-Rich Libraries
-* **Nokogiri** v1.18.8 - Most popular XML/HTML parser with XPath, CSS selectors, and comprehensive DOM manipulation
-* **Oga** v3.4 - Pure Ruby XML parser with XPath support and streaming capabilities
+==== High-performance libraries
 
-==== Built-in Libraries
-* **REXML** v3.4.1 - Ruby's standard library XML parser with streaming support (reference implementation)
+* **https://github.com/ohler55/ox[Ox]** v2.14.23 - Ultra-fast C extension optimized for speed and low memory usage
+* **https://github.com/xml4r/libxml-ruby[LibXML]** v4.1.2 - Ruby bindings for libxml2 with excellent performance characteristics
 
-=== JSON Serialization Libraries
+==== Feature-rich libraries
 
-==== High-Performance Libraries
-* **Oj** v3.16.11 - Ultra-fast JSON parser with multiple parsing modes and streaming support
-* **YAJL** v1.4.3 - Yet Another JSON Library with excellent streaming capabilities
+* **https://github.com/sparklemotion/nokogiri[Nokogiri]** v1.18.8 - Most popular XML/HTML parser with XPath, CSS selectors, and comprehensive DOM manipulation
+* **https://github.com/YorickPeterse/oga[Oga]** v3.4 - Pure Ruby XML parser with XPath support and streaming capabilities
 
-==== Built-in Libraries
-* **JSON** v2.12.2 - Ruby's standard library JSON parser (reference implementation)
+==== Built-in libraries
 
-=== TOML Serialization Libraries
+* **https://github.com/ruby/rexml[REXML]** v3.4.1 - Ruby's standard library XML parser with streaming support (reference implementation)
 
-==== High-Performance Libraries
-* **Tomlib** v0.7.3 - Fast TOML parser implemented in C
+=== JSON serialization libraries
 
-==== Standard Libraries
-* **TOML-RB** v2.2.0 - Pure Ruby TOML parser with good compatibility
+==== High-performance libraries
+
+* **https://github.com/ohler55/oj[Oj]** v3.16.11 - Ultra-fast JSON parser with multiple parsing modes and streaming support
+* **https://github.com/brianmario/yajl-ruby[YAJL]** v1.4.3 - Yet Another JSON Library with excellent streaming capabilities
+
+==== Built-in libraries
+
+* **https://github.com/flori/json[JSON]** v2.12.2 - Ruby's standard library JSON parser (reference implementation)
+
+=== YAML serialization libraries
+
+==== Built-in libraries
+
+* **https://github.com/ruby/psych[Psych]** v5.1.2 - Ruby's standard library YAML parser with excellent performance and full YAML 1.1 support
+
+==== Legacy libraries
+
+* **https://github.com/ruby/syck[Syck]** v1.5.1.1 - Legacy YAML parser (Ruby < 1.9.3) with fast parsing for simple documents
+
+=== TOML serialization libraries
+
+==== High-performance libraries
+
+* **https://github.com/fbernier/tomlib[Tomlib]** v0.7.3 - Fast TOML parser implemented in C
+
+==== Standard libraries
+
+* **https://github.com/emancu/toml-rb[TOML-RB]** v2.2.0 - Pure Ruby TOML parser with good compatibility
 
 == Installation
 
@@ -56,14 +75,14 @@ gem 'serialbench'
 
 And then execute:
 
-[source,shell]
+[source]
 ----
 $ bundle install
 ----
 
 Or install it yourself as:
 
-[source,shell]
+[source]
 ----
 $ gem install serialbench
 ----
@@ -72,7 +91,7 @@ $ gem install serialbench
 
 To run benchmarks for all supported XML libraries, install the following gems:
 
-[source,shell]
+[source]
 ----
 # Core XML libraries
 $ gem install ox nokogiri libxml-ruby oga
@@ -84,20 +103,24 @@ $ gem install oj toml-rb
 $ gem install memory_profiler
 ----
 
-NOTE: REXML and JSON are included with Ruby and require no additional installation.
+NOTE: REXML, JSON, and Psych (YAML) are included with Ruby and require no additional installation.
 
 === Library-specific installation notes
 
 ==== Ox
+
 High-performance C extension requiring compilation:
-[source,shell]
+
+[source]
 ----
 $ gem install ox
 ----
 
 ==== Nokogiri
+
 May require system dependencies on some platforms:
-[source,shell]
+
+[source]
 ----
 # macOS with Homebrew
 $ brew install libxml2 libxslt
@@ -109,8 +132,10 @@ $ gem install nokogiri
 ----
 
 ==== LibXML
+
 Ruby bindings for libxml2:
-[source,shell]
+
+[source]
 ----
 # macOS with Homebrew
 $ brew install libxml2
@@ -122,35 +147,395 @@ $ gem install libxml-ruby
 ----
 
 ==== Oga
+
 Pure Ruby implementation with no system dependencies:
-[source,shell]
+
+[source]
 ----
 $ gem install oga
 ----
+
+== Docker multi-Ruby version benchmarking
+
+Serialbench includes comprehensive Docker support for running benchmarks across multiple Ruby versions in isolated environments. This enables accurate performance comparisons and ensures consistent results across different Ruby implementations.
+
+=== Quick start with Docker
+
+==== Prerequisites
+
+* Docker installed and running
+* Bash shell (Linux/macOS/WSL)
+
+==== Running multi-Ruby benchmarks
+
+[source]
+----
+# From the project root directory
+$ ./docker/run-benchmarks.sh
+----
+
+This automated script will:
+
+. **Build Docker images** for Ruby 3.0, 3.1, 3.2, 3.3, and 3.4
+. **Run comprehensive benchmarks** in each isolated environment
+. **Merge results** from all Ruby versions into comparative datasets
+. **Generate GitHub Pages** with interactive multi-version reports
+
+==== Results structure
+
+Results are organized in `docker-results/`:
+
+[source]
+----
+docker-results/
+├── ruby-3.0/              # Ruby 3.0 individual results
+│   ├── benchmark.log       # Execution log
+│   ├── data/
+│   │   ├── results.json    # Raw benchmark data
+│   │   └── results.yaml    # YAML format results
+│   ├── reports/
+│   │   └── benchmark_report.html
+│   └── assets/
+├── ruby-3.1/              # Ruby 3.1 individual results
+├── ruby-3.2/              # Ruby 3.2 individual results
+├── ruby-3.3/              # Ruby 3.3 individual results
+├── ruby-3.4/              # Ruby 3.4 individual results
+├── merged/                 # Aggregated cross-version results
+│   └── merged_results.json # Combined performance data
+└── docs/                   # GitHub Pages ready output
+    ├── index.html          # Interactive comparison report
+    ├── styles.css          # Report styling
+    └── merged_results.json # Data for interactive charts
+----
+
+=== Manual Docker usage
+
+==== Build image for specific Ruby version
+
+[source]
+----
+$ docker build \
+  --build-arg RUBY_VERSION=3.3 \
+  -t serialbench:ruby-3.3 \
+  -f docker/Dockerfile.benchmark \
+  .
+----
+
+==== Run benchmarks in container
+
+[source]
+----
+# Create results directory
+$ mkdir -p results
+
+# Run benchmarks with volume mounting
+$ docker run \
+  --rm \
+  -v $(pwd)/results:/app/results \
+  serialbench:ruby-3.3
+----
+
+==== Custom configuration
+
+[source]
+----
+# Use custom config file
+$ docker run \
+  --rm \
+  -v $(pwd)/results:/app/results \
+  -v $(pwd)/config:/app/config \
+  serialbench:ruby-3.3 \
+  bundle exec serialbench benchmark --config config/ci.yml
+----
+
+=== Supported Ruby versions
+
+The Docker setup supports the following Ruby versions:
+
+* **Ruby 3.0** - Stable release with good performance baseline
+* **Ruby 3.1** - Improved performance and new features
+* **Ruby 3.2** - Enhanced YJIT and memory optimizations
+* **Ruby 3.3** - Latest stable with performance improvements
+* **Ruby 3.4** - Current development version
+
+Each version includes all supported serialization libraries:
+
+* **XML**: REXML (built-in), Ox, Nokogiri, Oga, LibXML
+* **JSON**: JSON (built-in), Oj, YAJL
+* **YAML**: Psych (built-in), Syck
+* **TOML**: TOML-RB, Tomlib
+
+=== Environment variables
+
+The Docker images support these environment variables:
+
+* `BUNDLE_PATH` - Bundle installation path
+* `BUNDLE_BIN` - Bundle binary path
+* `PATH` - System PATH including bundle binaries
+* `RUBY_VERSION` - Ruby version for build-time configuration
+
+=== Result aggregation and GitHub Pages
+
+==== Merging multi-version results
+
+The Docker workflow automatically merges results from all Ruby versions:
+
+[source]
+----
+# Manual result merging
+$ serialbench merge_results \
+  docker-results/ruby-3.0 \
+  docker-results/ruby-3.1 \
+  docker-results/ruby-3.2 \
+  docker-results/ruby-3.3 \
+  docker-results/ruby-3.4 \
+  docker-results/merged
+----
+
+==== GitHub Pages generation
+
+Generate interactive HTML reports ready for GitHub Pages deployment:
+
+[source]
+----
+# Generate GitHub Pages from multi-version results
+$ serialbench github_pages \
+  docker-results/ruby-3.0 \
+  docker-results/ruby-3.1 \
+  docker-results/ruby-3.2 \
+  docker-results/ruby-3.3 \
+  docker-results/ruby-3.4 \
+  docker-results/docs
+----
+
+The generated GitHub Pages include:
+
+* **Interactive Performance Charts**: Compare serializers across Ruby versions
+* **Multi-Version Analysis**: See how performance changes between Ruby releases
+* **Environment Details**: Ruby versions, platforms, and library versions
+* **Responsive Design**: Works on desktop and mobile devices
+* **Direct Deployment**: Ready for GitHub Pages, Netlify, or any static hosting
+
+==== Deploying to GitHub Pages
+
+. **Commit the generated files**:
++
+[source]
+----
+$ git add docker-results/docs/
+$ git commit -m "Add multi-Ruby benchmark results"
+$ git push origin main
+----
+
+. **Enable GitHub Pages** in repository settings:
+.. Go to Settings → Pages
+.. Set source to "Deploy from a branch"
+.. Select branch containing the `docs/` folder
+.. Set folder to `/docker-results/docs`
+
+. **Access your results** at: `https://yourusername.github.io/yourrepo/`
+
+=== Troubleshooting Docker issues
+
+==== Build failures
+
+Check build logs for specific Ruby versions:
+
+[source]
+----
+$ cat docker-results/build-ruby-3.3.log
+----
+
+Common build issues:
+
+* **Missing system dependencies**: Ensure libxml2-dev and libxslt1-dev are available
+* **Network timeouts**: Retry the build or use a different network
+* **Disk space**: Ensure sufficient disk space for multiple Ruby images
+
+==== Runtime failures
+
+Check benchmark execution logs:
+
+[source]
+----
+$ cat docker-results/ruby-3.3/benchmark.log
+----
+
+Common runtime issues:
+
+* **Memory constraints**: Increase Docker memory allocation
+* **Timeout issues**: Some benchmarks may take longer on slower systems
+* **Permission errors**: Ensure proper volume mounting permissions
+
+==== Docker system issues
+
+Verify Docker is running properly:
+
+[source]
+----
+$ docker info
+$ docker system df  # Check disk usage
+$ docker system prune  # Clean up unused resources
+----
+
+Clean up Serialbench Docker resources:
+
+[source]
+----
+# Remove all Serialbench images
+$ docker rmi $(docker images serialbench -q)
+
+# Remove all containers
+$ docker container prune
+----
+
+=== Customization options
+
+==== Adding Ruby versions
+
+Edit the `RUBY_VERSIONS` array in `docker/run-benchmarks.sh`:
+
+[source,bash]
+----
+RUBY_VERSIONS=("3.0" "3.1" "3.2" "3.3" "3.4" "head")
+----
+
+==== Custom benchmark configuration
+
+Create custom config files in the `config/` directory:
+
+[source,yaml]
+----
+# config/custom.yml
+formats:
+  - xml
+  - json
+iterations: 50
+warmup: 5
+data_sizes:
+  - small
+  - medium
+----
+
+Reference the custom config in the run script:
+
+[source,bash]
+----
+# In docker/run-benchmarks.sh
+CONFIG_FILE="config/custom.yml"
+----
+
+==== Output directory customization
+
+Change the output directory in the run script:
+
+[source,bash]
+----
+# In docker/run-benchmarks.sh
+OUTPUT_DIR="my-benchmark-results"
+----
+
+=== Integration with CI/CD
+
+==== GitHub Actions integration
+
+The Docker setup integrates seamlessly with GitHub Actions:
+
+[source,yaml]
+----
+# .github/workflows/benchmark.yml
+name: Multi-Ruby Benchmarks
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Docker Benchmarks
+        run: ./docker/run-benchmarks.sh
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: docker-results/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docker-results/docs
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: benchmark
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+----
+
+==== Performance considerations
+
+* **Parallel builds**: Docker builds can run in parallel for faster execution
+* **Build caching**: Subsequent runs use cached layers for faster builds
+* **Memory profiling**: Enabled by default but can be disabled for faster runs
+* **Result compression**: Large result files can be compressed for storage
+
+=== Security considerations
+
+* **Containers run with minimal privileges**: No root access required
+* **No network access during benchmarks**: Isolated execution environment
+* **Volume mounting**: Results written only to specified mounted volumes
+* **Image scanning**: Regular security updates for base Ruby images
 
 == Usage
 
 === Command line interface
 
-==== Basic Usage
+==== Basic usage
 
 Run benchmarks for all available formats:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark
 ----
 
 List all available serializers:
 
-[source,shell]
+[source]
 ----
 $ serialbench list
 ----
 
 Show help information:
 
-[source,shell]
+[source]
 ----
 $ serialbench help
 $ serialbench help benchmark
@@ -158,25 +543,25 @@ $ serialbench help benchmark
 
 Show version:
 
-[source,shell]
+[source]
 ----
 $ serialbench version
 ----
 
-==== Format-Specific Benchmarks
+==== Format-specific benchmarks
 
-===== XML Benchmarks
+===== XML benchmarks
 
 Run all XML library benchmarks:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml
 ----
 
 Test specific XML libraries:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml --parsers ox,nokogiri
 $ serialbench benchmark --formats xml --parsers rexml,oga,libxml
@@ -184,116 +569,116 @@ $ serialbench benchmark --formats xml --parsers rexml,oga,libxml
 
 XML-only parsing performance:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml --parsing-only
 ----
 
 XML generation benchmarks:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml --generation-only
 ----
 
 XML streaming/SAX parsing:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml --streaming-only
 ----
 
-===== JSON Benchmarks
+===== JSON benchmarks
 
 Run all JSON library benchmarks:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats json
 ----
 
 Test specific JSON libraries:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats json --parsers oj,json
 $ serialbench benchmark --formats json --parsers yajl,oj
 ----
 
-===== TOML Benchmarks
+===== TOML benchmarks
 
 Run all TOML library benchmarks:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats toml
 ----
 
 Test specific TOML libraries:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats toml --parsers tomlib,toml-rb
 ----
 
-==== Cross-Format Comparisons
+==== Cross-format comparisons
 
 Compare XML vs JSON performance:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml json
 ----
 
 Compare all supported formats:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --formats xml json toml
 ----
 
-==== Advanced Options
+==== Advanced options
 
 Memory profiling across formats:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --memory-profiling
 ----
 
 Generate detailed reports:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --detailed-reports
 ----
 
 Output results in JSON format:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --output-format json
 ----
 
 Custom data sizes and iterations:
 
-[source,shell]
+[source]
 ----
 $ serialbench benchmark --data-sizes small,medium --iterations 100
 ----
 
-=== Multi-Ruby Version Comparison
+=== Multi-Ruby version comparison
 
 Merge benchmark results from multiple Ruby versions:
 
-[source,shell]
+[source]
 ----
 $ serialbench merge_results ruby-3.0/results ruby-3.1/results ruby-3.2/results merged_output/
 ----
 
 Generate GitHub Pages HTML from multiple benchmark runs:
 
-[source,shell]
+[source]
 ----
 $ serialbench github_pages ruby-3.0/results ruby-3.1/results ruby-3.2/results docs/
 ----
@@ -412,11 +797,14 @@ Tests how quickly libraries can convert Ruby objects into serialized strings.
 
 === Streaming performance
 
-Evaluates streaming event-based parsing performance for libraries that support it, which processes data sequentially and is memory-efficient for large files.
+Evaluates streaming event-based parsing performance for libraries that support
+it, which processes data sequentially and is memory-efficient for large files.
 
 === Memory usage analysis
 
-Profiles memory allocation and retention during serialization operations using the `memory_profiler` gem.
+Profiles memory allocation and retention during serialization operations using
+the `memory_profiler` gem.
+
 
 == Output and reports
 
@@ -452,17 +840,16 @@ results/
 * **Performance rankings**: Fastest to slowest for each category
 * **Memory profiling**: Detailed memory allocation analysis
 * **Feature matrix**: Capability comparison across libraries
-* **Recommendations**: Use-case specific library suggestions
 * **Environment details**: Ruby version, platform, and library versions
 
 === Sample output
 
-[source]
-----
+[example]
+====
 Serialbench - Comprehensive Serialization Performance Tests
 ===========================================================
 Environment: Ruby 3.3.2 on arm64-darwin23
-Timestamp: 2024-01-15T10:30:00Z
+Timestamp: 2025-06-07T10:30:00Z
 
 Available serializers: rexml, json, oj, toml-rb
 Test formats: xml, json, toml
@@ -480,7 +867,7 @@ Parsing Performance:
     JSON/json: 12.67ms
     XML/rexml: 28.45ms
     TOML/toml-rb: 35.21ms
-----
+====
 
 == Methodology
 
@@ -514,118 +901,11 @@ The benchmark suite uses carefully crafted synthetic data that represents common
 * Memory measurements account for garbage collection
 * Results include both absolute and relative performance metrics
 
-== Library comparison matrix
-
-[cols="1,1,1,1,1,1,1"]
-|===
-|Format |Library |Parsing |Generation |Streaming |Memory |Features
-
-|XML |REXML |⭐⭐ |⭐⭐ |⭐⭐⭐ |⭐⭐ |Built-in
-|XML |Ox |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |High-performance
-|XML |Nokogiri |⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |Feature-rich
-|XML |LibXML |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |High-performance
-|XML |Oga |⭐⭐ |⭐⭐ |⭐⭐⭐ |⭐⭐ |Pure Ruby
-|JSON |JSON |⭐⭐⭐ |⭐⭐⭐ |❌ |⭐⭐⭐ |Built-in
-|JSON |Oj |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐⭐ |High-performance
-|JSON |YAJL |⭐⭐⭐⭐ |⭐⭐⭐ |⭐⭐⭐⭐ |⭐⭐⭐⭐ |Streaming
-|TOML |TOML-RB |⭐⭐⭐ |⭐⭐⭐ |❌ |⭐⭐⭐ |Standard
-|TOML |Tomlib |⭐⭐⭐⭐⭐ |⭐⭐⭐⭐ |❌ |⭐⭐⭐⭐⭐ |High-performance
-|===
-
-_Performance ratings: ⭐⭐⭐⭐⭐ Excellent, ⭐⭐⭐⭐ Good, ⭐⭐⭐ Average, ⭐⭐ Below average, ⭐ Poor, ❌ Not supported_
-
-== Format-Specific Recommendations
-
-=== XML Serialization
-
-==== For High-Performance XML Processing
-* **Ox** - Best choice for speed-critical applications requiring fast XML parsing/generation
-* **LibXML** - Excellent performance with robust C library backing
-
-==== For Feature-Rich XML Applications
-* **Nokogiri** - Industry standard with comprehensive XPath, CSS selectors, and DOM manipulation
-* **Oga** - Pure Ruby alternative with good XPath support
-
-==== For Built-in/Minimal Dependencies
-* **REXML** - Included with Ruby, suitable for simple XML processing without external dependencies
-
-==== XML Use Case Recommendations
-* **Web scraping**: Nokogiri (CSS selectors, robust HTML parsing)
-* **Configuration files**: REXML (built-in, simple structure)
-* **High-volume data processing**: Ox or LibXML (performance)
-* **Document transformation**: Nokogiri (comprehensive DOM manipulation)
-* **Streaming large files**: Ox or REXML (memory efficiency)
-
-=== JSON Serialization
-
-==== For High-Performance JSON Processing
-* **Oj** - Superior performance for speed-critical JSON applications
-* **YAJL** - Excellent streaming capabilities for large JSON files
-
-==== For Built-in/Standard Use
-* **JSON** - Ruby standard library, good for general-purpose JSON handling
-
-==== JSON Use Case Recommendations
-* **API responses**: Oj (speed) or JSON (compatibility)
-* **Configuration files**: JSON (readability and tooling)
-* **Real-time applications**: Oj (performance)
-* **Large file processing**: YAJL (streaming) or Oj (speed)
-* **Cross-platform data exchange**: JSON (universal support)
-
-=== TOML Serialization
-
-==== For High-Performance TOML Processing
-* **Tomlib** - C implementation offering superior performance
-
-==== For Standard TOML Use
-* **TOML-RB** - Pure Ruby implementation with good compatibility
-
-==== TOML Use Case Recommendations
-* **Configuration files**: TOML-RB (human-readable, good for config)
-* **Application settings**: Tomlib (performance) or TOML-RB (simplicity)
-* **Package manifests**: TOML-RB (standard compliance)
-
-=== Cross-Format Recommendations
-
-==== By Application Type
-
-===== Web Applications
-* **APIs**: JSON with Oj for performance
-* **Configuration**: TOML for readability, JSON for speed
-* **Data exchange**: JSON (universal compatibility)
-
-===== Data Processing Applications
-* **ETL pipelines**: XML with Ox/LibXML, JSON with Oj
-* **Log processing**: JSON with YAJL (streaming)
-* **Report generation**: XML with Nokogiri (document manipulation)
-
-===== Configuration Management
-* **Human-editable**: TOML with TOML-RB
-* **Machine-generated**: JSON with built-in JSON library
-* **Legacy systems**: XML with REXML
-
-==== By Performance Requirements
-
-===== Speed-Critical Applications
-1. **JSON**: Oj
-2. **XML**: Ox or LibXML
-3. **TOML**: Tomlib
-
-===== Memory-Constrained Environments
-1. **Streaming**: YAJL (JSON), Ox (XML)
-2. **Low memory**: Oj (JSON), Ox (XML)
-3. **Built-in only**: JSON, REXML
-
-===== Minimal Dependencies
-1. **No external gems**: JSON, REXML
-2. **Pure Ruby**: Oga (XML), TOML-RB (TOML)
-3. **Standard libraries**: JSON, REXML
-
 == Development
 
 === Running tests
 
-[source,shell]
+[source]
 ----
 $ bundle exec rake
 $ bundle exec rspec
@@ -633,21 +913,21 @@ $ bundle exec rspec
 
 === Contributing
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin feature/my-new-feature`)
-5. Create a new Pull Request
+. Fork the repository
+. Create your feature branch (`git checkout -b feature/my-new-feature`)
+. Commit your changes (`git commit -am 'Add some feature'`)
+. Push to the branch (`git push origin feature/my-new-feature`)
+. Create a new Pull Request
 
 === Adding new serializers
 
 To add support for additional serialization libraries:
 
-1. Create a new serializer class in `lib/serialbench/serializers/{format}/`
-2. Inherit from the appropriate base class (`BaseXmlSerializer`, `BaseJsonSerializer`, etc.)
-3. Implement the required methods: `parse`, `generate`, `name`, `version`
-4. Add the serializer to the registry in `lib/serialbench/serializers.rb`
-5. Update documentation and tests
+. Create a new serializer class in `lib/serialbench/serializers/{format}/`
+. Inherit from the appropriate base class (`BaseXmlSerializer`, `BaseJsonSerializer`, etc.)
+. Implement the required methods: `parse`, `generate`, `name`, `version`
+. Add the serializer to the registry in `lib/serialbench/serializers.rb`
+. Update documentation and tests
 
 ==== Example: Adding a new JSON serializer
 

@@ -1,4 +1,4 @@
-name: SerialBench XML Benchmarks
+name: benchmark
 
 on:
   push:
@@ -44,20 +44,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxml2-dev libxslt1-dev
+
     - name: Set up Ruby ${{ matrix.ruby-version }}
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: ${{ matrix.ruby-version }}
         bundler-cache: true
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev
-
     - name: List available serializers
       run: |
-        bundle exec ruby exe/serialbench list
+        bundle exec serialbench list
 
     - name: Run tests
       run: bundle exec rspec
@@ -65,7 +65,7 @@ jobs:
     - name: Run XML benchmarks
       run: |
         mkdir -p results-ruby-${{ matrix.ruby-version }}
-        bundle exec ruby exe/serialbench benchmark --formats xml
+        bundle exec serialbench benchmark --formats xml
         # Copy results to versioned directory
         cp -r results/* results-ruby-${{ matrix.ruby-version }}/
 
@@ -84,16 +84,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libxml2-dev libxslt1-dev
+
     - name: Set up Ruby (for report generation)
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: '3.3'
         bundler-cache: true
-
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev
 
     - name: Download all benchmark artifacts
       uses: actions/download-artifact@v4
@@ -110,7 +110,7 @@ jobs:
         for version in $RUBY_VERSIONS; do
           ARTIFACT_PATHS="$ARTIFACT_PATHS artifacts/benchmark-results-ruby-$version/"
         done
-        bundle exec ruby exe/serialbench github_pages $ARTIFACT_PATHS docs/
+        bundle exec serialbench github_pages $ARTIFACT_PATHS docs/
 
     - name: Setup Pages
       uses: actions/configure-pages@v4

@@ -6,7 +6,7 @@ require 'yaml'
 require 'fileutils'
 
 module Serialbench
-  # Thor-based command line interface for SerialBench
+  # Thor-based command line interface for Serialbench
   class Cli < Thor
     include Thor::Actions
 
@@ -17,8 +17,8 @@ module Serialbench
       This command will test parsing, generation, streaming, and memory usage
       across XML, JSON, and TOML formats using all available libraries.
     DESC
-    option :formats, type: :array, default: %w[xml json toml],
-                     desc: 'Formats to benchmark (xml, json, toml)'
+    option :formats, type: :array, default: %w[xml json yaml toml],
+                     desc: 'Formats to benchmark (xml, json, yaml, toml)'
     option :output_format, type: :string, default: 'all',
                            desc: 'Output format: all, json, yaml, html'
     option :parsing_only, type: :boolean, default: false,
@@ -34,11 +34,11 @@ module Serialbench
     option :warmup, type: :numeric, default: 3,
                     desc: 'Number of warmup iterations'
     def benchmark
-      say 'SerialBench - Comprehensive Serialization Performance Tests', :green
+      say 'Serialbench - Comprehensive Serialization Performance Tests', :green
       say '=' * 70, :green
 
       # Validate formats
-      valid_formats = %w[xml json toml]
+      valid_formats = %w[xml json yaml toml]
       invalid_formats = options[:formats] - valid_formats
       unless invalid_formats.empty?
         say "Invalid formats: #{invalid_formats.join(', ')}", :red
@@ -94,7 +94,7 @@ module Serialbench
           show_serializers_for_format(format_sym, serializers)
         end
       else
-        %i[xml json toml].each do |format|
+        %i[xml json yaml toml].each do |format|
           serializers = Serialbench::Serializers.available_for_format(format)
           next if serializers.empty?
 
@@ -104,9 +104,9 @@ module Serialbench
       end
     end
 
-    desc 'version', 'Show SerialBench version'
+    desc 'version', 'Show Serialbench version'
     def version
-      say "SerialBench version #{Serialbench::VERSION}", :green
+      say "Serialbench version #{Serialbench::VERSION}", :green
     end
 
     desc 'merge_results INPUT_DIRS... OUTPUT_DIR', 'Merge benchmark results from multiple runs'
@@ -242,7 +242,7 @@ module Serialbench
         serializer = serializer_class.new
         features = []
         features << 'streaming' if serializer.supports_streaming?
-        features << 'built-in' if %w[json rexml].include?(serializer.name)
+        features << 'built-in' if %w[json rexml psych].include?(serializer.name)
 
         feature_text = features.empty? ? '' : " (#{features.join(', ')})"
         say "  ✓ #{serializer.name} v#{serializer.version}#{feature_text}", :green

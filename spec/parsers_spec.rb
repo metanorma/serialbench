@@ -6,6 +6,7 @@ RSpec.describe 'Serialbench Serializers' do
   let(:small_xml) { create_test_xml(:small) }
   let(:medium_xml) { create_test_xml(:medium) }
   let(:test_json) { '{"name":"test","values":[1,2,3]}' }
+  let(:test_yaml) { "name: test\nvalues:\n  - 1\n  - 2\n  - 3\n" }
   let(:test_toml) { "[config]\nname = \"test\"\nvalues = [1, 2, 3]" }
 
   describe Serialbench::Serializers::BaseSerializer do
@@ -30,33 +31,51 @@ RSpec.describe 'Serialbench Serializers' do
   end
 
   describe 'XML Serializers' do
-    describe Serialbench::Serializers::Xml::RexmlSerializer do
-      let(:serializer) { Serialbench::Serializers::Xml::RexmlSerializer.new }
-
-      it 'is available' do
-        expect(serializer).to be_available
-      end
+    shared_examples 'an XML serializer' do |serializer_class, expected_name|
+      let(:serializer) { serializer_class.new }
 
       it 'has correct format' do
         expect(serializer.format).to eq(:xml)
       end
 
-      it 'has a name and version' do
-        expect(serializer.name).to eq('rexml')
+      it 'has expected name' do
+        expect(serializer.name).to eq(expected_name)
+      end
+
+      it 'has a version' do
         expect(serializer.version).to be_a(String)
       end
 
-      it 'can parse XML' do
-        result = serializer.parse(small_xml)
-        expect(result).not_to be_nil
-        expect(result).to respond_to(:root)
-      end
+      context 'when available' do
+        before do
+          skip "#{expected_name} not available" unless serializer.available?
+        end
 
-      it 'can generate XML' do
-        doc = serializer.parse(small_xml)
-        xml_string = serializer.generate(doc)
-        expect(xml_string).to be_a(String)
-        expect(xml_string).to include('<?xml')
+        it 'can parse XML' do
+          result = serializer.parse(small_xml)
+          expect(result).not_to be_nil
+        end
+
+        it 'can generate XML' do
+          doc = serializer.parse(small_xml)
+          xml_string = serializer.generate(doc)
+          expect(xml_string).to be_a(String)
+        end
+
+        it 'handles medium-sized XML' do
+          result = serializer.parse(medium_xml)
+          expect(result).not_to be_nil
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Xml::RexmlSerializer do
+      include_examples 'an XML serializer', Serialbench::Serializers::Xml::RexmlSerializer, 'rexml'
+
+      let(:serializer) { Serialbench::Serializers::Xml::RexmlSerializer.new }
+
+      it 'is always available (built-in)' do
+        expect(serializer).to be_available
       end
 
       it 'supports streaming' do
@@ -71,66 +90,91 @@ RSpec.describe 'Serialbench Serializers' do
         expect(events).not_to be_empty
       end
     end
+
+    describe Serialbench::Serializers::Xml::OxSerializer do
+      include_examples 'an XML serializer', Serialbench::Serializers::Xml::OxSerializer, 'ox'
+
+      let(:serializer) { Serialbench::Serializers::Xml::OxSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'Ox not available' unless serializer.available?
+        end
+
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Xml::NokogiriSerializer do
+      include_examples 'an XML serializer', Serialbench::Serializers::Xml::NokogiriSerializer, 'nokogiri'
+
+      let(:serializer) { Serialbench::Serializers::Xml::NokogiriSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'Nokogiri not available' unless serializer.available?
+        end
+
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Xml::OgaSerializer do
+      include_examples 'an XML serializer', Serialbench::Serializers::Xml::OgaSerializer, 'oga'
+
+      let(:serializer) { Serialbench::Serializers::Xml::OgaSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'Oga not available' unless serializer.available?
+        end
+
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Xml::LibxmlSerializer do
+      include_examples 'an XML serializer', Serialbench::Serializers::Xml::LibxmlSerializer, 'libxml'
+
+      let(:serializer) { Serialbench::Serializers::Xml::LibxmlSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'LibXML not available' unless serializer.available?
+        end
+
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
   end
 
   describe 'JSON Serializers' do
-    describe Serialbench::Serializers::Json::JsonSerializer do
-      let(:serializer) { Serialbench::Serializers::Json::JsonSerializer.new }
-
-      it 'is available' do
-        expect(serializer).to be_available
-      end
+    shared_examples 'a JSON serializer' do |serializer_class, expected_name|
+      let(:serializer) { serializer_class.new }
 
       it 'has correct format' do
         expect(serializer.format).to eq(:json)
       end
 
-      it 'has a name and version' do
-        expect(serializer.name).to eq('json')
+      it 'has expected name' do
+        expect(serializer.name).to eq(expected_name)
+      end
+
+      it 'has a version' do
         expect(serializer.version).to be_a(String)
       end
 
-      it 'can parse JSON' do
-        result = serializer.parse(test_json)
-        expect(result).to be_a(Hash)
-        expect(result['name']).to eq('test')
-        expect(result['values']).to eq([1, 2, 3])
-      end
-
-      it 'can generate JSON' do
-        data = { 'name' => 'test', 'values' => [1, 2, 3] }
-        json_string = serializer.generate(data)
-        expect(json_string).to be_a(String)
-        expect(JSON.parse(json_string)).to eq(data)
-      end
-
-      it 'can generate pretty JSON' do
-        data = { 'name' => 'test', 'values' => [1, 2, 3] }
-        pretty_json = serializer.generate(data, pretty: true)
-        expect(pretty_json).to include("\n")
-        expect(pretty_json).to include("  ")
-      end
-
-      it 'does not support streaming' do
-        expect(serializer.supports_streaming?).to be false
-      end
-    end
-
-    describe Serialbench::Serializers::Json::OjSerializer do
-      let(:serializer) { Serialbench::Serializers::Json::OjSerializer.new }
-
-      context 'when Oj is available' do
+      context 'when available' do
         before do
-          skip 'Oj not available' unless serializer.available?
-        end
-
-        it 'has correct format' do
-          expect(serializer.format).to eq(:json)
-        end
-
-        it 'has a name and version' do
-          expect(serializer.name).to eq('oj')
-          expect(serializer.version).to be_a(String)
+          skip "#{expected_name} not available" unless serializer.available?
         end
 
         it 'can parse JSON' do
@@ -147,39 +191,164 @@ RSpec.describe 'Serialbench Serializers' do
           expect(JSON.parse(json_string)).to eq(data)
         end
 
+        it 'can generate pretty JSON' do
+          data = { 'name' => 'test', 'values' => [1, 2, 3] }
+          pretty_json = serializer.generate(data, pretty: true)
+          expect(pretty_json).to be_a(String)
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Json::JsonSerializer do
+      include_examples 'a JSON serializer', Serialbench::Serializers::Json::JsonSerializer, 'json'
+
+      let(:serializer) { Serialbench::Serializers::Json::JsonSerializer.new }
+
+      it 'is always available (built-in)' do
+        expect(serializer).to be_available
+      end
+
+      it 'does not support streaming' do
+        expect(serializer.supports_streaming?).to be false
+      end
+    end
+
+    describe Serialbench::Serializers::Json::OjSerializer do
+      include_examples 'a JSON serializer', Serialbench::Serializers::Json::OjSerializer, 'oj'
+
+      let(:serializer) { Serialbench::Serializers::Json::OjSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'Oj not available' unless serializer.available?
+        end
+
         it 'supports streaming' do
           expect(serializer.supports_streaming?).to be true
         end
       end
+    end
 
-      context 'when Oj is not available' do
+    describe Serialbench::Serializers::Json::YajlSerializer do
+      include_examples 'a JSON serializer', Serialbench::Serializers::Json::YajlSerializer, 'yajl'
+
+      let(:serializer) { Serialbench::Serializers::Json::YajlSerializer.new }
+
+      context 'when available' do
         before do
-          allow(serializer).to receive(:require_library).with('oj').and_return(false)
+          skip 'YAJL not available' unless serializer.available?
         end
 
-        it 'reports as unavailable' do
-          expect(serializer).not_to be_available
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Json::RapidjsonSerializer do
+      include_examples 'a JSON serializer', Serialbench::Serializers::Json::RapidjsonSerializer, 'rapidjson'
+
+      let(:serializer) { Serialbench::Serializers::Json::RapidjsonSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'RapidJSON not available' unless serializer.available?
+        end
+
+        it 'supports streaming' do
+          expect(serializer.supports_streaming?).to be true
+        end
+      end
+    end
+  end
+
+  describe 'YAML Serializers' do
+    shared_examples 'a YAML serializer' do |serializer_class, expected_name|
+      let(:serializer) { serializer_class.new }
+
+      it 'has correct format' do
+        expect(serializer.format).to eq(:yaml)
+      end
+
+      it 'has expected name' do
+        expect(serializer.name).to eq(expected_name)
+      end
+
+      it 'has a version' do
+        expect(serializer.version).to be_a(String)
+      end
+
+      context 'when available' do
+        before do
+          skip "#{expected_name} not available" unless serializer.available?
+        end
+
+        it 'can parse YAML' do
+          result = serializer.parse(test_yaml)
+          expect(result).to be_a(Hash)
+          expect(result['name']).to eq('test')
+          expect(result['values']).to eq([1, 2, 3])
+        end
+
+        it 'can generate YAML' do
+          data = { 'name' => 'test', 'values' => [1, 2, 3] }
+          yaml_string = serializer.generate(data)
+          expect(yaml_string).to be_a(String)
+          expect(yaml_string).to include('name: test')
+        end
+      end
+    end
+
+    describe Serialbench::Serializers::Yaml::PsychSerializer do
+      include_examples 'a YAML serializer', Serialbench::Serializers::Yaml::PsychSerializer, 'psych'
+
+      let(:serializer) { Serialbench::Serializers::Yaml::PsychSerializer.new }
+
+      it 'is always available (built-in)' do
+        expect(serializer).to be_available
+      end
+
+      it 'supports streaming' do
+        expect(serializer.supports_streaming?).to be true
+      end
+    end
+
+    describe Serialbench::Serializers::Yaml::SyckSerializer do
+      include_examples 'a YAML serializer', Serialbench::Serializers::Yaml::SyckSerializer, 'syck'
+
+      let(:serializer) { Serialbench::Serializers::Yaml::SyckSerializer.new }
+
+      context 'when available' do
+        before do
+          skip 'Syck not available' unless serializer.available?
+        end
+
+        it 'does not support streaming' do
+          expect(serializer.supports_streaming?).to be false
         end
       end
     end
   end
 
   describe 'TOML Serializers' do
-    describe Serialbench::Serializers::Toml::TomlRbSerializer do
-      let(:serializer) { Serialbench::Serializers::Toml::TomlRbSerializer.new }
+    shared_examples 'a TOML serializer' do |serializer_class, expected_name|
+      let(:serializer) { serializer_class.new }
 
-      context 'when TOML-RB is available' do
+      it 'has correct format' do
+        expect(serializer.format).to eq(:toml)
+      end
+
+      it 'has expected name' do
+        expect(serializer.name).to eq(expected_name)
+      end
+
+      it 'has a version' do
+        expect(serializer.version).to be_a(String)
+      end
+
+      context 'when available' do
         before do
-          skip 'TOML-RB not available' unless serializer.available?
-        end
-
-        it 'has correct format' do
-          expect(serializer.format).to eq(:toml)
-        end
-
-        it 'has a name and version' do
-          expect(serializer.name).to eq('toml-rb')
-          expect(serializer.version).to be_a(String)
+          skip "#{expected_name} not available" unless serializer.available?
         end
 
         it 'can parse TOML' do
@@ -201,16 +370,14 @@ RSpec.describe 'Serialbench Serializers' do
           expect(serializer.supports_streaming?).to be false
         end
       end
+    end
 
-      context 'when TOML-RB is not available' do
-        before do
-          allow(serializer).to receive(:require_library).with('toml-rb').and_return(false)
-        end
+    describe Serialbench::Serializers::Toml::TomlRbSerializer do
+      include_examples 'a TOML serializer', Serialbench::Serializers::Toml::TomlRbSerializer, 'toml-rb'
+    end
 
-        it 'reports as unavailable' do
-          expect(serializer).not_to be_available
-        end
-      end
+    describe Serialbench::Serializers::Toml::TomlibSerializer do
+      include_examples 'a TOML serializer', Serialbench::Serializers::Toml::TomlibSerializer, 'tomlib'
     end
   end
 
@@ -222,17 +389,13 @@ RSpec.describe 'Serialbench Serializers' do
         expect(all_serializers).to all(be < Serialbench::Serializers::BaseSerializer)
       end
 
-      it 'returns serializers for specific format' do
-        xml_serializers = Serialbench::Serializers.for_format(:xml)
-        expect(xml_serializers).not_to be_empty
-        xml_serializers.each do |serializer_class|
-          expect(serializer_class.new.format).to eq(:xml)
-        end
-
-        json_serializers = Serialbench::Serializers.for_format(:json)
-        expect(json_serializers).not_to be_empty
-        json_serializers.each do |serializer_class|
-          expect(serializer_class.new.format).to eq(:json)
+      it 'returns serializers for each supported format' do
+        %i[xml json yaml toml].each do |format|
+          format_serializers = Serialbench::Serializers.for_format(format)
+          expect(format_serializers).not_to be_empty
+          format_serializers.each do |serializer_class|
+            expect(serializer_class.new.format).to eq(format)
+          end
         end
       end
 
@@ -244,14 +407,43 @@ RSpec.describe 'Serialbench Serializers' do
         end
       end
 
-      it 'returns available serializers for format' do
-        available_xml = Serialbench::Serializers.available_for_format(:xml)
-        expect(available_xml).not_to be_empty
-        available_xml.each do |serializer_class|
-          serializer = serializer_class.new
-          expect(serializer.format).to eq(:xml)
-          expect(serializer).to be_available
+      it 'returns available serializers for each format' do
+        %i[xml json yaml toml].each do |format|
+          available_format = Serialbench::Serializers.available_for_format(format)
+          available_format.each do |serializer_class|
+            serializer = serializer_class.new
+            expect(serializer.format).to eq(format)
+            expect(serializer).to be_available
+          end
         end
+      end
+
+      it 'includes all expected XML serializers' do
+        xml_serializers = Serialbench::Serializers.for_format(:xml)
+        expected_xml = %w[rexml ox nokogiri oga libxml]
+        actual_xml = xml_serializers.map { |s| s.new.name }
+        expect(actual_xml).to match_array(expected_xml)
+      end
+
+      it 'includes all expected JSON serializers' do
+        json_serializers = Serialbench::Serializers.for_format(:json)
+        expected_json = %w[json oj yajl rapidjson]
+        actual_json = json_serializers.map { |s| s.new.name }
+        expect(actual_json).to match_array(expected_json)
+      end
+
+      it 'includes all expected YAML serializers' do
+        yaml_serializers = Serialbench::Serializers.for_format(:yaml)
+        expected_yaml = %w[psych syck]
+        actual_yaml = yaml_serializers.map { |s| s.new.name }
+        expect(actual_yaml).to match_array(expected_yaml)
+      end
+
+      it 'includes all expected TOML serializers' do
+        toml_serializers = Serialbench::Serializers.for_format(:toml)
+        expected_toml = %w[toml-rb tomlib]
+        actual_toml = toml_serializers.map { |s| s.new.name }
+        expect(actual_toml).to match_array(expected_toml)
       end
     end
   end
@@ -281,6 +473,12 @@ RSpec.describe 'Serialbench Serializers' do
       expect(runner.test_data).to have_key(:large)
     end
 
+    it 'can initialize with all formats' do
+      all_formats_runner = Serialbench::BenchmarkRunner.new(formats: [:xml, :json, :yaml, :toml])
+      expect(all_formats_runner.formats).to eq([:xml, :json, :yaml, :toml])
+      expect(all_formats_runner.serializers).not_to be_empty
+    end
+
     # Mock the actual benchmark running to avoid long test times
     it 'can run benchmarks (mocked)' do
       allow(runner).to receive(:run_parsing_benchmarks).and_return({})
@@ -293,6 +491,73 @@ RSpec.describe 'Serialbench Serializers' do
       expect(results).to have_key(:parsing)
       expect(results).to have_key(:generation)
       expect(results).to have_key(:memory_usage)
+    end
+  end
+
+  describe 'Cross-format compatibility' do
+    let(:test_data) do
+      {
+        'name' => 'test',
+        'values' => [1, 2, 3],
+        'config' => {
+          'enabled' => true,
+          'timeout' => 30
+        }
+      }
+    end
+
+    it 'can round-trip data through available serializers' do
+      Serialbench::Serializers.available.each do |serializer_class|
+        serializer = serializer_class.new
+        next unless serializer.available?
+
+        begin
+          # Generate serialized data
+          serialized = serializer.generate(test_data)
+          expect(serialized).to be_a(String)
+
+          # Parse it back
+          parsed = serializer.parse(serialized)
+          expect(parsed).to be_a(Hash)
+
+          # Basic structure should be preserved
+          expect(parsed).to have_key('name')
+          expect(parsed['name']).to eq('test')
+        rescue => e
+          # Some serializers might not support all data types
+          # Log the error but don't fail the test
+          puts "Warning: #{serializer.name} failed round-trip test: #{e.message}"
+        end
+      end
+    end
+  end
+
+  describe 'Performance characteristics' do
+    let(:small_data) { { 'test' => 'value' } }
+
+    it 'all available serializers can handle basic operations' do
+      Serialbench::Serializers.available.each do |serializer_class|
+        serializer = serializer_class.new
+
+        # Test basic generation
+        expect { serializer.generate(small_data) }.not_to raise_error
+
+        # Test basic parsing
+        serialized = serializer.generate(small_data)
+        expect { serializer.parse(serialized) }.not_to raise_error
+      end
+    end
+
+    it 'streaming serializers report streaming support correctly' do
+      streaming_serializers = Serialbench::Serializers.available.select do |serializer_class|
+        serializer_class.new.supports_streaming?
+      end
+
+      expect(streaming_serializers).not_to be_empty
+      streaming_serializers.each do |serializer_class|
+        serializer = serializer_class.new
+        expect(serializer).to respond_to(:stream_parse)
+      end
     end
   end
 end

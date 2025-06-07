@@ -278,6 +278,10 @@ module Serialbench
           @test_data[:small][:json] = generate_small_json
           @test_data[:medium][:json] = generate_medium_json
           @test_data[:large][:json] = generate_large_json
+        when :yaml
+          @test_data[:small][:yaml] = generate_small_yaml
+          @test_data[:medium][:yaml] = generate_medium_yaml
+          @test_data[:large][:yaml] = generate_large_yaml
         when :toml
           @test_data[:small][:toml] = generate_small_toml
           @test_data[:medium][:toml] = generate_medium_toml
@@ -456,6 +460,84 @@ module Serialbench
                         records: records
                       }
                     })
+    end
+
+    # YAML test data generators
+    def generate_small_yaml
+      require 'yaml'
+      {
+        config: {
+          database: {
+            host: 'localhost',
+            port: 5432,
+            name: 'myapp',
+            user: 'admin',
+            password: 'secret'
+          },
+          cache: {
+            enabled: true,
+            ttl: 3600
+          }
+        }
+      }.to_yaml
+    end
+
+    def generate_medium_yaml
+      require 'yaml'
+      users = (1..1000).map do |i|
+        {
+          id: i,
+          name: "User #{i}",
+          email: "user#{i}@example.com",
+          created_at: "2023-01-#{(i % 28) + 1}T10:00:00Z",
+          profile: {
+            age: 20 + (i % 50),
+            city: "City #{i % 100}",
+            preferences: {
+              theme: i.even? ? 'dark' : 'light',
+              notifications: i % 3 == 0
+            }
+          }
+        }
+      end
+
+      { users: users }.to_yaml
+    end
+
+    def generate_large_yaml
+      require 'yaml'
+      records = (1..10_000).map do |i|
+        {
+          id: i,
+          timestamp: "2023-01-01T#{format('%02d', i % 24)}:#{format('%02d', i % 60)}:#{format('%02d', i % 60)}Z",
+          data: {
+            field1: "Value #{i}",
+            field2: i * 2,
+            field3: i % 100 == 0 ? 'special' : 'normal',
+            nested: [
+              "Item #{i}-1",
+              "Item #{i}-2",
+              "Item #{i}-3"
+            ]
+          },
+          metadata: {
+            source: 'generator',
+            version: '1.0',
+            checksum: i.to_s(16)
+          }
+        }
+      end
+
+      {
+        dataset: {
+          header: {
+            created: '2023-01-01T00:00:00Z',
+            count: 10_000,
+            format: 'yaml'
+          },
+          records: records
+        }
+      }.to_yaml
     end
 
     # TOML test data generators
