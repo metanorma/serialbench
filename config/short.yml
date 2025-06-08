@@ -3,11 +3,13 @@
 
 data_sizes:
   - small
+  - medium
 
 formats:
   - xml
   - json
   - yaml
+  - toml
 
 iterations:
   small: 5
@@ -18,21 +20,10 @@ iterations:
 memory_profiling: false
 
 # Minimal warmup iterations
-warmup_iterations: 1
+warmup_iterations: 2
 
 # Disable streaming benchmarks to reduce complexity
 streaming_benchmarks: false
 
 # Disable detailed reports to save memory
 detailed_reports: false
-
-# Only test essential serializers to reduce memory footprint
-serializers:
-  xml:
-    - rexml
-    - nokogiri
-  json:
-    - json
-    - oj
-  yaml:
-    - psych
