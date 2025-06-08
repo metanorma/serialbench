@@ -77,12 +77,20 @@ jobs:
     - name: List available serializers
       run: bundle exec serialbench list
 
-    - name: Run comprehensive benchmarks
+    - name: Run benchmarks
       run: |
-        bundle exec serialbench benchmark \
-          --formats xml json yaml toml \
-          --iterations 5 \
-          --warmup 2
+        if [ "${{ matrix.platform }}" = "macos-latest" ]; then
+          # macOS can handle full benchmarks
+          bundle exec serialbench benchmark \
+            --formats xml json yaml toml \
+            --iterations 5 \
+            --warmup 2
+        else
+          # Windows and Ubuntu use short configuration for memory efficiency
+          bundle exec serialbench benchmark \
+            --config config/short.yml
+        fi
+      shell: bash
 
     - name: Run tests to verify functionality
       run: bundle exec rspec --format documentation

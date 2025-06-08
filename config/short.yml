@@ -1,0 +1,38 @@
+# Configuration for short benchmarks - Minimal memory usage for CI runners
+# Designed for Windows and Ubuntu runners with limited memory
+
+data_sizes:
+  - small
+
+formats:
+  - xml
+  - json
+  - yaml
+
+iterations:
+  small: 5
+  medium: 2
+  large: 1
+
+# Disable memory profiling to reduce memory usage
+memory_profiling: false
+
+# Minimal warmup iterations
+warmup_iterations: 1
+
+# Disable streaming benchmarks to reduce complexity
+streaming_benchmarks: false
+
+# Disable detailed reports to save memory
+detailed_reports: false
+
+# Only test essential serializers to reduce memory footprint
+serializers:
+  xml:
+    - rexml
+    - nokogiri
+  json:
+    - json
+    - oj
+  yaml:
+    - psych

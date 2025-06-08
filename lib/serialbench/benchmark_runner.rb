@@ -14,8 +14,9 @@ module Serialbench
   class BenchmarkRunner
     attr_reader :serializers, :test_data, :results, :formats
 
-    def initialize(formats: FORMATS, iterations: nil, warmup: nil, **options)
+    def initialize(formats: FORMATS, iterations: nil, warmup: nil, config: nil, **options)
       @formats = Array(formats)
+      @config = config
       @options = options
       @options[:iterations] = iterations if iterations
       @options[:warmup] = warmup if warmup
@@ -243,15 +244,19 @@ module Serialbench
     private
 
     def get_iterations_for_size(size)
-      case size
-      when :small
-        20
-      when :medium
-        5
-      when :large
-        2
+      if @config && @config['iterations']
+        @config['iterations'][size.to_s] || @config['iterations']['small'] || 5
       else
-        10
+        case size
+        when :small
+          20
+        when :medium
+          5
+        when :large
+          2
+        else
+          10
+        end
       end
     end
 
@@ -260,40 +265,66 @@ module Serialbench
     end
 
     def load_test_data
-      # Load test data for each format
-      @test_data = {
-        small: {},
-        medium: {},
-        large: {}
-      }
+      # Determine which data sizes to load based on configuration
+      data_sizes = if @config && @config['data_sizes']
+                     @config['data_sizes'].map(&:to_sym)
+                   else
+                     [:small, :medium, :large]
+                   end
 
-      # Generate data for each format
+      # Initialize test data structure
+      @test_data = {}
+      data_sizes.each { |size| @test_data[size] = {} }
+
+      # Generate data for each format and size
       @formats.each do |format|
-        case format
-        when :xml
-          @test_data[:small][:xml] = generate_small_xml
-          @test_data[:medium][:xml] = generate_medium_xml
-          @test_data[:large][:xml] = generate_large_xml
-        when :json
-          @test_data[:small][:json] = generate_small_json
-          @test_data[:medium][:json] = generate_medium_json
-          @test_data[:large][:json] = generate_large_json
-        when :yaml
-          @test_data[:small][:yaml] = generate_small_yaml
-          @test_data[:medium][:yaml] = generate_medium_yaml
-          @test_data[:large][:yaml] = generate_large_yaml
-        when :toml
-          @test_data[:small][:toml] = generate_small_toml
-          @test_data[:medium][:toml] = generate_medium_toml
-          @test_data[:large][:toml] = generate_large_toml
+        data_sizes.each do |size|
+          case format
+          when :xml
+            @test_data[size][:xml] = case size
+                                     when :small
+                                       generate_small_xml
+                                     when :medium
+                                       generate_medium_xml
+                                     when :large
+                                       generate_large_xml
+                                     end
+          when :json
+            @test_data[size][:json] = case size
+                                      when :small
+                                        generate_small_json
+                                      when :medium
+                                        generate_medium_json
+                                      when :large
+                                        generate_large_json
+                                      end
+          when :yaml
+            @test_data[size][:yaml] = case size
+                                      when :small
+                                        generate_small_yaml
+                                      when :medium
+                                        generate_medium_yaml
+                                      when :large
+                                        generate_large_yaml
+                                      end
+          when :toml
+            @test_data[size][:toml] = case size
+                                      when :small
+                                        generate_small_toml
+                                      when :medium
+                                        generate_medium_toml
+                                      when :large
+                                        generate_large_toml
+                                      end
+          end
         end
       end
 
       # Try to load real test files if they exist
-      %w[small medium large].each do |size|
+      data_sizes.each do |size|
         @formats.each do |format|
           file_path = "test_data/#{size}.#{format}"
-          @test_data[size.to_sym][format] = File.read(file_path) if File.exist?(file_path)
+          @test_data[size][format] = File.read(file_path) if File.exist?(file_path)
         end
       end
     end

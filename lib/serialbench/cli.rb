@@ -33,6 +33,8 @@ module Serialbench
                         desc: 'Number of benchmark iterations'
     option :warmup, type: :numeric, default: 3,
                     desc: 'Number of warmup iterations'
+    option :config, type: :string,
+                    desc: 'Configuration file path (e.g., config/short.yml)'
     def benchmark
       say 'Serialbench - Comprehensive Serialization Performance Tests', :green
       say '=' * 70, :green
@@ -46,8 +48,19 @@ module Serialbench
         exit 1
       end
 
-      # Convert format strings to symbols
-      formats = options[:formats].map(&:to_sym)
+      # Load configuration if provided
+      config = load_configuration(options[:config]) if options[:config]
+
+      # Apply configuration overrides
+      if config
+        formats = config['formats']&.map(&:to_sym) || options[:formats].map(&:to_sym)
+        iterations = config.dig('iterations', 'small') || options[:iterations]
+        warmup = config['warmup_iterations'] || options[:warmup]
+      else
+        formats = options[:formats].map(&:to_sym)
+        iterations = options[:iterations]
+        warmup = options[:warmup]
+      end
 
       # Show available serializers
       show_available_serializers(formats)
@@ -55,8 +68,9 @@ module Serialbench
       # Run benchmarks
       runner_options = {
         formats: formats,
-        iterations: options[:iterations],
-        warmup: options[:warmup]
+        iterations: iterations,
+        warmup: warmup,
+        config: config
       }
 
       runner = Serialbench::BenchmarkRunner.new(**runner_options)
@@ -625,6 +639,22 @@ module Serialbench
       mean = values.sum.to_f / values.length
       variance = values.map { |v| (v - mean)**2 }.sum / values.length
       Math.sqrt(variance)
+    end
+
+    def load_configuration(config_path)
+      unless File.exist?(config_path)
+        say "Configuration file not found: #{config_path}", :red
+        exit 1
+      end
+
+      begin
+        config = YAML.load_file(config_path)
+        say "Loaded configuration from: #{config_path}", :cyan
+        config
+      rescue StandardError => e
+        say "Error loading configuration: #{e.message}", :red
+        exit 1
+      end
     end
   end
 end
