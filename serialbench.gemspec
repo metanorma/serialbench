@@ -37,6 +37,7 @@ Gem::Specification.new do |spec|
 
   # Reporting dependencies
   spec.add_dependency 'csv' # Required from Ruby 3.4+
+  spec.add_dependency 'liquid' # Template engine for HTML reports
 
   # XML serializers
   spec.add_dependency 'rexml' # needed for Ruby 3.4+

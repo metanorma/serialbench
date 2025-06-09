@@ -8,6 +8,8 @@ require_relative 'serialbench/cli'
 require_relative 'serialbench/result_formatter'
 require_relative 'serialbench/chart_generator'
 require_relative 'serialbench/memory_profiler'
+require_relative 'serialbench/models'
+require_relative 'serialbench/schema_validator'
 
 module Serialbench
   class Error < StandardError; end

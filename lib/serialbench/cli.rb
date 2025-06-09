@@ -4,6 +4,7 @@ require 'thor'
 require 'json'
 require 'yaml'
 require 'fileutils'
+require_relative 'schema_validator'
 
 module Serialbench
   # Thor-based command line interface for Serialbench
@@ -332,6 +333,180 @@ module Serialbench
         say "Output saved to: #{output_file}", :green
       rescue StandardError => e
         say "Error analyzing performance: #{e.message}", :red
+        exit 1
+      end
+    end
+
+    desc 'validate FILE_OR_DIR', 'Validate benchmark results against schema'
+    long_desc <<~DESC
+      Validate benchmark result files against the official SerialBench schema.
+
+      FILE_OR_DIR can be:
+      - A single JSON or YAML benchmark result file
+      - A directory containing benchmark result files
+      - A merged benchmark results file
+
+      This command ensures data integrity and compliance with the schema specification.
+
+      Examples:
+        serialbench validate results/data/results.json
+        serialbench validate docker-results/ruby-3.2/
+        serialbench validate merged_results/merged_results.json
+    DESC
+    option :pattern, type: :string, default: '**/results.{json,yaml,yml}',
+                     desc: 'File pattern for directory validation'
+    option :verbose, type: :boolean, default: false,
+                     desc: 'Show detailed validation information'
+    def validate(file_or_dir)
+      say "Validating benchmark results: #{file_or_dir}", :green
+
+      unless File.exist?(file_or_dir)
+        say "File or directory not found: #{file_or_dir}", :red
+        exit 1
+      end
+
+      begin
+        validator = Serialbench::SchemaValidator.new
+
+        if File.directory?(file_or_dir)
+          # Validate directory
+          results = validator.validate_directory(file_or_dir, options[:pattern])
+
+          say "Validation Results:", :cyan
+          say "  Total files: #{results[:total_files]}", :white
+          say "  Valid files: #{results[:valid_files].length}", :green
+          say "  Invalid files: #{results[:invalid_files].length}", :red
+
+          if options[:verbose] && results[:valid_files].any?
+            say "\nValid files:", :green
+            results[:valid_files].each { |file| say "  ✓ #{file}", :green }
+          end
+
+          if results[:invalid_files].any?
+            say "\nInvalid files:", :red
+            results[:invalid_files].each do |file|
+              say "  ✗ #{file}", :red
+              if options[:verbose]
+                say "    Error: #{results[:errors][file]}", :yellow
+              end
+            end
+            exit 1 unless results[:valid_files].any?
+          end
+
+          say "\nValidation completed successfully!", :green
+        else
+          # Validate single file
+          validator.validate_file(file_or_dir)
+          say "✓ File is valid according to schema", :green
+        end
+      rescue Serialbench::SchemaValidator::ValidationError => e
+        say "Validation failed:", :red
+        say e.message, :yellow
+        exit 1
+      rescue StandardError => e
+        say "Error during validation: #{e.message}", :red
+        exit 1
+      end
+    end
+
+    desc 'validate_and_merge INPUT_DIRS... OUTPUT_DIR', 'Validate and merge benchmark results with schema checking'
+    long_desc <<~DESC
+      Validate benchmark results against schema before merging them.
+
+      This command combines validation and merging in one step, ensuring all input
+      files are valid before proceeding with the merge operation.
+
+      INPUT_DIRS should contain results.json files from different benchmark runs.
+      OUTPUT_DIR will contain the merged results and comparative reports.
+
+      Example:
+        serialbench validate_and_merge ruby-3.0/results ruby-3.1/results ruby-3.2/results merged_output/
+    DESC
+    option :skip_invalid, type: :boolean, default: false,
+                          desc: 'Skip invalid files instead of failing'
+    def validate_and_merge(*args)
+      if args.length < 2
+        say 'Error: Need at least one input directory and one output directory', :red
+        say 'Usage: serialbench validate_and_merge INPUT_DIRS... OUTPUT_DIR', :yellow
+        exit 1
+      end
+
+      output_dir = args.pop
+      input_dirs = args
+
+      say "Validating and merging benchmark results from #{input_dirs.length} directories", :green
+
+      begin
+        validator = Serialbench::SchemaValidator.new
+        valid_dirs = []
+        invalid_dirs = []
+
+        # Validate each input directory
+        input_dirs.each do |input_dir|
+          say "Validating #{input_dir}...", :yellow
+
+          begin
+            results = validator.validate_directory(input_dir)
+            if results[:invalid_files].any?
+              say "  ⚠ Found #{results[:invalid_files].length} invalid files, #{results[:valid_files].length} valid files", :yellow
+
+              if results[:valid_files].any?
+                say "  ✓ Directory has valid files, proceeding with merge", :green
+                valid_dirs << input_dir
+
+                if options[:verbose]
+                  say "    Valid files:", :green
+                  results[:valid_files].each { |file| say "      ✓ #{file}", :green }
+                  say "    Invalid files:", :red
+                  results[:invalid_files].each do |file|
+                    say "      ✗ #{file}: #{results[:errors][file]}", :red
+                  end
+                end
+              else
+                say "  ✗ No valid files found", :red
+                invalid_dirs << input_dir
+              end
+            else
+              say "  ✓ All files valid (#{results[:valid_files].length} files)", :green
+              valid_dirs << input_dir
+            end
+          rescue Serialbench::SchemaValidator::ValidationError => e
+            say "  ✗ Validation error: #{e.message}", :red
+            invalid_dirs << input_dir
+            unless options[:skip_invalid]
+              exit 1
+            end
+          end
+        end
+
+        if valid_dirs.empty?
+          say "No valid directories found for merging", :red
+          exit 1
+        end
+
+        if invalid_dirs.any? && !options[:skip_invalid]
+          say "Validation failed for some directories. Use --skip-invalid to proceed with valid directories only.", :red
+          exit 1
+        end
+
+        # Proceed with merging valid directories
+        say "Proceeding with #{valid_dirs.length} valid directories", :green
+
+        merger = Serialbench::ResultMerger.new
+        merged_file = merger.merge_directories(valid_dirs, output_dir)
+
+        # Validate the merged result
+        say "Validating merged results...", :yellow
+        validator.validate_file(merged_file)
+        say "✓ Merged results are valid", :green
+
+        say "Results validated and merged successfully to: #{merged_file}", :green
+
+        if invalid_dirs.any?
+          say "Note: #{invalid_dirs.length} directories were skipped due to validation errors", :yellow
+        end
+      rescue StandardError => e
+        say "Error during validation and merge: #{e.message}", :red
         exit 1
       end
     end

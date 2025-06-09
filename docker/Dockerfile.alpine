@@ -1,0 +1,58 @@
+# Alpine-based Ruby benchmark environment
+FROM alpine:3.19
+
+# Install system dependencies
+RUN apk add --no-cache \
+    build-base \
+    git \
+    bash \
+    curl \
+    wget \
+    libxml2-dev \
+    libxslt-dev \
+    yaml-dev \
+    zlib-dev \
+    openssl-dev \
+    readline-dev \
+    sqlite-dev \
+    postgresql-dev \
+    mysql-dev \
+    linux-headers
+
+# Install rbenv
+RUN git clone https://github.com/rbenv/rbenv.git ~/.rbenv && \
+    echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc && \
+    echo 'eval "$(rbenv init -)"' >> ~/.bashrc && \
+    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+
+# Set environment variables
+ENV PATH="/root/.rbenv/bin:/root/.rbenv/shims:$PATH"
+ENV RBENV_ROOT="/root/.rbenv"
+
+# Install Ruby versions
+ARG RUBY_VERSION=3.3.8
+RUN ~/.rbenv/bin/rbenv install $RUBY_VERSION && \
+    ~/.rbenv/bin/rbenv global $RUBY_VERSION && \
+    ~/.rbenv/bin/rbenv rehash
+
+# Create app directory
+WORKDIR /app
+
+# Copy gemfiles first for better caching
+COPY Gemfile Gemfile.lock serialbench.gemspec ./
+COPY lib/serialbench/version.rb ./lib/serialbench/
+
+# Install gems
+RUN eval "$(~/.rbenv/bin/rbenv init -)" && \
+    gem install bundler && \
+    bundle install
+
+# Copy the rest of the application
+COPY . .
+
+# Create output directory
+RUN mkdir -p /output
+
+# Set the entrypoint
+ENTRYPOINT ["bash", "-c", "eval \"$(~/.rbenv/bin/rbenv init -)\" && \"$@\"", "--"]
+CMD ["bundle", "exec", "serialbench", "benchmark", "--config", "config/short.yml"]
