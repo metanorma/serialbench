@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serialbench - Platform Matrix Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+
+            --pastel-purple: #e8d5ff;
+            --pastel-blue: #d5e8ff;
+            --pastel-green: #d5ffd5;
+            --pastel-pink: #ffd5e8;
+            --pastel-yellow: #fff5d5;
+            --pastel-orange: #ffe8d5;
+
+            --text-dark: #2d3748;
+            --text-medium: #4a5568;
+            --text-light: #718096;
+            --border-light: #e2e8f0;
+            --bg-light: #f7fafc;
+            --white: #ffffff;
+
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 60px 40px;
+            background: var(--primary-gradient);
+            color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header .subtitle {
+            font-size: 1.25rem;
+            font-weight: 400;
+            opacity: 0.9;
+            margin-bottom: 32px;
+        }
+
+        .metadata {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .metadata-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Platform/Ruby Version Tabs */
+        .platform-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            background: var(--white);
+            padding: 8px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .platform-tab {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            color: var(--text-medium);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .platform-tab:hover {
+            background: var(--pastel-blue);
+            color: var(--text-dark);
+        }
+
+        .platform-tab.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ruby-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: var(--white);
+            padding: 6px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ruby-tab {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-medium);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .ruby-tab:hover {
+            background: var(--pastel-purple);
+            color: var(--text-dark);
+        }
+
+        .ruby-tab.active {
+            background: var(--secondary-gradient);
+            color: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Format Tabs */
+        .format-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .format-tab {
+            padding: 16px 32px;
+            border: none;
+            background: var(--white);
+            color: var(--text-medium);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .format-tab::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--success-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .format-tab:hover::before {
+            opacity: 0.1;
+        }
+
+        .format-tab.active {
+            background: var(--success-gradient);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .format-tab.active::before {
+            opacity: 0;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .benchmark-section {
+            margin-bottom: 50px;
+        }
+
+        .benchmark-section h2 {
+            color: var(--text-dark);
+            margin-bottom: 30px;
+            font-size: 2rem;
+            font-weight: 600;
+            padding-bottom: 12px;
+            border-bottom: 3px solid;
+            border-image: var(--primary-gradient) 1;
+        }
+
+        .size-section {
+            margin-bottom: 40px;
+        }
+
+        .size-section h3 {
+            color: var(--text-medium);
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+            font-weight: 500;
+            padding: 16px 24px;
+            background: var(--pastel-blue);
+            border-radius: var(--border-radius);
+            border-left: 4px solid #667eea;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .chart-container {
+            background: var(--bg-light);
+            padding: 24px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chart-container:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .chart-container h4 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Performance Tables */
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: var(--white);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .performance-table th {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .performance-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.9rem;
+        }
+
+        .performance-table tr:hover {
+            background: var(--bg-light);
+        }
+
+        .performance-value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .performance-rank {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .rank-1 { background: var(--pastel-green); color: #22543d; }
+        .rank-2 { background: var(--pastel-blue); color: #2a4365; }
+        .rank-3 { background: var(--pastel-yellow); color: #744210; }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .metadata {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                padding: 40px 24px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content-section {
+                padding: 24px;
+            }
+
+            .format-tabs {
+                gap: 8px;
+            }
+
+            .format-tab {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-section.active {
+            animation: fadeIn 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>Serialbench Platform Matrix</h1>
+            <p class="subtitle">Comprehensive serialization performance across platforms and Ruby versions</p>
+            <div class="metadata">
+                <div class="metadata-item">
+                    <span>📅 Generated:</span>
+                    <span>{{ metadata.merged_at | date: "%B %d, %Y at %H:%M" }}</span>
+                </div>
+                <div class="metadata-item">
+                    <span>💎 Ruby Versions:</span>
+                    <span>{{ metadata.ruby_versions | join: ", " }}</span>
+                </div>
+                <div class="metadata-item">
+                    <span>🖥️ Platforms:</span>
+                    <span>{{ metadata.platforms | join: ", " }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Platform Tabs -->
+        <div class="platform-tabs">
+            {% for platform in metadata.platforms %}
+            <button class="platform-tab{% if forloop.first %} active{% endif %}"
+                    onclick="switchPlatform('{{ platform | replace: '-', '_' }}')">
+                {{ platform | replace: '-', ' ' | capitalize }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- Ruby Version Tabs -->
+        <div class="ruby-tabs">
+            {% for version in metadata.ruby_versions %}
+            <button class="ruby-tab{% if forloop.first %} active{% endif %}"
+                    onclick="switchRubyVersion('{{ version | replace: '.', '_' }}')">
+                Ruby {{ version }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- Format Tabs -->
+        <div class="format-tabs">
+            <button class="format-tab active" onclick="switchFormat('xml')">XML</button>
+            <button class="format-tab" onclick="switchFormat('json')">JSON</button>
+            <button class="format-tab" onclick="switchFormat('yaml')">YAML</button>
+            <button class="format-tab" onclick="switchFormat('toml')">TOML</button>
+        </div>
+
+        <!-- Content Sections for each format -->
+        {% for format in site.formats %}
+        <div id="{{ format }}-content" class="content-section{% if format == 'xml' %} active{% endif %}">
+
+            <!-- Parsing Performance -->
+            {% if combined_results.parsing %}
+            <div class="benchmark-section">
+                <h2>{{ format | upcase }} Parsing Performance</h2>
+
+                {% for size in site.sizes %}
+                {% if combined_results.parsing[size][format] %}
+                <div class="size-section">
+                    <h3>{{ size | capitalize }} Files</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Performance Comparison</h4>
+                            <canvas id="parsing_{{ format }}_{{ size }}_chart" width="400" height="300"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Performance Table</h4>
+                            <table class="performance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Serializer</th>
+                                        <th>Performance</th>
+                                        <th>Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="parsing_{{ format }}_{{ size }}_table">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Generation Performance -->
+            {% if combined_results.generation %}
+            <div class="benchmark-section">
+                <h2>{{ format | upcase }} Generation Performance</h2>
+
+                {% for size in site.sizes %}
+                {% if combined_results.generation[size][format] %}
+                <div class="size-section">
+                    <h3>{{ size | capitalize }} Files</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Performance Comparison</h4>
+                            <canvas id="generation_{{ format }}_{{ size }}_chart" width="400" height="300"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4>Performance Table</h4>
+                            <table class="performance-table">
+                                <thead>
+                                    <tr>
+                                        <th>Serializer</th>
+                                        <th>Performance</th>
+                                        <th>Rank</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="generation_{{ format }}_{{ size }}_table">
+                                    <!-- Populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Streaming Performance -->
+            {% if combined_results.streaming %}
+            <div class="benchmark-section">
+                <h2>{{ format | upcase }} Streaming Performance</h2>
+
+                {% for size in site.sizes %}
+                {% if combined_results.streaming[size][format] %}
+                <div class="size-section">
+                    <h3>{{ size | capitalize }} Files</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Performance Comparison</h4>
+                            <canvas id="streaming_{{ format }}_{{ size }}_chart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Memory Usage -->
+            {% if combined_results.memory_usage %}
+            <div class="benchmark-section">
+                <h2>{{ format | upcase }} Memory Usage</h2>
+
+                {% for size in site.sizes %}
+                {% if combined_results.memory_usage[size][format] %}
+                <div class="size-section">
+                    <h3>{{ size | capitalize }} Files</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4>Memory Usage Comparison</h4>
+                            <canvas id="memory_{{ format }}_{{ size }}_chart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // Global state
+        let currentPlatform = '{{ metadata.platforms.first | replace: "-", "_" }}';
+        let currentRubyVersion = '{{ metadata.ruby_versions.first | replace: ".", "_" }}';
+        let currentFormat = 'xml';
+
+        // Data from Liquid template
+        const benchmarkData = {{ combined_results | json }};
+        const environments = {{ environments | json }};
+        const metadata = {{ metadata | json }};
+
+        // Platform switching
+        function switchPlatform(platform) {
+            currentPlatform = platform;
+            updateActiveTab('.platform-tab', platform);
+            updateCharts();
+        }
+
+        // Ruby version switching
+        function switchRubyVersion(version) {
+            currentRubyVersion = version;
+            updateActiveTab('.ruby-tab', version);
+            updateCharts();
+        }
+
+        // Format switching
+        function switchFormat(format) {
+            currentFormat = format;
+            updateActiveTab('.format-tab', format);
+
+            // Hide all content sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected format section
+            document.getElementById(format + '-content').classList.add('active');
+
+            updateCharts();
+        }
+
+        function updateActiveTab(selector, value) {
+            document.querySelectorAll(selector).forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.textContent.toLowerCase().includes(value.replace('_', '.')) ||
+                    tab.onclick.toString().includes(value)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Update all visible charts for current platform/ruby version
+            const operations = ['parsing', 'generation', 'streaming', 'memory_usage'];
+            const sizes = ['small', 'medium', 'large'];
+
+            operations.forEach(operation => {
+                if (!benchmarkData[operation]) return;
+
+                sizes.forEach(size => {
+                    if (!benchmarkData[operation][size] || !benchmarkData[operation][size][currentFormat]) return;
+
+                    const chartId = `${operation}_${currentFormat}_${size}_chart`;
+                    const tableId = `${operation}_${currentFormat}_${size}_table`;
+
+                    if (document.getElementById(chartId)) {
+                        if (operation === 'memory_usage') {
+                            createMemoryChart(chartId, benchmarkData[operation][size][currentFormat]);
+                        } else {
+                            createPerformanceChart(chartId, benchmarkData[operation][size][currentFormat]);
+                        }
+                    }
+
+                    if (document.getElementById(tableId)) {
+                        updatePerformanceTable(tableId, benchmarkData[operation][size][currentFormat]);
+                    }
+                });
+            });
+        }
+
+        function createPerformanceChart(canvasId, data) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            // Destroy existing chart if it exists
+            if (canvas.chart) {
+                canvas.chart.destroy();
+            }
+
+            const currentEnvKey = getCurrentEnvironmentKey();
+            const serializers = Object.keys(data);
+
+            const chartData = serializers.map(serializer => {
+                const serializerData = data[serializer][currentEnvKey];
+                return serializerData ? serializerData.iterations_per_second || 0 : 0;
+            });
+
+            const colors = [
+                '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'
+            ];
+
+            canvas.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: serializers,
+                    datasets: [{
+                        label: 'Operations/Second',
+                        data: chartData,
+                        backgroundColor: colors.slice(0, serializers.length),
+                        borderColor: colors.slice(0, serializers.length).map(c => c + '80'),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: '#667eea',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#4a5568' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#4a5568' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createMemoryChart(canvasId, data) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            if (canvas.chart) {
+                canvas.chart.destroy();
+            }
+
+            const currentEnvKey = getCurrentEnvironmentKey();
+            const serializers = Object.keys(data);
+
+            const chartData = serializers.map(serializer => {
+                const serializerData = data[serializer][currentEnvKey];
+                return serializerData ? (serializerData.allocated_memory / 1024 / 1024) : 0;
+            });
+
+            const colors = [
+                '#43e97b', '#38f9d7', '#667eea', '#764ba2',
+                '#f093fb', '#f5576c', '#4facfe', '#00f2fe'
+            ];
+
+            canvas.chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: serializers,
+                    datasets: [{
+                        label: 'Memory Usage (MB)',
+                        data: chartData,
+                        backgroundColor: colors.slice(0, serializers.length),
+                        borderColor: colors.slice(0, serializers.length).map(c => c + '80'),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: '#43e97b',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#e2e8f0' },
+                            ticks: { color: '#4a5568' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#4a5568' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePerformanceTable(tableId, data) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            const currentEnvKey = getCurrentEnvironmentKey();
+            const serializers = Object.keys(data);
+
+            // Sort by performance
+            const sortedData = serializers.map(serializer => {
+                const serializerData = data[serializer][currentEnvKey];
+                return {
+                    name: serializer,
+                    performance: serializerData ? serializerData.iterations_per_second || 0 : 0
+                };
+            }).sort((a, b) => b.performance - a.performance);
+
+            table.innerHTML = sortedData.map((item, index) => `
+                <tr>
+                    <td>${item.name}</td>
+                    <td class="performance-value">${item.performance.toLocaleString()} ops/sec</td>
+                    <td><span class="performance-rank rank-${Math.min(index + 1, 3)}">#${index + 1}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function getCurrentEnvironmentKey() {
+            // Find environment key that matches current platform and ruby version
+            const targetPlatform = currentPlatform.replace('_', '-');
+            const targetVersion = currentRubyVersion.replace('_', '.');
+
+            for (const [key, env] of Object.entries(environments)) {
+                if (env.ruby_platform.includes(targetPlatform) && env.ruby_version === targetVersion) {
+                    return key;
+                }
+            }
+
+            // Fallback to first available environment
+            return Object.keys(environments)[0];
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCharts();
+        });
+    </script>
+</body>
+</html>

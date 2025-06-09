@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title | default: "Serialbench - Performance Report" }}</title>
+    <link rel="stylesheet" href="{{ css_path | default: "assets/css/benchmark_report.css" }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>{{ report_title | default: "Serialbench - Performance Report" }}</h1>
+            <p class="subtitle">{{ report_subtitle | default: "Comprehensive serialization performance benchmarks" }}</p>
+            <div class="metadata">
+                {% if metadata.generated_at %}
+                <p><strong>Generated:</strong> {{ metadata.generated_at }}</p>
+                {% endif %}
+                {% if metadata.ruby_version %}
+                <p><strong>Ruby Version:</strong> {{ metadata.ruby_version }}</p>
+                {% endif %}
+                {% if metadata.ruby_versions %}
+                <p><strong>Ruby Versions:</strong> {{ metadata.ruby_versions | join: ", " }}</p>
+                {% endif %}
+                {% if metadata.platform %}
+                <p><strong>Platform:</strong> {{ metadata.platform }}</p>
+                {% endif %}
+                {% if metadata.platforms %}
+                <p><strong>Platforms:</strong> {{ metadata.platforms | join: ", " }}</p>
+                {% endif %}
+            </div>
+        </header>
+
+        <nav class="benchmark-nav">
+            {% for nav_item in navigation %}
+            <button class="nav-btn{% if nav_item.active %} active{% endif %}"
+                    data-section="{{ nav_item.section }}"
+                    onclick="showSection('{{ nav_item.section }}')">
+                {{ nav_item.label }}
+            </button>
+            {% endfor %}
+        </nav>
+
+        {{ content }}
+    </div>
+
+    <script src="{{ js_chart_path | default: "assets/js/chart_helpers.js" }}" defer></script>
+    <script src="{{ js_nav_path | default: "assets/js/navigation.js" }}" defer></script>
+    <script>
+        {{ inline_javascript }}
+    </script>
+</body>
+</html>

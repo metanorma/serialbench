@@ -1,0 +1,497 @@
+# SerialBench Benchmark Results Schema
+# This YAML schema defines the complete structure for SerialBench benchmark results
+# Version: 2.0
+# Last Updated: 2025-06-08
+
+# Root Schema for Single Benchmark Results
+single_benchmark_result:
+  type: object
+  required:
+    - environment
+    - parsing
+    - ruby_version
+    - ruby_platform
+    - timestamp
+  properties:
+    # Environment Information
+    environment:
+      type: object
+      required:
+        - ruby_version
+        - ruby_platform
+        - serializer_versions
+        - timestamp
+      properties:
+        ruby_version:
+          type: string
+          description: "Ruby version (e.g., '3.2.8')"
+          pattern: '^\d+\.\d+\.\d+$'
+        ruby_platform:
+          type: string
+          description: "Platform architecture (e.g., 'aarch64-linux', 'x86_64-darwin')"
+          enum:
+            - aarch64-linux
+            - x86_64-linux
+            - x86_64-darwin
+            - aarch64-darwin
+            - x86_64-mingw32
+        serializer_versions:
+          type: object
+          description: "Versions of all serializer libraries"
+          properties:
+            # XML Serializers
+            rexml:
+              type: string
+              description: "REXML version"
+            ox:
+              type: string
+              description: "Ox version"
+            nokogiri:
+              type: string
+              description: "Nokogiri version"
+            oga:
+              type: string
+              description: "Oga version"
+            libxml:
+              type: string
+              description: "LibXML version"
+            # JSON Serializers
+            json:
+              type: string
+              description: "JSON gem version"
+            oj:
+              type: string
+              description: "Oj version"
+            rapidjson:
+              type: string
+              description: "RapidJSON version"
+            yajl:
+              type: string
+              description: "YAJL version"
+            # YAML Serializers
+            psych:
+              type: string
+              description: "Psych version"
+            syck:
+              type: string
+              description: "Syck version"
+            # TOML Serializers
+            toml-rb:
+              type: string
+              description: "TOML-RB version"
+            tomlib:
+              type: string
+              description: "Tomlib version"
+        timestamp:
+          type: string
+          format: date-time
+          description: "ISO 8601 timestamp when benchmark was run"
+
+    # Benchmark Operations
+    parsing:
+      $ref: '#/operation_results'
+    generation:
+      $ref: '#/operation_results'
+    memory:
+      $ref: '#/memory_operation_results'
+    streaming:
+      $ref: '#/operation_results'
+
+    # Top-level metadata (duplicated for convenience)
+    ruby_version:
+      type: string
+      description: "Ruby version (duplicated from environment)"
+    ruby_platform:
+      type: string
+      description: "Platform (duplicated from environment)"
+    timestamp:
+      type: string
+      format: date-time
+      description: "Benchmark completion timestamp"
+
+# Operation Results Schema (for parsing, generation, streaming)
+operation_results:
+  type: object
+  properties:
+    small:
+      $ref: '#/size_results'
+    medium:
+      $ref: '#/size_results'
+    large:
+      $ref: '#/size_results'
+
+# Memory Operation Results Schema
+memory_operation_results:
+  type: object
+  properties:
+    small:
+      $ref: '#/memory_size_results'
+    medium:
+      $ref: '#/memory_size_results'
+    large:
+      $ref: '#/memory_size_results'
+
+# Size Results Schema (small/medium/large)
+size_results:
+  type: object
+  properties:
+    xml:
+      $ref: '#/format_results'
+    json:
+      $ref: '#/format_results'
+    yaml:
+      $ref: '#/format_results'
+    toml:
+      $ref: '#/format_results'
+
+# Memory Size Results Schema
+memory_size_results:
+  type: object
+  properties:
+    xml:
+      $ref: '#/memory_format_results'
+    json:
+      $ref: '#/memory_format_results'
+    yaml:
+      $ref: '#/memory_format_results'
+    toml:
+      $ref: '#/memory_format_results'
+
+# Format Results Schema (xml/json/yaml/toml)
+format_results:
+  type: object
+  description: "Results for each serializer in this format"
+  patternProperties:
+    '^[a-z0-9_-]+$':
+      $ref: '#/serializer_performance'
+
+# Memory Format Results Schema
+memory_format_results:
+  type: object
+  description: "Memory results for each serializer in this format"
+  patternProperties:
+    '^[a-z0-9_-]+$':
+      $ref: '#/serializer_memory_performance'
+
+# Individual Serializer Performance
+serializer_performance:
+  type: object
+  required:
+    - time_per_iterations
+    - time_per_iteration
+    - iterations_per_second
+    - iterations_count
+  properties:
+    time_per_iterations:
+      type: number
+      description: "Total time for all iterations (seconds)"
+      minimum: 0
+    time_per_iteration:
+      type: number
+      description: "Average time per single iteration (seconds)"
+      minimum: 0
+    iterations_per_second:
+      type: number
+      description: "Operations per second (throughput)"
+      minimum: 0
+    iterations_count:
+      type: integer
+      description: "Number of iterations performed"
+      minimum: 1
+
+# Individual Serializer Memory Performance
+serializer_memory_performance:
+  type: object
+  required:
+    - total_allocated
+    - total_retained
+    - allocated_memory
+    - retained_memory
+  properties:
+    total_allocated:
+      type: integer
+      description: "Total number of objects allocated"
+      minimum: 0
+    total_retained:
+      type: integer
+      description: "Total number of objects retained"
+      minimum: 0
+    allocated_memory:
+      type: integer
+      description: "Total memory allocated (bytes)"
+      minimum: 0
+    retained_memory:
+      type: integer
+      description: "Total memory retained (bytes)"
+      minimum: 0
+    allocated_objects_by_gem:
+      type: object
+      description: "Memory allocation breakdown by gem"
+      additionalProperties:
+        type: integer
+        minimum: 0
+    retained_objects_by_gem:
+      type: object
+      description: "Memory retention breakdown by gem"
+      additionalProperties:
+        type: integer
+        minimum: 0
+
+# Multi-Version/Platform Merged Results Schema
+merged_benchmark_results:
+  type: object
+  required:
+    - combined_results
+    - environments
+    - metadata
+  properties:
+    combined_results:
+      type: object
+      properties:
+        parsing:
+          $ref: '#/merged_operation_results'
+        generation:
+          $ref: '#/merged_operation_results'
+        memory:
+          $ref: '#/merged_memory_operation_results'
+        streaming:
+          $ref: '#/merged_operation_results'
+
+    environments:
+      type: object
+      description: "Environment information keyed by environment ID"
+      patternProperties:
+        '^[a-zA-Z0-9_-]+$':
+          type: object
+          properties:
+            ruby_version:
+              type: string
+            ruby_platform:
+              type: string
+            source_file:
+              type: string
+              description: "Original benchmark file path"
+            timestamp:
+              type: string
+              format: date-time
+            environment:
+              type: object
+              properties:
+                serializer_versions:
+                  type: object
+                  additionalProperties:
+                    type: string
+
+    metadata:
+      type: object
+      required:
+        - timestamp
+        - ruby_versions
+        - platforms
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: "When the merged report was generated"
+        ruby_versions:
+          type: array
+          items:
+            type: string
+          description: "List of Ruby versions included"
+        platforms:
+          type: array
+          items:
+            type: string
+          description: "List of platforms included"
+        total_environments:
+          type: integer
+          minimum: 1
+          description: "Number of environments merged"
+
+# Merged Operation Results (across environments)
+merged_operation_results:
+  type: object
+  properties:
+    small:
+      $ref: '#/merged_size_results'
+    medium:
+      $ref: '#/merged_size_results'
+    large:
+      $ref: '#/merged_size_results'
+
+# Merged Memory Operation Results
+merged_memory_operation_results:
+  type: object
+  properties:
+    small:
+      $ref: '#/merged_memory_size_results'
+    medium:
+      $ref: '#/merged_memory_size_results'
+    large:
+      $ref: '#/merged_memory_size_results'
+
+# Merged Size Results
+merged_size_results:
+  type: object
+  properties:
+    xml:
+      $ref: '#/merged_format_results'
+    json:
+      $ref: '#/merged_format_results'
+    yaml:
+      $ref: '#/merged_format_results'
+    toml:
+      $ref: '#/merged_format_results'
+
+# Merged Memory Size Results
+merged_memory_size_results:
+  type: object
+  properties:
+    xml:
+      $ref: '#/merged_memory_format_results'
+    json:
+      $ref: '#/merged_memory_format_results'
+    yaml:
+      $ref: '#/merged_memory_format_results'
+    toml:
+      $ref: '#/merged_memory_format_results'
+
+# Merged Format Results
+merged_format_results:
+  type: object
+  description: "Results for each serializer across environments"
+  patternProperties:
+    '^[a-z0-9_-]+$':
+      type: object
+      description: "Serializer results keyed by environment ID"
+      patternProperties:
+        '^[a-zA-Z0-9_-]+$':
+          $ref: '#/serializer_performance'
+
+# Merged Memory Format Results
+merged_memory_format_results:
+  type: object
+  description: "Memory results for each serializer across environments"
+  patternProperties:
+    '^[a-z0-9_-]+$':
+      type: object
+      description: "Serializer memory results keyed by environment ID"
+      patternProperties:
+        '^[a-zA-Z0-9_-]+$':
+          $ref: '#/serializer_memory_performance'
+
+# Example Data Structures
+examples:
+  single_benchmark:
+    environment:
+      ruby_version: "3.2.8"
+      ruby_platform: "aarch64-linux"
+      serializer_versions:
+        rexml: "3.4.1"
+        ox: "2.14.23"
+        nokogiri: "1.18.8"
+        json: "2.12.2"
+        oj: "3.16.11"
+        psych: "5.0.1"
+        toml-rb: "4.0.0"
+      timestamp: "2025-06-07T10:42:32+00:00"
+    parsing:
+      small:
+        xml:
+          rexml:
+            time_per_iterations: 0.06580191599999807
+            time_per_iteration: 0.003290095799999904
+            iterations_per_second: 303.94251741849865
+            iterations_count: 20
+          ox:
+            time_per_iterations: 0.00021674999999277134
+            time_per_iteration: 1.0837499999638567e-05
+            iterations_per_second: 92272.2030019239
+            iterations_count: 20
+        json:
+          json:
+            time_per_iterations: 3.216700002894868e-05
+            time_per_iteration: 1.6083500014474339e-06
+            iterations_per_second: 621755.2144123173
+            iterations_count: 20
+
+  memory_benchmark:
+    memory:
+      small:
+        xml:
+          rexml:
+            total_allocated: 1500
+            total_retained: 50
+            allocated_memory: 153600
+            retained_memory: 5120
+            allocated_objects_by_gem:
+              rexml: 1200
+              ruby: 300
+            retained_objects_by_gem:
+              rexml: 40
+              ruby: 10
+
+  merged_benchmark:
+    combined_results:
+      parsing:
+        small:
+          xml:
+            rexml:
+              env_ruby_3_2_aarch64:
+                time_per_iterations: 0.06580191599999807
+                time_per_iteration: 0.003290095799999904
+                iterations_per_second: 303.94251741849865
+                iterations_count: 20
+              env_ruby_3_3_x86_64:
+                time_per_iterations: 0.05234567890123456
+                time_per_iteration: 0.002617283945061728
+                iterations_per_second: 382.12345678901234
+                iterations_count: 20
+    environments:
+      env_ruby_3_2_aarch64:
+        ruby_version: "3.2.8"
+        ruby_platform: "aarch64-linux"
+        source_file: "/path/to/ruby-3.2/results.yaml"
+        timestamp: "2025-06-07T10:42:32+00:00"
+      env_ruby_3_3_x86_64:
+        ruby_version: "3.3.2"
+        ruby_platform: "x86_64-linux"
+        source_file: "/path/to/ruby-3.3/results.yaml"
+        timestamp: "2025-06-07T11:15:45+00:00"
+    metadata:
+      timestamp: "2025-06-08T19:30:00+00:00"
+      ruby_versions: ["3.2.8", "3.3.2"]
+      platforms: ["aarch64-linux", "x86_64-linux"]
+      total_environments: 2
+
+# Validation Rules
+validation_rules:
+  - "iterations_per_second should equal 1.0 / time_per_iteration (within floating point precision)"
+  - "time_per_iteration should equal time_per_iterations / iterations_count"
+  - "All timestamps must be valid ISO 8601 format"
+  - "Ruby versions must follow semantic versioning (major.minor.patch)"
+  - "Platform names must follow Ruby's platform naming convention"
+  - "Memory values must be non-negative integers"
+  - "Performance values must be positive numbers"
+  - "Environment IDs in merged results must exist in environments section"
+
+# File Naming Conventions
+file_naming:
+  single_benchmark: "results.yaml"
+  merged_benchmark: "merged_results.yaml"
+  json_format: "results.json"
+
+# Directory Structure
+directory_structure: |
+  benchmark_results/
+  ├── ruby-3.2.0/
+  │   ├── results.yaml          # Single benchmark results
+  │   ├── results.json          # JSON format (optional)
+  │   └── benchmark.log         # Execution log
+  ├── ruby-3.3.0/
+  │   ├── results.yaml
+  │   ├── results.json
+  │   └── benchmark.log
+  └── merged/
+      ├── merged_results.yaml   # Combined results
+      └── merged_results.json   # JSON format (optional)

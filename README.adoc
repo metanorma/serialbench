@@ -900,6 +900,76 @@ Show version:
 $ serialbench version
 ----
 
+==== Validation commands
+
+Validate benchmark result files against the schema:
+
+[source]
+----
+# Validate a single file
+$ serialbench validate results/data/results.json
+$ serialbench validate results/data/results.yaml
+
+# Validate with verbose output
+$ serialbench validate results/data/results.json --verbose
+
+# Validate all result files in a directory
+$ serialbench validate docker-results/
+
+# Validate directory with custom pattern
+$ serialbench validate docker-results/ --pattern "**/*.json"
+
+# Validate directory with verbose output
+$ serialbench validate docker-results/ --verbose
+
+# Validate and merge results in one step
+$ serialbench validate_and_merge ruby-3.0/results ruby-3.1/results ruby-3.2/results merged_output/
+
+# Skip invalid files during validation and merge
+$ serialbench validate_and_merge ruby-3.0/results ruby-3.1/results ruby-3.2/results merged_output/ --skip-invalid
+----
+
+==== Template rendering commands
+
+Generate HTML reports from benchmark data:
+
+[source]
+----
+# Generate single benchmark report
+$ serialbench render_template results/data/results.json single_benchmark output/
+
+# Generate multi-version comparison report
+$ serialbench render_template merged_results.json multi_version output/
+
+# Generate format-based comparison report
+$ serialbench render_template merged_results.json format_based output/
+
+# Generate platform matrix report
+$ serialbench render_template merged_results.json platform_matrix output/
+
+# Render with custom template
+$ serialbench render_template data.json custom_template.liquid output/
+----
+
+==== Result merging and analysis commands
+
+Merge results from multiple benchmark runs:
+
+[source]
+----
+# Merge results from multiple directories
+$ serialbench merge_results ruby-3.0/results ruby-3.1/results ruby-3.2/results merged_output/
+
+# Generate GitHub Pages from multiple runs
+$ serialbench github_pages ruby-3.0/results ruby-3.1/results ruby-3.2/results docs/
+
+# Analyze performance across platforms and Ruby versions
+$ serialbench analyze_performance artifacts/benchmark-results-*/ performance_analysis.json
+
+# Generate platform comparison report
+$ serialbench platform_comparison performance_analysis.json platform_comparison.json
+----
+
 ==== Format-specific benchmarks
 
 ===== XML benchmarks
