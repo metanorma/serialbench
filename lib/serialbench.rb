@@ -10,6 +10,7 @@ require_relative 'serialbench/chart_generator'
 require_relative 'serialbench/memory_profiler'
 require_relative 'serialbench/models'
 require_relative 'serialbench/schema_validator'
+require_relative 'serialbench/site_generator'
 
 module Serialbench
   class Error < StandardError; end

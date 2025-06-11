@@ -1,0 +1,74 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+title: "Serialbench Configuration"
+description: "Configuration schema for Serialbench runtime environments"
+type: object
+
+properties:
+  runtime:
+    type: string
+    enum: ["docker", "asdf"]
+    description: "Runtime environment for benchmarks"
+
+  ruby_versions:
+    type: array
+    items:
+      type: string
+      pattern: "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+    minItems: 1
+    description: "Ruby versions to benchmark"
+
+  image_variants:
+    type: array
+    items:
+      type: string
+      enum: ["slim", "alpine"]
+    minItems: 1
+    description: "Docker image variants (only for docker runtime)"
+
+  auto_install:
+    type: boolean
+    default: true
+    description: "Auto-install missing Ruby versions (only for asdf runtime)"
+
+  output_dir:
+    type: string
+    default: "benchmark-results"
+    description: "Output directory for results"
+
+  benchmark_config:
+    type: string
+    default: "config/full.yml"
+    description: "Path to benchmark configuration file"
+
+required: ["runtime", "ruby_versions"]
+
+allOf:
+  - if:
+      properties:
+        runtime:
+          const: "docker"
+    then:
+      required: ["image_variants"]
+      properties:
+        image_variants:
+          minItems: 1
+  - if:
+      properties:
+        runtime:
+          const: "asdf"
+    then:
+      not:
+        required: ["image_variants"]
+
+examples:
+  - runtime: "docker"
+    ruby_versions: ["3.0", "3.1", "3.2", "3.3", "3.4"]
+    image_variants: ["slim", "alpine"]
+    output_dir: "docker-results"
+    benchmark_config: "config/full.yml"
+
+  - runtime: "asdf"
+    ruby_versions: ["3.0.7", "3.1.7", "3.2.8", "3.3.8", "3.4.4"]
+    auto_install: true
+    output_dir: "asdf-results"
+    benchmark_config: "config/full.yml"

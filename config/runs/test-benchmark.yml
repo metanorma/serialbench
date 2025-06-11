@@ -1,0 +1,37 @@
+# Serialbench Run Configuration
+# Generated on 2025-06-10T10:00:42+08:00
+
+# Run name (optional - will use filename if not specified)
+# name: my-benchmark-run
+
+# Formats to benchmark
+formats:
+  - xml
+  - json
+  - yaml
+  - toml
+
+# Number of benchmark iterations
+iterations: 10
+
+# Number of warmup iterations
+warmup: 3
+
+# Data sizes to test
+data_sizes:
+  - small
+  - medium
+  - large
+
+# Output format options
+output_format: all  # all, json, yaml, html
+
+# Memory profiling (optional)
+# memory_profiling: true
+
+# Specific operations to run (optional - defaults to all)
+# operations:
+#   - parsing
+#   - generation
+#   - streaming
+#   - memory

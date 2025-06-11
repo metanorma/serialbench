@@ -1,6 +1,9 @@
 # Configuration for short benchmarks - Minimal memory usage for CI runners
 # Designed for Windows and Ubuntu runners with limited memory
 
+# Run name for identification
+name: short-benchmark
+
 data_sizes:
   - small
   - medium

@@ -3,4 +3,4 @@
 
 require_relative '../lib/serialbench'
 
-Serialbench::Cli.start(ARGV)
+Serialbench::CLI.start(ARGV)

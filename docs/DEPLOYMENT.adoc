@@ -1,0 +1,391 @@
+= Deployment and CI/CD Guide
+
+== Multi-environment deployment workflows
+
+=== ASDF-based deployment
+
+==== Complete ASDF workflow
+
+[source,bash]
+----
+# 1. Generate ASDF configuration
+$ ./exe/serialbench benchmark init asdf
+
+# 2. Execute complete workflow (prepare + benchmark + merge + dashboard)
+$ ./exe/serialbench benchmark execute serialbench-asdf.yml
+
+# 3. Deploy results to GitHub Pages
+$ git add asdf-results/_site/
+$ git commit -m "Add ASDF multi-Ruby benchmark results"
+$ git push origin main
+----
+
+==== Step-by-step ASDF deployment
+
+[source,bash]
+----
+# 1. Validate configuration
+$ ./exe/serialbench benchmark validate serialbench-asdf.yml
+
+# 2. Prepare Ruby environments
+$ ./exe/serialbench benchmark prepare asdf --config=serialbench-asdf.yml
+
+# 3. Run benchmarks across all Ruby versions
+$ ./exe/serialbench benchmark execute asdf --config=serialbench-asdf.yml
+
+# 4. Results are automatically merged and dashboard generated
+$ open asdf-results/_site/index.html
+----
+
+=== Docker-based deployment
+
+==== Complete Docker workflow
+
+[source,bash]
+----
+# 1. Generate Docker configuration
+$ ./exe/serialbench benchmark init docker
+
+# 2. Execute complete workflow (prepare + benchmark + merge + dashboard)
+$ ./exe/serialbench benchmark execute serialbench-docker.yml
+
+# 3. Deploy results to GitHub Pages
+$ git add docker-results/_site/
+$ git commit -m "Add Docker multi-Ruby benchmark results"
+$ git push origin main
+----
+
+==== Step-by-step Docker deployment
+
+[source,bash]
+----
+# 1. Validate configuration
+$ ./exe/serialbench benchmark validate serialbench-docker.yml
+
+# 2. Prepare Docker environments
+$ ./exe/serialbench benchmark prepare docker --config=serialbench-docker.yml
+
+# 3. Run benchmarks across all Ruby versions
+$ ./exe/serialbench benchmark execute docker --config=serialbench-docker.yml
+
+# 4. Results are automatically merged and dashboard generated
+$ open docker-results/_site/index.html
+----
+
+=== Runset-based deployment
+
+==== Creating and executing runsets
+
+[source,bash]
+----
+# 1. Create a runset configuration
+$ ./exe/serialbench runset create multi-ruby-comparison \
+  --name "Multi-Ruby Performance Comparison" \
+  --description "Compare serialization performance across Ruby versions"
+
+# 2. Add runs to the runset
+$ ./exe/serialbench runset add-run multi-ruby-comparison \
+  --environment ruby-3.2 \
+  --config config/full.yml
+
+$ ./exe/serialbench runset add-run multi-ruby-comparison \
+  --environment ruby-3.3 \
+  --config config/full.yml
+
+# 3. Execute the runset
+$ ./exe/serialbench runset execute multi-ruby-comparison
+
+# 4. Generate comparison report
+$ ./exe/serialbench runset render multi-ruby-comparison \
+  --template runset_comparison \
+  --output runset-results/
+----
+
+==== Runset GitHub Pages deployment
+
+[source,bash]
+----
+# Generate GitHub Pages from runset results
+$ ./exe/serialbench runset render multi-ruby-comparison \
+  --template runset_comparison \
+  --output _site/
+
+# Deploy to GitHub Pages
+$ git add _site/
+$ git commit -m "Add runset comparison results"
+$ git push origin main
+----
+
+== GitHub Pages deployment
+
+=== Result aggregation and GitHub Pages
+
+==== Merging multi-version results (legacy method)
+
+The Docker workflow automatically merges results from all Ruby versions:
+
+[source]
+----
+# Manual result merging (legacy)
+$ serialbench merge_results \
+  docker-results/ruby-3.0 \
+  docker-results/ruby-3.1 \
+  docker-results/ruby-3.2 \
+  docker-results/ruby-3.3 \
+  docker-results/ruby-3.4 \
+  docker-results/merged
+----
+
+==== GitHub Pages generation (modern approach)
+
+Generate interactive HTML reports ready for GitHub Pages deployment:
+
+[source]
+----
+# Modern approach: Use multi-environment CLI
+$ ./exe/serialbench benchmark execute docker --config=serialbench-docker.yml
+# Results automatically available in docker-results/_site/
+
+# Legacy approach: Manual GitHub Pages generation
+$ serialbench github_pages \
+  docker-results/ruby-3.0 \
+  docker-results/ruby-3.1 \
+  docker-results/ruby-3.2 \
+  docker-results/ruby-3.3 \
+  docker-results/ruby-3.4 \
+  docker-results/docs
+----
+
+The generated GitHub Pages include:
+
+* **Interactive Performance Dashboard**: Modern format-based interface with tabbed navigation
+* **Multi-Version Analysis**: Compare performance across Ruby versions with interactive charts
+* **Format-Specific Views**: Dedicated tabs for XML, JSON, YAML, and TOML performance
+* **Dynamic Filtering**: Filter by platform, Ruby type, and version
+* **Theme Toggle**: Light and dark mode support
+* **Responsive Design**: Works on desktop and mobile devices
+* **Real-time Chart Updates**: Charts update dynamically based on selected filters
+* **Performance Summary**: Automated insights and recommendations
+* **Environment Details**: Ruby versions, platforms, and library versions
+* **Direct Deployment**: Ready for GitHub Pages, Netlify, or any static hosting
+
+=== Format-based dashboard features
+
+The new dashboard provides an enhanced user experience with:
+
+==== Interactive navigation
+* **Format tabs**: Switch between XML, JSON, YAML, and TOML views
+* **Operation sections**: Parsing, generation, streaming, and memory usage
+* **Filter controls**: Platform, Ruby type, and version dropdowns
+* **Theme toggle**: Light/dark mode with persistent preference
+
+==== Dynamic visualizations
+* **Real-time charts**: Performance charts update based on selected filters
+* **Color-coded data**: Consistent color schemes across serializers
+* **Responsive scaling**: Charts adapt to different screen sizes
+* **Performance metrics**: Operations per second and memory usage
+
+==== Enhanced usability
+* **Keyboard navigation**: Full keyboard accessibility support
+* **Mobile-friendly**: Touch-optimized interface for mobile devices
+* **Fast loading**: Optimized JavaScript for quick initialization
+* **Error handling**: Graceful degradation when data is unavailable
+
+=== Deploying to GitHub Pages
+
+. **Commit the generated files**:
++
+[source]
+----
+$ git add docker-results/docs/
+$ git commit -m "Add multi-Ruby benchmark results"
+$ git push origin main
+----
+
+. **Enable GitHub Pages** in repository settings:
+.. Go to Settings → Pages
+.. Set source to "Deploy from a branch"
+.. Select branch containing the `docs/` folder
+.. Set folder to `/docker-results/docs`
+
+. **Access your results** at: `https://yourusername.github.io/yourrepo/`
+
+== CI/CD integration
+
+=== GitHub Actions integration
+
+The Docker setup integrates seamlessly with GitHub Actions:
+
+[source,yaml]
+----
+# .github/workflows/benchmark.yml
+name: Multi-Ruby Benchmarks
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run Docker Benchmarks
+        run: ./docker/run-benchmarks.sh
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: docker-results/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docker-results/docs
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: benchmark
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+----
+
+=== Performance considerations
+
+* **Parallel builds**: Docker builds can run in parallel for faster execution
+* **Build caching**: Subsequent runs use cached layers for faster builds
+* **Memory profiling**: Enabled by default but can be disabled for faster runs
+* **Result compression**: Large result files can be compressed for storage
+
+=== Security considerations
+
+* **Containers run with minimal privileges**: No root access required
+* **No network access during benchmarks**: Isolated execution environment
+* **Volume mounting**: Results written only to specified mounted volumes
+* **Image scanning**: Regular security updates for base Ruby images
+
+== Troubleshooting
+
+=== Docker issues
+
+==== Build failures
+
+Check build logs for specific Ruby versions:
+
+[source]
+----
+$ cat docker-results/build-ruby-3.3.log
+----
+
+Common build issues:
+
+* **Missing system dependencies**: Ensure libxml2-dev and libxslt1-dev are available
+* **Network timeouts**: Retry the build or use a different network
+* **Disk space**: Ensure sufficient disk space for multiple Ruby images
+
+==== Runtime failures
+
+Check benchmark execution logs:
+
+[source]
+----
+$ cat docker-results/ruby-3.3/benchmark.log
+----
+
+Common runtime issues:
+
+* **Memory constraints**: Increase Docker memory allocation
+* **Timeout issues**: Some benchmarks may take longer on slower systems
+* **Permission errors**: Ensure proper volume mounting permissions
+
+==== Docker system issues
+
+Verify Docker is running properly:
+
+[source]
+----
+$ docker info
+$ docker system df  # Check disk usage
+$ docker system prune  # Clean up unused resources
+----
+
+Clean up Serialbench Docker resources:
+
+[source]
+----
+# Remove all Serialbench images
+$ docker rmi $(docker images serialbench -q)
+
+# Remove all containers
+$ docker container prune
+----
+
+=== Customization options
+
+==== Adding Ruby versions
+
+Edit the `RUBY_VERSIONS` array in `docker/run-benchmarks.sh`:
+
+[source,bash]
+----
+RUBY_VERSIONS=("3.0" "3.1" "3.2" "3.3" "3.4" "head")
+----
+
+==== Custom benchmark configuration
+
+Create custom config files in the `config/` directory:
+
+[source,yaml]
+----
+# config/custom.yml
+formats:
+  - xml
+  - json
+iterations: 50
+warmup: 5
+data_sizes:
+  - small
+  - medium
+----
+
+Reference the custom config in the run script:
+
+[source,bash]
+----
+# In docker/run-benchmarks.sh
+CONFIG_FILE="config/custom.yml"
+----
+
+==== Output directory customization
+
+Change the output directory in the run script:
+
+[source,bash]
+----
+# In docker/run-benchmarks.sh
+OUTPUT_DIR="my-benchmark-results"
+----

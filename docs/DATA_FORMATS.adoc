@@ -1,0 +1,424 @@
+= Data Formats and Schema Reference
+
+== Benchmark report JSON format
+
+=== Single Ruby version results
+
+The benchmark results are saved as JSON files with the following structure:
+
+[source,json]
+----
+{
+  "environment": {
+    "ruby_version": "3.3.8",
+    "ruby_platform": "aarch64-linux",
+    "serializer_versions": {
+      "rexml": "3.4.1",
+      "ox": "2.14.23",
+      "nokogiri": "1.18.8",
+      "oga": "3.4",
+      "libxml": "4.1.2",
+      "json": "2.12.2",
+      "oj": "3.16.11",
+      "yajl": "1.4.3",
+      "psych": "5.1.2",
+      "syck": "1.5.1.1",
+      "toml-rb": "2.2.0",
+      "tomlib": "0.7.3"
+    },
+    "timestamp": "2025-06-07T09:00:25+00:00"
+  },
+  "parsing": {
+    "small": {
+      "xml": {
+        "rexml": {
+          "time_per_iterations": 0.002514416000053643,
+          "time_per_iteration": 0.00012572080000268216,
+          "iterations_per_second": 7954.133285650949,
+          "iterations_count": 20
+        },
+        "ox": {
+          "time_per_iterations": 0.00005258399994545471,
+          "time_per_iteration": 0.0000026291999972727353,
+          "iterations_per_second": 380343.83121759404,
+          "iterations_count": 20
+        }
+      },
+      "json": {
+        "json": {
+          "time_per_iterations": 0.000029707999942729657,
+          "time_per_iteration": 0.000001485399997136483,
+          "iterations_per_second": 673219.3361571126,
+          "iterations_count": 20
+        },
+        "oj": {
+          "time_per_iterations": 0.00003158300000905001,
+          "time_per_iteration": 0.0000015791500004525006,
+          "iterations_per_second": 633252.0658034089,
+          "iterations_count": 20
+        }
+      }
+    },
+    "medium": {
+      "xml": { /* ... */ },
+      "json": { /* ... */ }
+    },
+    "large": {
+      "xml": { /* ... */ },
+      "json": { /* ... */ }
+    }
+  },
+  "ruby_version": "3.3.8",
+  "ruby_platform": "aarch64-linux",
+  "timestamp": "2025-06-07T09:01:02+00:00"
+}
+----
+
+=== Multi-Ruby version merged results
+
+When results from multiple Ruby versions are merged, the structure becomes:
+
+[source,json]
+----
+{
+  "environments": {
+    "3_3_8_aarch64_linux": {
+      "ruby_version": "3.3.8",
+      "ruby_platform": "aarch64-linux",
+      "source_file": "docker-results/ruby-3.3/data/results.json",
+      "timestamp": "2025-06-07T09:01:02+00:00",
+      "environment": {
+        "ruby_version": "3.3.8",
+        "ruby_platform": "aarch64-linux",
+        "serializer_versions": { /* ... */ },
+        "timestamp": "2025-06-07T09:00:25+00:00"
+      }
+    },
+    "3_4_4_aarch64_linux": {
+      "ruby_version": "3.4.4",
+      "ruby_platform": "aarch64-linux",
+      /* ... */
+    }
+  },
+  "combined_results": {
+    "parsing": {
+      "small": {
+        "xml": {
+          "rexml": {
+            "3_3_8_aarch64_linux": {
+              "time_per_iterations": 0.002514416000053643,
+              "time_per_iteration": 0.00012572080000268216,
+              "iterations_per_second": 7954.133285650949,
+              "iterations_count": 20
+            },
+            "3_4_4_aarch64_linux": {
+              "time_per_iterations": 0.0025308329999234047,
+              "time_per_iteration": 0.00012654164999617023,
+              "iterations_per_second": 7902.536437846866,
+              "iterations_count": 20
+            }
+          }
+        }
+      }
+    }
+  },
+  "metadata": {
+    "merged_at": "2025-06-07T17:01:48+08:00",
+    "ruby_versions": ["3.3.8", "3.4.4"],
+    "platforms": ["aarch64-linux"]
+  }
+}
+----
+
+=== Cross-platform data structure
+
+The cross-platform data structure used in multi-environment benchmarks:
+
+[source,json]
+----
+{
+  "environments": {
+    "3_3_8_aarch64_linux_musl": {
+      "ruby_version": "3.3.8",
+      "ruby_platform": "aarch64-linux-musl",
+      "source_file": "docker-results/ruby-3.3-alpine/data/results.yaml",
+      "environment": {
+        "serializer_versions": {
+          "ox": "2.14.23",
+          "nokogiri": "1.18.8",
+          "json": "2.12.2"
+        }
+      }
+    }
+  },
+  "combined_results": {
+    "parsing": {
+      "small": {
+        "xml": {
+          "ox": {
+            "3_3_8_aarch64_linux_musl": {
+              "iterations_per_second": 335188.01906371984,
+              "time_per_iteration": 0.000002983400190714747
+            }
+          }
+        }
+      },
+      "medium": { /* ... */ },
+      "large": { /* ... */ }
+    }
+  }
+}
+----
+
+== JSON schema specification
+
+The benchmark results follow this comprehensive schema:
+
+[source,json]
+----
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Serialbench Results",
+  "type": "object",
+  "properties": {
+    "environment": {
+      "type": "object",
+      "properties": {
+        "ruby_version": { "type": "string" },
+        "ruby_platform": { "type": "string" },
+        "serializer_versions": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ruby_version", "ruby_platform", "serializer_versions", "timestamp"]
+    },
+    "parsing": {
+      "type": "object",
+      "properties": {
+        "small": { "$ref": "#/definitions/sizeResults" },
+        "medium": { "$ref": "#/definitions/sizeResults" },
+        "large": { "$ref": "#/definitions/sizeResults" }
+      }
+    },
+    "ruby_version": { "type": "string" },
+    "ruby_platform": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  },
+  "definitions": {
+    "sizeResults": {
+      "type": "object",
+      "properties": {
+        "xml": { "$ref": "#/definitions/formatResults" },
+        "json": { "$ref": "#/definitions/formatResults" },
+        "yaml": { "$ref": "#/definitions/formatResults" },
+        "toml": { "$ref": "#/definitions/formatResults" }
+      }
+    },
+    "formatResults": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/serializerResults"
+      }
+    },
+    "serializerResults": {
+      "type": "object",
+      "properties": {
+        "time_per_iterations": { "type": "number" },
+        "time_per_iteration": { "type": "number" },
+        "iterations_per_second": { "type": "number" },
+        "iterations_count": { "type": "integer" }
+      },
+      "required": ["time_per_iterations", "time_per_iteration", "iterations_per_second", "iterations_count"]
+    }
+  }
+}
+----
+
+== Data structure field descriptions
+
+=== Environment metadata
+
+* **ruby_version**: The Ruby version used for benchmarking (e.g., "3.3.8")
+* **ruby_platform**: The platform identifier (e.g., "aarch64-linux", "x86_64-darwin")
+* **serializer_versions**: Object mapping serializer names to their version numbers
+* **timestamp**: ISO 8601 timestamp of when the benchmark was executed
+
+=== Performance metrics
+
+* **time_per_iterations**: Total time taken for all iterations (in seconds)
+* **time_per_iteration**: Average time per single iteration (in seconds)
+* **iterations_per_second**: Performance metric showing operations per second
+* **iterations_count**: Number of iterations performed for the measurement
+
+=== Data organization
+
+* **Data sizes**: `small` (~1KB), `medium` (~1MB), `large` (~10MB)
+* **Formats**: `xml`, `json`, `yaml`, `toml`
+* **Operations**: `parsing`, `generation`, `streaming`, `memory`
+* **Serializers**: Library-specific implementations (e.g., `ox`, `nokogiri`, `rexml` for XML)
+
+=== Multi-environment structure
+
+* **environments**: Metadata for each Ruby version/platform combination
+* **combined_results**: Performance data organized by operation, size, format, and serializer
+* **metadata**: Information about the merge operation and included environments
+
+== Configuration file formats
+
+=== Multi-environment configuration
+
+==== Docker configuration example
+
+[source,yaml]
+----
+# serialbench-docker.yml
+runtime: docker
+
+# Ruby versions to benchmark (major.minor format for Docker)
+ruby_versions:
+  - "3.0"
+  - "3.1"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+
+# Docker image variants to use
+image_variants:
+  - "slim"      # Debian-based Ruby images
+  - "alpine"    # Alpine-based Ruby images
+
+# Output directory for results
+output_dir: "docker-results"
+
+# Benchmark configuration file to use
+benchmark_config: "config/full.yml"
+
+# Optional: Memory profiling settings
+memory_profiling: true
+
+# Optional: Dashboard generation settings
+generate_dashboard: true
+dashboard_template: "format_based"
+----
+
+==== ASDF configuration example
+
+[source,yaml]
+----
+# serialbench-asdf.yml
+runtime: asdf
+
+# Ruby versions to benchmark (full version numbers required for ASDF)
+ruby_versions:
+  - "3.0.7"
+  - "3.1.7"
+  - "3.2.8"
+  - "3.3.8"
+  - "3.4.4"
+
+# Automatically install missing Ruby versions
+auto_install: true
+
+# Output directory for results
+output_dir: "asdf-results"
+
+# Benchmark configuration file to use
+benchmark_config: "config/full.yml"
+
+# Optional: Memory profiling settings
+memory_profiling: true
+
+# Optional: Dashboard generation settings
+generate_dashboard: true
+dashboard_template: "format_based"
+----
+
+=== Environment configuration
+
+==== Environment definition example
+
+[source,yaml]
+----
+# environments/ruby-3.3-production.yml
+name: "ruby-3.3-production"
+description: "Ruby 3.3.8 production environment"
+ruby_version: "3.3.8"
+platform: "aarch64-linux"
+environment_variables:
+  RUBY_YJIT_ENABLE: "1"
+  RUBY_GC_HEAP_INIT_SLOTS: "1000000"
+gems:
+  - ox
+  - nokogiri
+  - oj
+  - yajl-ruby
+  - memory_profiler
+----
+
+=== Runset configuration
+
+==== Runset definition example
+
+[source,yaml]
+----
+# resultsets/multi-ruby-comparison.yml
+name: "Multi-Ruby Performance Comparison"
+description: "Compare serialization performance across Ruby versions"
+created_at: "2025-06-12T06:45:00+08:00"
+runs:
+  - environment: "ruby-3.2"
+    config: "config/full.yml"
+    status: "completed"
+    result_path: "results/ruby-3.2/data/results.json"
+    executed_at: "2025-06-12T06:30:00+08:00"
+  - environment: "ruby-3.3"
+    config: "config/full.yml"
+    status: "completed"
+    result_path: "results/ruby-3.3/data/results.json"
+    executed_at: "2025-06-12T06:35:00+08:00"
+  - environment: "ruby-3.4"
+    config: "config/full.yml"
+    status: "pending"
+    result_path: null
+    executed_at: null
+metadata:
+  total_runs: 3
+  completed_runs: 2
+  pending_runs: 1
+  failed_runs: 0
+----
+
+=== Benchmark configuration example
+
+[source,yaml]
+----
+# config/custom.yml
+formats:
+  - xml
+  - json
+  - yaml
+  - toml
+iterations: 50
+warmup: 5
+data_sizes:
+  - small
+  - medium
+  - large
+memory_profiling: true
+detailed_reports: true
+streaming_benchmarks: true
+generation_benchmarks: true
+----
+
+== Environment key format
+
+Environment keys in merged results follow the pattern: `{ruby_version}_{platform}_{variant}`
+
+Examples:
+* `3_3_8_aarch64_linux` - Ruby 3.3.8 on ARM64 Linux
+* `3_4_4_x86_64_darwin` - Ruby 3.4.4 on x64 macOS
+* `3_2_8_aarch64_linux_musl` - Ruby 3.2.8 on ARM64 Alpine Linux
+
+This format ensures unique identification of each benchmark environment while remaining filesystem-safe.

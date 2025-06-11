@@ -1,0 +1,494 @@
+= Installation Guide
+
+== System requirements
+
+* **Ruby**: 3.0 or later (3.3+ recommended for best performance)
+* **Operating System**: Linux, macOS, or Windows
+* **Architecture**: x86_64 or ARM64 (Apple Silicon)
+
+== Prerequisites for multi-Ruby testing
+
+=== ASDF runtime prerequisites
+
+**ASDF** is required for local multi-Ruby version benchmarking.
+
+==== Installing ASDF
+
+[source,bash]
+----
+# Install ASDF
+$ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
+
+# Add to shell profile (bash)
+$ echo '. "$HOME/.asdf/asdf.sh"' >> ~/.bashrc
+
+# Add to shell profile (zsh)
+$ echo '. "$HOME/.asdf/asdf.sh"' >> ~/.zshrc
+
+# Reload shell or source profile
+$ source ~/.bashrc  # or ~/.zshrc
+
+# Install Ruby plugin
+$ asdf plugin add ruby
+----
+
+==== Manual Ruby management with ASDF
+
+[source,bash]
+----
+# List available Ruby versions
+$ asdf list all ruby
+
+# Install specific versions for benchmarking
+$ asdf install ruby 3.0.7
+$ asdf install ruby 3.1.7
+$ asdf install ruby 3.2.8
+$ asdf install ruby 3.3.8
+$ asdf install ruby 3.4.4
+
+# List installed versions
+$ asdf list ruby
+
+# Set global Ruby version (optional)
+$ asdf global ruby 3.3.8
+----
+
+==== ASDF workflow example
+
+[source,bash]
+----
+# Generate ASDF configuration
+$ ./exe/serialbench benchmark init asdf
+
+# Edit configuration if needed
+$ vim serialbench-asdf.yml
+
+# Run multi-Ruby benchmarks
+$ ./exe/serialbench benchmark execute serialbench-asdf.yml
+----
+
+=== Docker runtime prerequisites
+
+**Docker** is required for containerized multi-Ruby version benchmarking.
+
+==== Installing Docker
+
+[source,bash]
+----
+# macOS: Download Docker Desktop from docker.com
+# Windows: Download Docker Desktop from docker.com
+
+# Ubuntu/Debian
+$ sudo apt-get update
+$ sudo apt-get install docker.io docker-compose
+
+# CentOS/RHEL/Fedora
+$ sudo yum install docker docker-compose
+
+# Verify Docker installation
+$ docker --version
+$ docker run hello-world
+----
+
+==== Docker workflow example
+
+[source,bash]
+----
+# Generate Docker configuration
+$ ./exe/serialbench benchmark init docker
+
+# Edit configuration if needed
+$ vim serialbench-docker.yml
+
+# Run multi-Ruby benchmarks
+$ ./exe/serialbench benchmark execute serialbench-docker.yml
+----
+
+== System dependencies
+
+**Required for native extension compilation:**
+
+[source,bash]
+----
+# macOS with Homebrew
+$ brew install libxml2 libxslt
+
+# Ubuntu/Debian
+$ sudo apt-get install libxml2-dev libxslt1-dev build-essential
+
+# CentOS/RHEL/Fedora
+$ sudo yum install libxml2-devel libxslt-devel gcc gcc-c++
+
+# Alpine Linux (for Docker)
+$ apk add libxml2-dev libxslt-dev build-base
+----
+
+== Serialization library dependencies
+
+=== Core libraries (automatically installed with the gem)
+
+[source,bash]
+----
+# XML libraries
+$ gem install ox nokogiri libxml-ruby oga
+
+# JSON libraries
+$ gem install oj yajl-ruby
+
+# YAML libraries (Psych included with Ruby)
+$ gem install syck  # Note: May cause issues on ARM64 with Ruby 3.1+
+
+# TOML libraries
+$ gem install toml-rb tomlib
+
+# Memory profiling support
+$ gem install memory_profiler
+----
+
+NOTE: REXML, JSON, and Psych (YAML) are included with Ruby and require no additional installation.
+
+=== Library-specific installation notes
+
+==== Ox
+
+High-performance C extension requiring compilation:
+
+[source,bash]
+----
+$ gem install ox
+----
+
+**Requirements**: C compiler, system development tools
+
+==== Nokogiri
+
+May require system dependencies on some platforms:
+
+[source,bash]
+----
+# macOS with Homebrew
+$ brew install libxml2 libxslt
+$ gem install nokogiri
+
+# Ubuntu/Debian
+$ sudo apt-get install libxml2-dev libxslt1-dev
+$ gem install nokogiri
+
+# CentOS/RHEL/Fedora
+$ sudo yum install libxml2-devel libxslt-devel
+$ gem install nokogiri
+----
+
+==== LibXML
+
+Ruby bindings for libxml2:
+
+[source,bash]
+----
+# macOS with Homebrew
+$ brew install libxml2
+$ gem install libxml-ruby
+
+# Ubuntu/Debian
+$ sudo apt-get install libxml2-dev
+$ gem install libxml-ruby
+
+# CentOS/RHEL/Fedora
+$ sudo yum install libxml2-devel
+$ gem install libxml-ruby
+----
+
+==== Oga
+
+Pure Ruby implementation with no system dependencies:
+
+[source,bash]
+----
+$ gem install oga
+----
+
+==== Oj
+
+High-performance JSON parser with C extension:
+
+[source,bash]
+----
+$ gem install oj
+----
+
+**Requirements**: C compiler
+
+==== YAJL
+
+JSON library with streaming capabilities:
+
+[source,bash]
+----
+$ gem install yajl-ruby
+----
+
+**Requirements**: C compiler, libyajl development headers
+
+[source,bash]
+----
+# Ubuntu/Debian
+$ sudo apt-get install libyajl-dev
+
+# macOS with Homebrew
+$ brew install yajl
+
+# CentOS/RHEL/Fedora
+$ sudo yum install yajl-devel
+----
+
+==== Tomlib
+
+TOML parser implemented in C:
+
+[source,bash]
+----
+$ gem install tomlib
+----
+
+**Requirements**: C compiler
+
+==== TOML-RB
+
+Pure Ruby TOML parser:
+
+[source,bash]
+----
+$ gem install toml-rb
+----
+
+**Requirements**: None (pure Ruby)
+
+== Known compatibility issues
+
+=== Syck YAML serializer on ARM64
+
+The Syck YAML serializer is known to cause segmentation faults on ARM64 architecture with Ruby 3.1 and later versions.
+
+**Affected configurations:**
+* ARM64/aarch64 architecture (Apple Silicon Macs, ARM64 Linux)
+* Ruby 3.1.0 and later versions
+* Both Docker and ASDF runtime environments
+
+**Automatic handling:**
+Serialbench automatically detects this problematic configuration and:
+* Displays a warning message when Syck is detected on ARM64 with Ruby 3.1+
+* Skips Syck benchmarks to prevent crashes
+* Continues with other YAML serializers (Psych)
+
+**Manual workaround:**
+If you encounter Syck-related crashes:
+
+[source,bash]
+----
+# Check your platform and Ruby version
+$ ruby -e "puts RUBY_PLATFORM"
+$ ruby -v
+
+# Remove syck from Gemfile if present
+# gem 'syck'  # Comment out or remove this line
+
+# Run benchmarks excluding Syck
+$ ./exe/serialbench benchmark --formats yaml --parsers psych
+----
+
+=== Memory profiling limitations
+
+Memory profiling may show inconsistent results on some platforms due to:
+* Garbage collection timing differences
+* Platform-specific memory allocation patterns
+* Docker container memory constraints
+
+**Recommendations:**
+* Run memory profiling multiple times for consistency
+* Use larger data sizes for more reliable memory measurements
+* Consider platform-specific memory profiling tools for detailed analysis
+
+== Installation verification
+
+=== Verify basic installation
+
+[source,bash]
+----
+# Check Serialbench installation
+$ ./exe/serialbench version
+
+# List available serializers
+$ ./exe/serialbench list
+
+# Run a quick test benchmark
+$ ./exe/serialbench benchmark --formats json --data-sizes small
+----
+
+=== Verify multi-Ruby setup
+
+==== ASDF verification
+
+[source,bash]
+----
+# Check ASDF installation
+$ asdf --version
+
+# Check Ruby plugin
+$ asdf plugin list | grep ruby
+
+# Check installed Ruby versions
+$ asdf list ruby
+
+# Test Ruby switching
+$ asdf shell ruby 3.3.8
+$ ruby -v
+----
+
+==== Docker verification
+
+[source,bash]
+----
+# Check Docker installation
+$ docker --version
+$ docker info
+
+# Test Docker functionality
+$ docker run hello-world
+
+# Pull a Ruby image for testing
+$ docker pull ruby:3.3-slim
+$ docker run --rm ruby:3.3-slim ruby -v
+----
+
+== Troubleshooting installation issues
+
+=== Common gem installation failures
+
+**Native extension compilation errors:**
+
+[source,bash]
+----
+# Ensure development tools are installed
+# Ubuntu/Debian
+$ sudo apt-get install build-essential
+
+# macOS
+$ xcode-select --install
+
+# CentOS/RHEL/Fedora
+$ sudo yum groupinstall "Development Tools"
+----
+
+**Missing system libraries:**
+
+[source,bash]
+----
+# Check for missing dependencies
+$ gem install nokogiri --verbose
+
+# Install missing libraries (example for Ubuntu)
+$ sudo apt-get install libxml2-dev libxslt1-dev zlib1g-dev
+----
+
+=== ASDF troubleshooting
+
+**Ruby installation failures:**
+
+[source,bash]
+----
+# Update ASDF and Ruby plugin
+$ asdf update
+$ asdf plugin update ruby
+
+# Install with verbose output
+$ asdf install ruby 3.3.8 --verbose
+
+# Check build dependencies
+$ asdf install ruby 3.3.8 --keep-build-dir
+----
+
+**Shell integration issues:**
+
+[source,bash]
+----
+# Verify ASDF is in PATH
+$ which asdf
+
+# Check shell configuration
+$ cat ~/.bashrc | grep asdf
+$ cat ~/.zshrc | grep asdf
+
+# Reload shell configuration
+$ source ~/.bashrc  # or ~/.zshrc
+----
+
+=== Docker troubleshooting
+
+**Permission issues:**
+
+[source,bash]
+----
+# Add user to docker group (Linux)
+$ sudo usermod -aG docker $USER
+$ newgrp docker
+
+# Test without sudo
+$ docker run hello-world
+----
+
+**Image pull failures:**
+
+[source,bash]
+----
+# Check Docker daemon status
+$ sudo systemctl status docker
+
+# Check network connectivity
+$ docker run --rm alpine ping -c 3 google.com
+
+# Clear Docker cache
+$ docker system prune -a
+----
+
+== Performance optimization
+
+=== Ruby optimization
+
+[source,bash]
+----
+# Enable YJIT for Ruby 3.1+ (significant performance improvement)
+$ export RUBY_YJIT_ENABLE=1
+
+# Set Ruby garbage collection tuning
+$ export RUBY_GC_HEAP_INIT_SLOTS=1000000
+$ export RUBY_GC_HEAP_FREE_SLOTS=500000
+----
+
+=== System optimization
+
+[source,bash]
+----
+# Increase system limits for benchmarking
+$ ulimit -n 65536  # Increase file descriptor limit
+
+# Disable CPU frequency scaling (Linux)
+$ sudo cpupower frequency-set --governor performance
+
+# Monitor system resources during benchmarks
+$ htop
+$ iostat -x 1
+----
+
+=== Docker optimization
+
+[source,bash]
+----
+# Increase Docker memory allocation
+# Edit Docker Desktop settings or daemon.json
+
+# Use faster storage driver
+$ docker info | grep "Storage Driver"
+
+# Optimize Docker build cache
+$ docker builder prune
+----
