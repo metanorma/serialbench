@@ -82,200 +82,120 @@ Serialbench is a comprehensive benchmarking suite that evaluates the performance
 | Pure Ruby TOML parser
 |===
 
-== Benchmark report JSON format
+== Data formats and schema
 
-=== Single Ruby version results
+Serialbench generates structured JSON output for benchmark results, with different formats for single-environment and multi-environment runs. For detailed information about data structures, JSON schemas, and configuration file formats, see link:docs/DATA_FORMATS.adoc[Data Formats Reference].
 
-The benchmark results are saved as JSON files with the following structure:
+The data formats include:
 
-[source,json]
+* **Single Ruby version results**: Individual benchmark run output
+* **Multi-Ruby version merged results**: Cross-environment comparison data
+* **Cross-platform data structure**: Multi-platform benchmark aggregation
+* **JSON schema specification**: Complete schema validation rules
+* **Configuration file formats**: Docker and ASDF configuration examples
+
+== Prerequisites
+
+=== System requirements
+
+* **Ruby**: 3.0 or later (3.3+ recommended for best performance)
+* **Operating System**: Linux, macOS, or Windows
+* **Architecture**: x86_64 or ARM64 (Apple Silicon)
+
+=== Multi-Ruby testing prerequisites
+
+==== For ASDF-based multi-Ruby testing
+
+**ASDF** is required for local multi-Ruby version benchmarking:
+
+[source,bash]
 ----
-{
-  "environment": {
-    "ruby_version": "3.3.8",
-    "ruby_platform": "aarch64-linux",
-    "serializer_versions": {
-      "rexml": "3.4.1",
-      "ox": "2.14.23",
-      "nokogiri": "1.18.8",
-      "oga": "3.4",
-      "libxml": "4.1.2",
-      "json": "2.12.2",
-      "oj": "3.16.11",
-      "yajl": "1.4.3",
-      "psych": "5.1.2",
-      "syck": "1.5.1.1",
-      "toml-rb": "2.2.0",
-      "tomlib": "0.7.3"
-    },
-    "timestamp": "2025-06-07T09:00:25+00:00"
-  },
-  "parsing": {
-    "small": {
-      "xml": {
-        "rexml": {
-          "time_per_iterations": 0.002514416000053643,
-          "time_per_iteration": 0.00012572080000268216,
-          "iterations_per_second": 7954.133285650949,
-          "iterations_count": 20
-        },
-        "ox": {
-          "time_per_iterations": 0.00005258399994545471,
-          "time_per_iteration": 0.0000026291999972727353,
-          "iterations_per_second": 380343.83121759404,
-          "iterations_count": 20
-        }
-      },
-      "json": {
-        "json": {
-          "time_per_iterations": 0.000029707999942729657,
-          "time_per_iteration": 0.000001485399997136483,
-          "iterations_per_second": 673219.3361571126,
-          "iterations_count": 20
-        },
-        "oj": {
-          "time_per_iterations": 0.00003158300000905001,
-          "time_per_iteration": 0.0000015791500004525006,
-          "iterations_per_second": 633252.0658034089,
-          "iterations_count": 20
-        }
-      }
-    },
-    "medium": {
-      "xml": { /* ... */ },
-      "json": { /* ... */ }
-    },
-    "large": {
-      "xml": { /* ... */ },
-      "json": { /* ... */ }
-    }
-  },
-  "ruby_version": "3.3.8",
-  "ruby_platform": "aarch64-linux",
-  "timestamp": "2025-06-07T09:01:02+00:00"
-}
+# Install ASDF
+$ git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
+
+# Add to shell profile (bash)
+$ echo '. "$HOME/.asdf/asdf.sh"' >> ~/.bashrc
+
+# Add to shell profile (zsh)
+$ echo '. "$HOME/.asdf/asdf.sh"' >> ~/.zshrc
+
+# Reload shell or source profile
+$ source ~/.bashrc  # or ~/.zshrc
+
+# Install Ruby plugin
+$ asdf plugin add ruby
 ----
 
-=== Multi-Ruby version merged results
-
-When results from multiple Ruby versions are merged, the structure becomes:
-
-[source,json]
+**Example ASDF workflow**:
+[source,bash]
 ----
-{
-  "environments": {
-    "3_3_8_aarch64_linux": {
-      "ruby_version": "3.3.8",
-      "ruby_platform": "aarch64-linux",
-      "source_file": "docker-results/ruby-3.3/data/results.json",
-      "timestamp": "2025-06-07T09:01:02+00:00",
-      "environment": {
-        "ruby_version": "3.3.8",
-        "ruby_platform": "aarch64-linux",
-        "serializer_versions": { /* ... */ },
-        "timestamp": "2025-06-07T09:00:25+00:00"
-      }
-    },
-    "3_4_4_aarch64_linux": {
-      "ruby_version": "3.4.4",
-      "ruby_platform": "aarch64-linux",
-      /* ... */
-    }
-  },
-  "combined_results": {
-    "parsing": {
-      "small": {
-        "xml": {
-          "rexml": {
-            "3_3_8_aarch64_linux": {
-              "time_per_iterations": 0.002514416000053643,
-              "time_per_iteration": 0.00012572080000268216,
-              "iterations_per_second": 7954.133285650949,
-              "iterations_count": 20
-            },
-            "3_4_4_aarch64_linux": {
-              "time_per_iterations": 0.0025308329999234047,
-              "time_per_iteration": 0.00012654164999617023,
-              "iterations_per_second": 7902.536437846866,
-              "iterations_count": 20
-            }
-          }
-        }
-      }
-    }
-  },
-  "metadata": {
-    "merged_at": "2025-06-07T17:01:48+08:00",
-    "ruby_versions": ["3.3.8", "3.4.4"],
-    "platforms": ["aarch64-linux"]
-  }
-}
+# Generate ASDF configuration
+$ ./exe/serialbench benchmark init asdf
+
+# Run multi-Ruby benchmarks
+$ ./exe/serialbench benchmark execute asdf-test.yml
 ----
 
-=== JSON schema specification
+==== For Docker-based multi-Ruby testing
 
-The benchmark results follow this schema:
+**Docker** is required for containerized multi-Ruby version benchmarking:
 
-[source,json]
+[source,bash]
 ----
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Serialbench Results",
-  "type": "object",
-  "properties": {
-    "environment": {
-      "type": "object",
-      "properties": {
-        "ruby_version": { "type": "string" },
-        "ruby_platform": { "type": "string" },
-        "serializer_versions": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
-        },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["ruby_version", "ruby_platform", "serializer_versions", "timestamp"]
-    },
-    "parsing": {
-      "type": "object",
-      "properties": {
-        "small": { "$ref": "#/definitions/sizeResults" },
-        "medium": { "$ref": "#/definitions/sizeResults" },
-        "large": { "$ref": "#/definitions/sizeResults" }
-      }
-    },
-    "ruby_version": { "type": "string" },
-    "ruby_platform": { "type": "string" },
-    "timestamp": { "type": "string", "format": "date-time" }
-  },
-  "definitions": {
-    "sizeResults": {
-      "type": "object",
-      "properties": {
-        "xml": { "$ref": "#/definitions/formatResults" },
-        "json": { "$ref": "#/definitions/formatResults" },
-        "yaml": { "$ref": "#/definitions/formatResults" },
-        "toml": { "$ref": "#/definitions/formatResults" }
-      }
-    },
-    "formatResults": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/serializerResults"
-      }
-    },
-    "serializerResults": {
-      "type": "object",
-      "properties": {
-        "time_per_iterations": { "type": "number" },
-        "time_per_iteration": { "type": "number" },
-        "iterations_per_second": { "type": "number" },
-        "iterations_count": { "type": "integer" }
-      },
-      "required": ["time_per_iterations", "time_per_iteration", "iterations_per_second", "iterations_count"]
-    }
-  }
-}
+# Install Docker (varies by platform)
+# macOS: Download Docker Desktop
+# Ubuntu: sudo apt-get install docker.io
+# Windows: Download Docker Desktop
+
+# Verify Docker installation
+$ docker --version
+$ docker run hello-world
+----
+
+**Example Docker workflow**:
+[source,bash]
+----
+# Generate Docker configuration
+$ ./exe/serialbench benchmark init docker
+
+# Run multi-Ruby benchmarks
+$ ./exe/serialbench benchmark execute docker-test.yml
+----
+
+=== Library dependencies
+
+**Core serialization libraries** (automatically installed with the gem):
+
+[source,bash]
+----
+# XML libraries
+$ gem install ox nokogiri libxml-ruby oga
+
+# JSON libraries
+$ gem install oj yajl-ruby
+
+# YAML libraries (Psych included with Ruby)
+$ gem install syck  # Note: May cause issues on ARM64 with Ruby 3.1+
+
+# TOML libraries
+$ gem install toml-rb tomlib
+
+# Memory profiling
+$ gem install memory_profiler
+----
+
+**System dependencies** (required for some native extensions):
+
+[source,bash]
+----
+# macOS with Homebrew
+$ brew install libxml2 libxslt
+
+# Ubuntu/Debian
+$ sudo apt-get install libxml2-dev libxslt1-dev build-essential
+
+# CentOS/RHEL/Fedora
+$ sudo yum install libxml2-devel libxslt-devel gcc gcc-c++
 ----
 
 == Installation
@@ -301,97 +221,405 @@ Or install it yourself as:
 $ gem install serialbench
 ----
 
-=== XML library dependencies
+For detailed installation instructions including library-specific dependencies and ASDF setup, see link:docs/INSTALLATION.adoc[Installation Guide].
 
-To run benchmarks for all supported XML libraries, install the following gems:
+== Usage workflow
 
+The Serialbench system follows a structured workflow as shown in the architecture diagram. Each numbered step below corresponds to the workflow stages in the diagram.
 
-[source]
-----
-# Core XML libraries
-$ gem install ox nokogiri libxml-ruby oga
-
-# Additional format libraries (for comparison)
-$ gem install oj toml-rb
-
-# Memory profiling support
-$ gem install memory_profiler
-----
-
-
-NOTE: REXML, JSON, and Psych (YAML) are included with Ruby and require no additional installation.
-
-=== Library-specific installation notes
-
-==== Ox
-
-High-performance C extension requiring compilation:
+=== Workflow diagram
 
 [source]
 ----
-$ gem install ox
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                        1. MULTI-ENVIRONMENT ORCHESTRATION                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    │                                       │
+            ┌───────▼────────┐                    ┌────────▼────────┐
+            │ 2a. DOCKER     │                    │ 2b. ASDF        │
+            │     RUNNER     │                    │     RUNNER      │
+            │                │                    │                 │
+            │ • ruby:3.x     │                    │ • asdf install  │
+            │ • ruby:3.x-    │                    │ • local rubies  │
+            │   alpine       │                    │ • gem install  │
+            └───────┬────────┘                    └────────┬────────┘
+                    │                                      │
+        ┌───────────┴───────────┐                ┌────────┴────────┐
+┌───────▼────────┐    ┌────────▼────────┐    ┌──▼──┐    ┌────────▼────────┐
+│ RUBY 3.0-SLIM  │    │ RUBY 3.0-ALPINE │    │3.0.7│    │     3.1.7       │
+│ RUBY 3.1-SLIM  │    │ RUBY 3.1-ALPINE │    │3.1.7│    │     3.2.8       │
+│ RUBY 3.2-SLIM  │    │ RUBY 3.2-ALPINE │    │3.2.8│    │     3.3.8       │
+│ RUBY 3.3-SLIM  │    │ RUBY 3.3-ALPINE │    │3.3.8│    │     3.4.4       │
+│ RUBY 3.4-SLIM  │    │ RUBY 3.4-ALPINE │    └─────┘    └─────────────────┘
+└───────┬────────┘    └────────┬────────┘         │               │
+        └──────────────────────┼──────────────────┼───────────────┘
+                               │                  │
+    ┌──────────────────────────▼──────────────────▼──────────────────┐
+    │                    3. BENCHMARK EXECUTION                      │
+    │                                                                │
+    │  ┌─────────────────────────────────────────────────────────┐   │
+    │  │                     DATA SIZES                          │   │
+    │  │  ┌─────┐        ┌────────┐        ┌──────┐              │   │
+    │  │  │SMALL│        │ MEDIUM │        │LARGE │              │   │
+    │  │  │~1KB │        │  ~1MB  │        │~10MB │              │   │
+    │  │  └─────┘        └────────┘        └──────┘              │   │
+    │  └─────────────────────────────────────────────────────────┘   │
+    │  ┌─────────────────────────────────────────────────────────┐   │
+    │  │                      FORMATS                            │   │
+    │  │  ┌─────┐  ┌──────┐  ┌──────┐  ┌──────┐                  │   │
+    │  │  │ XML │  │ JSON │  │ YAML │  │ TOML │                  │   │
+    │  │  └─────┘  └──────┘  └──────┘  └──────┘                  │   │
+    │  └─────────────────────────────────────────────────────────┘   │
+    │  ┌─────────────────────────────────────────────────────────┐   │
+    │  │                    OPERATIONS                           │   │
+    │  │  ┌─────────┐  ┌──────────────┐  ┌──────────┐  ┌───────┐ │   │
+    │  │  │ PARSING │  │ GENERATION   │  │STREAMING │  │MEMORY │ │   │
+    │  │  └─────────┘  └──────────────┘  └──────────┘  └───────┘ │   │
+    │  └─────────────────────────────────────────────────────────┘   │
+    └─────────────────────────────┬──────────────────────────────────┘
+                                  │
+    ┌─────────────────────────────▼────────────────────────────────┐
+    │                    4. RESULT COLLECTION                      │
+    │  ┌──────────────────────────┐  ┌──────────────────────────┐  │
+    │  │    PER-ENVIRONMENT       │  │    PER-ENVIRONMENT       │  │
+    │  │                          │  │                          │  │
+    │  │  ruby-3.1-slim/          │  │  ruby-3.0-alpine/        │  │
+    │  │  ├── benchmark.log       │  │  ├── benchmark.log       │  │
+    │  │  ├── data/results.json   │  │  ├── data/results.json   │  │
+    │  │  └── reports/            │  │  └── reports/            │  │
+    │  └──────────────────────────┘  └──────────────────────────┘  │
+    └──────────────────────────────┬───────────────────────────────┘
+                              │
+            ┌────────────────▼───────────────────────┐
+            │            5. RESULT MERGING           │
+            │                                        │
+            │  ┌─────────────────────────────────┐   │
+            │  │      CROSS-ENVIRONMENT          │   │
+            │  │                                 │   │
+            │  │  merged/                        │   │
+            │  │  ├── merged_results.json        │   │
+            │  │  └── merged_results.yaml        │   │
+            │  │                                 │   │
+            │  │  Data structure:                │   │
+            │  │  {                              │   │
+            │  │    "environments": {...},       │   │
+            │  │    "combined_results": {        │   │
+            │  │      "parsing": {               │   │
+            │  │        "small": {...},          │   │
+            │  │        "medium": {...},         │   │
+            │  │        "large": {...}           │   │
+            │  │      }                          │   │
+            │  │    }                            │   │
+            │  │  }                              │   │
+            │  └─────────────────────────────────┘   │
+            └────────────────┬───────────────────────┘
+                              │
+            ┌────────────────▼───────────────────────┐
+            │          6. DASHBOARD GENERATION       │
+            │                                        │
+            │  ┌─────────────────────────────────┐   │
+            │  │      FORMAT-BASED TEMPLATE      │   │
+            │  │                                 │   │
+            │  │  docs/                          │   │
+            │  │  ├── index.html                 │   │
+            │  │  ├── merged_results.json        │   │
+            │  │  └── assets/                    │   │
+            │  │      ├── css/themes.css         │   │
+            │  │      └── js/dashboard.js        │   │
+            │  │                                 │   │
+            │  │  Features:                      │   │
+            │  │  • Format tabs (XML/JSON/etc)   │   │
+            │  │  • Interactive charts           │   │
+            │  │  • Dynamic filtering            │   │
+            │  │  • Theme toggle                 │   │
+            │  │  • Mobile responsive            │   │
+            │  └─────────────────────────────────┘   │
+            └────────────────────────────────────────┘
 ----
 
-==== Nokogiri
+Each numbered step in the diagram corresponds to the workflow explanations below.
 
-May require system dependencies on some platforms:
+=== Step 1. Multi-environment orchestration
+
+**Input**: Configuration files specifying runtime environment and Ruby versions
+
+**Commands**:
+[source,bash]
+----
+# Generate configuration files
+$ bundle exec serialbench multi init docker    # Creates serialbench-docker.yml
+$ bundle exec serialbench multi init asdf      # Creates serialbench-asdf.yml
+
+# Validate configuration
+$ bundle exec serialbench multi validate serialbench-docker.yml
+$ bundle exec serialbench multi validate serialbench-asdf.yml
+
+# Execute complete workflow (prepare + benchmark + merge + dashboard)
+$ bundle exec serialbench multi execute docker --config=serialbench-docker.yml
+$ bundle exec serialbench multi execute asdf --config=serialbench-asdf.yml
+
+# Or run individual phases
+$ bundle exec serialbench multi prepare docker --config=serialbench-docker.yml
+$ bundle exec serialbench multi benchmark docker --config=serialbench-docker.yml
+----
+
+**Output**: Validated configuration and runtime selection (Docker or ASDF)
+
+=== Step 2. Runtime environment preparation
+
+==== Step 2a. Docker runner preparation
+
+**Input**: Docker configuration (`serialbench-docker.yml`) specifying Ruby versions and image variants
+
+**Commands**:
+[source,bash]
+----
+# Prepare Docker environments
+$ serialbench multi prepare docker --config=serialbench-docker.yml
+----
+
+**Process**:
+- Pulls official Ruby images (`ruby:3.x`, `ruby:3.x-alpine`)
+- Installs serialization libraries in each container
+- Creates benchmark-ready Docker images
+
+**Output**: Docker images for each Ruby version and variant combination
+
+==== Step 2b. ASDF runner preparation
+
+**Input**: ASDF configuration (`streambench-asdf.yml`) specifying exact Ruby versions
+
+**Commands**:
+[source,bash]
+----
+# Prepare ASDF environments
+$ serialbench streambench prepare asdf --config=streambench-asdf.yml
+----
+
+**Process**:
+- Checks for existing Ruby versions via ASDF
+- Installs missing Ruby versions automatically (if `auto_install: true`)
+- Installs required gems in each Ruby environment
+
+**Output**: Local Ruby installations managed by ASDF
+
+=== Step 3. Multi-environment benchmark execution
+
+**Input**: Prepared runtime environments and benchmark configuration
+
+**Commands**:
+[source,bash]
+----
+# Run benchmarks in prepared environments
+$ serialbench streambench benchmark docker --config=streambench-docker.yml
+$ serialbench streambench benchmark asdf --config=streambench-asdf.yml
+----
+
+**Process**: For each Ruby environment, executes benchmarks across:
+- **Data sizes**: Small (~1KB), Medium (~1MB), Large (~10MB)
+- **Formats**: XML, JSON, YAML, TOML
+- **Operations**: Parsing, generation, streaming, memory profiling
+- **Serializers**: All available libraries for each format
+
+**Output**: Individual benchmark results for each Ruby environment
+
+=== Step 4. Result collection
+
+**Input**: Benchmark execution output from multiple environments
+
+**Process**: Collects results into structured directories:
 
 [source]
 ----
-# macOS with Homebrew
-$ brew install libxml2 libxslt
-$ gem install nokogiri
-
-# Ubuntu/Debian
-$ sudo apt-get install libxml2-dev libxslt1-dev
-$ gem install nokogiri
+docker-results/  # or asdf-results/
+├── ruby-3.0/                   # Per-environment results
+│   ├── benchmark.log           # Execution log
+│   ├── data/results.json       # Raw performance data
+│   └── reports/benchmark_report.html
+├── ruby-3.1/
+├── ruby-3.2/
+├── ruby-3.3/
+└── ruby-3.4/
 ----
 
-==== LibXML
+**Commands**:
+[source,bash]
+----
+# Results are automatically collected during benchmark execution
+# Manual validation can be performed:
+$ serialbench validate docker-results/
+----
 
-Ruby bindings for libxml2:
+**Output**: Organized per-environment benchmark results with logs and data files
+
+=== Step 5. Result merging
+
+**Input**: Individual environment results from step 4
+
+**Commands**:
+[source,bash]
+----
+# Merge results from multiple environments
+$ serialbench merge_results \
+  docker-results/ruby-3.0 \
+  docker-results/ruby-3.1 \
+  docker-results/ruby-3.2 \
+  docker-results/ruby-3.3 \
+  docker-results/ruby-3.4 \
+  docker-results/merged
+----
+
+**Process**: Combines performance data across environments into unified structure:
+- Aggregates results by operation, size, format, and serializer
+- Creates cross-environment performance comparisons
+- Generates metadata about merged environments
+
+**Output**: Merged results in `merged/merged_results.json` with cross-environment data structure
+
+=== Step 6. Dashboard generation
+
+**Input**: Merged results from step 5
+
+**Commands**:
+[source,bash]
+----
+# Generate interactive dashboard
+$ serialbench github_pages \
+  docker-results/ruby-3.0 \
+  docker-results/ruby-3.1 \
+  docker-results/ruby-3.2 \
+  docker-results/ruby-3.3 \
+  docker-results/ruby-3.4 \
+  docker-results/_site
+
+# Alternative: render specific template
+$ serialbench render_template merged_results.json format_based _site/
+----
+
+**Process**: Creates interactive HTML dashboard with:
+- Format-based tabbed interface (XML, JSON, YAML, TOML)
+- Interactive charts with Chart.js
+- Dynamic filtering by platform, Ruby version, and image variant
+- Light/dark theme toggle
+- Mobile-responsive design
+
+**Output**: GitHub Pages-ready dashboard in `_site/` directory:
 
 [source]
 ----
-# macOS with Homebrew
-$ brew install libxml2
-$ gem install libxml-ruby
-
-# Ubuntu/Debian
-$ sudo apt-get install libxml2-dev
-$ gem install libxml-ruby
+_site/
+├── index.html               # Interactive comparison dashboard
+├── merged_results.json      # Dashboard data
+└── assets/
+    ├── css/themes.css       # Light/dark theme styles
+    └── js/dashboard.js      # Interactive functionality
 ----
 
-==== Oga
+=== Configuration file formats
 
-Pure Ruby implementation with no system dependencies:
+==== Docker configuration (`streambench-docker.yml`)
 
-[source]
+[source,yaml]
 ----
-$ gem install oga
+# Streambench Docker Configuration
+runtime: docker
+
+# Ruby versions to benchmark (major.minor format for Docker)
+ruby_versions:
+  - "3.0"
+  - "3.1"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+
+# Docker image variants to use
+image_variants:
+  - "slim"      # Debian-based Ruby images
+  - "alpine"    # Alpine-based Ruby images
+
+# Output directory for results
+output_dir: "docker-results"
+
+# Benchmark configuration file to use
+benchmark_config: "config/full.yml"
 ----
 
-== Docker containers and cross-platform benchmarking
+==== ASDF configuration (`streambench-asdf.yml`)
 
-Serialbench provides pre-built Docker containers and supports cross-platform benchmarking on Windows, macOS, and Linux. Our containers are automatically built and published to GitHub Container Registry for easy access.
+[source,yaml]
+----
+# Streambench ASDF Configuration
+runtime: asdf
 
-=== Published Docker containers
+# Ruby versions to benchmark (full version numbers required for ASDF)
+ruby_versions:
+  - "3.0.7"
+  - "3.1.7"
+  - "3.2.8"
+  - "3.3.8"
+  - "3.4.4"
 
-We publish multi-architecture Docker containers for all supported Ruby versions:
+# Automatically install missing Ruby versions
+auto_install: true
 
-**Registry**: `ghcr.io/metanorma/serialbench`
+# Output directory for results
+output_dir: "asdf-results"
 
-**Available tags**:
-* `ghcr.io/metanorma/serialbench:main-ruby-3.1` - Ruby 3.1 (linux/amd64, linux/arm64)
-* `ghcr.io/metanorma/serialbench:main-ruby-3.2` - Ruby 3.2 (linux/amd64, linux/arm64)
-* `ghcr.io/metanorma/serialbench:main-ruby-3.3` - Ruby 3.3 (linux/amd64, linux/arm64)
-* `ghcr.io/metanorma/serialbench:main-ruby-3.4` - Ruby 3.4 (linux/amd64, linux/arm64)
+# Benchmark configuration file to use
+benchmark_config: "config/full.yml"
+----
 
-**Container features**:
-* All serialization libraries pre-installed (XML, JSON, YAML, TOML)
-* Multi-architecture support (Intel x64 and ARM64)
-* Optimized for CI/CD and local development
-* Automatic updates on code changes
+=== Quick start examples
+
+==== Complete Docker workflow
+
+[source,bash]
+----
+# 1. Generate configuration
+$ serialbench streambench init docker
+
+# 2. Execute complete workflow (steps 2-6 automatically)
+$ serialbench streambench execute docker --config=streambench-docker.yml
+
+# 3. View results
+$ open docker-results/_site/index.html
+----
+
+==== Complete ASDF workflow
+
+[source,bash]
+----
+# 1. Generate configuration
+$ serialbench streambench init asdf
+
+# 2. Execute complete workflow (steps 2-6 automatically)
+$ serialbench streambench execute asdf --config=streambench-asdf.yml
+
+# 3. View results
+$ open asdf-results/_site/index.html
+----
+
+==== Step-by-step execution
+
+[source,bash]
+----
+# 1. Generate and validate configuration
+$ serialbench streambench init docker
+$ serialbench streambench validate streambench-docker.yml
+
+# 2. Prepare environments
+$ serialbench streambench prepare docker --config=streambench-docker.yml
+
+# 3. Run benchmarks
+$ serialbench streambench benchmark docker --config=streambench-docker.yml
+
+# 4-6. Results are automatically collected, merged, and dashboard generated
+$ open docker-results/_site/index.html
+----
+
+=== Docker (manual usage)
 
 === Running benchmarks on your computer
 
@@ -540,24 +768,29 @@ Results are organized in `docker-results/`:
 [source]
 ----
 docker-results/
-├── ruby-3.0/              # Ruby 3.0 individual results
-│   ├── benchmark.log       # Execution log
+├── docker-slim-x64-ruby-3.0/      # Ruby 3.0 slim individual results
+│   ├── benchmark.log               # Execution log
 │   ├── data/
-│   │   ├── results.json    # Raw benchmark data
-│   │   └── results.yaml    # YAML format results
+│   │   ├── results.json            # Raw benchmark data
+│   │   └── results.yaml            # YAML format results
 │   ├── reports/
 │   │   └── benchmark_report.html
 │   └── assets/
-├── ruby-3.1/              # Ruby 3.1 individual results
-├── ruby-3.2/              # Ruby 3.2 individual results
-├── ruby-3.3/              # Ruby 3.3 individual results
-├── ruby-3.4/              # Ruby 3.4 individual results
-├── merged/                 # Aggregated cross-version results
-│   └── merged_results.json # Combined performance data
-└── docs/                   # GitHub Pages ready output
-    ├── index.html          # Interactive comparison report
-    ├── styles.css          # Report styling
-    └── merged_results.json # Data for interactive charts
+├── docker-alpine-x64-ruby-3.0/    # Ruby 3.0 alpine individual results
+├── docker-slim-x64-ruby-3.1/      # Ruby 3.1 slim individual results
+├── docker-alpine-x64-ruby-3.1/    # Ruby 3.1 alpine individual results
+├── docker-slim-x64-ruby-3.2/      # Ruby 3.2 slim individual results
+├── docker-alpine-x64-ruby-3.2/    # Ruby 3.2 alpine individual results
+├── docker-slim-x64-ruby-3.3/      # Ruby 3.3 slim individual results
+├── docker-alpine-x64-ruby-3.3/    # Ruby 3.3 alpine individual results
+├── docker-slim-x64-ruby-3.4/      # Ruby 3.4 slim individual results
+├── docker-alpine-x64-ruby-3.4/    # Ruby 3.4 alpine individual results
+├── merged/                         # Aggregated cross-version results
+│   └── merged_results.json         # Combined performance data
+└── _site/                          # GitHub Pages ready output
+    ├── index.html                  # Interactive comparison report
+    ├── styles.css                  # Report styling
+    └── merged_results.json         # Data for interactive charts
 ----
 
 === Manual Docker usage
@@ -626,66 +859,7 @@ The Docker images support these environment variables:
 * `PATH` - System PATH including bundle binaries
 * `RUBY_VERSION` - Ruby version for build-time configuration
 
-=== Result aggregation and GitHub Pages
-
-==== Merging multi-version results
-
-The Docker workflow automatically merges results from all Ruby versions:
-
-[source]
-----
-# Manual result merging
-$ serialbench merge_results \
-  docker-results/ruby-3.0 \
-  docker-results/ruby-3.1 \
-  docker-results/ruby-3.2 \
-  docker-results/ruby-3.3 \
-  docker-results/ruby-3.4 \
-  docker-results/merged
-----
-
-==== GitHub Pages generation
-
-Generate interactive HTML reports ready for GitHub Pages deployment:
-
-[source]
-----
-# Generate GitHub Pages from multi-version results
-$ serialbench github_pages \
-  docker-results/ruby-3.0 \
-  docker-results/ruby-3.1 \
-  docker-results/ruby-3.2 \
-  docker-results/ruby-3.3 \
-  docker-results/ruby-3.4 \
-  docker-results/docs
-----
-
-The generated GitHub Pages include:
-
-* **Interactive Performance Charts**: Compare serializers across Ruby versions
-* **Multi-Version Analysis**: See how performance changes between Ruby releases
-* **Environment Details**: Ruby versions, platforms, and library versions
-* **Responsive Design**: Works on desktop and mobile devices
-* **Direct Deployment**: Ready for GitHub Pages, Netlify, or any static hosting
-
-==== Deploying to GitHub Pages
-
-. **Commit the generated files**:
-+
-[source]
-----
-$ git add docker-results/docs/
-$ git commit -m "Add multi-Ruby benchmark results"
-$ git push origin main
-----
-
-. **Enable GitHub Pages** in repository settings:
-.. Go to Settings → Pages
-.. Set source to "Deploy from a branch"
-.. Select branch containing the `docs/` folder
-.. Set folder to `/docker-results/docs`
-
-. **Access your results** at: `https://yourusername.github.io/yourrepo/`
+For detailed deployment instructions including GitHub Pages setup and CI/CD integration, see link:docs/DEPLOYMENT.adoc[Deployment Guide].
 
 === Troubleshooting Docker issues
 
@@ -718,6 +892,62 @@ Common runtime issues:
 * **Memory constraints**: Increase Docker memory allocation
 * **Timeout issues**: Some benchmarks may take longer on slower systems
 * **Permission errors**: Ensure proper volume mounting permissions
+
+=== Known issues and limitations
+
+==== Syck YAML serializer segmentation faults
+
+The Syck YAML serializer is known to cause segmentation faults on ARM64 architecture with Ruby 3.1 and later versions. This is a known compatibility issue between the syck gem and newer Ruby versions on ARM64 systems.
+
+**Affected configurations:**
+* ARM64/aarch64 architecture (Apple Silicon Macs, ARM64 Linux)
+* Ruby 3.1.0 and later versions
+* Both Docker and ASDF runtime environments
+
+**Symptoms:**
+* Benchmark process crashes with segmentation fault
+* Error message: "Segmentation fault (core dumped)"
+* Incomplete benchmark results
+
+**Automatic handling:**
+Serialbench automatically detects this problematic configuration and:
+* Displays a warning message when Syck is detected on ARM64 with Ruby 3.1+
+* Skips Syck benchmarks to prevent crashes
+* Continues with other YAML serializers (Psych)
+
+**Manual workaround:**
+If you encounter Syck-related crashes:
+
+[source]
+----
+# Check your platform and Ruby version
+$ ruby -e "puts RUBY_PLATFORM"
+$ ruby -v
+
+# Remove syck from Gemfile if present
+# gem 'syck'  # Comment out or remove this line
+
+# Run benchmarks excluding Syck
+$ serialbench benchmark --formats yaml --parsers psych
+----
+
+**Alternative YAML serializers:**
+* **Psych** (recommended): Ruby's standard YAML library, stable across all platforms
+* **Future alternatives**: Consider other YAML libraries as they become available
+
+This issue is tracked in the syck gem repository and affects multiple Ruby projects on ARM64 systems.
+
+==== Memory profiling limitations
+
+Memory profiling may show inconsistent results on some platforms due to:
+* Garbage collection timing differences
+* Platform-specific memory allocation patterns
+* Docker container memory constraints
+
+**Recommendations:**
+* Run memory profiling multiple times for consistency
+* Use larger data sizes for more reliable memory measurements
+* Consider platform-specific memory profiling tools for detailed analysis
 
 ==== Docker system issues
 
@@ -787,87 +1017,33 @@ Change the output directory in the run script:
 OUTPUT_DIR="my-benchmark-results"
 ----
 
-=== Integration with CI/CD
-
-==== GitHub Actions integration
-
-The Docker setup integrates seamlessly with GitHub Actions:
-
-[source,yaml]
-----
-# .github/workflows/benchmark.yml
-name: Multi-Ruby Benchmarks
-
-on:
-  schedule:
-    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
-  workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  benchmark:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Run Docker Benchmarks
-        run: ./docker/run-benchmarks.sh
-
-      - name: Upload Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmark-results
-          path: docker-results/
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./docker-results/docs
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: benchmark
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-----
-
-==== Performance considerations
-
-* **Parallel builds**: Docker builds can run in parallel for faster execution
-* **Build caching**: Subsequent runs use cached layers for faster builds
-* **Memory profiling**: Enabled by default but can be disabled for faster runs
-* **Result compression**: Large result files can be compressed for storage
-
-=== Security considerations
-
-* **Containers run with minimal privileges**: No root access required
-* **No network access during benchmarks**: Isolated execution environment
-* **Volume mounting**: Results written only to specified mounted volumes
-* **Image scanning**: Regular security updates for base Ruby images
 
 == Usage
 
 === Command line interface
+
+==== Streambench commands
+
+The `streambench` subcommand provides unified orchestration for multi-environment benchmarking:
+
+[source]
+----
+# Initialize configuration files
+$ bundle exec serialbench streambench init docker    # Creates streambench-docker.yml
+$ bundle exec serialbench streambench init asdf      # Creates streambench-asdf.yml
+
+# Validate configuration
+$ bundle exec serialbench streambench validate streambench-docker.yml
+$ bundle exec serialbench streambench validate streambench-asdf.yml
+
+# Execute complete workflow (prepare + benchmark + merge + dashboard)
+$ bundle exec serialbench streambench execute docker --config=streambench-docker.yml
+$ bundle exec serialbench streambench execute asdf --config=streambench-asdf.yml
+
+# Run individual phases
+$ bundle exec serialbench streambench prepare docker --config=streambench-docker.yml
+$ bundle exec serialbench streambench benchmark docker --config=streambench-docker.yml
+----
 
 ==== Basic usage
 
@@ -891,6 +1067,7 @@ Show help information:
 ----
 $ serialbench help
 $ serialbench help benchmark
+$ serialbench help streambench
 ----
 
 Show version:
@@ -1294,65 +1471,124 @@ the `memory_profiler` gem.
 
 == Output and reports
 
-=== Generated files
+=== Modern dashboard system
 
-Running benchmarks creates the following output structure:
+The current Serialbench system generates interactive HTML dashboards using the format-based template system:
+
+==== Single environment results
 
 [source]
 ----
 results/
-├── reports/
-│   ├── benchmark_report.html    # Main HTML report
-│   └── benchmark_report.adoc    # AsciiDoc source
-├── charts/
-│   ├── parsing_performance.svg
-│   ├── generation_performance.svg
-│   ├── streaming_performance.svg
-│   ├── memory_usage_comparison.svg
-│   └── format_comparison.svg
 ├── data/
 │   ├── results.json             # Raw benchmark data
-│   └── results.csv              # CSV export
+│   └── results.yaml             # YAML format results
+├── reports/
+│   └── benchmark_report.html    # Interactive HTML report
 └── assets/
     └── css/
         └── benchmark_report.css # Report styling
 ----
 
-=== Report features
+==== Multi-environment results (Docker/ASDF)
 
-* **Multi-format comparison**: Compare XML, JSON, and TOML performance
-* **Interactive charts**: SVG-based performance visualizations
-* **Comparative analysis**: Side-by-side library comparisons
-* **Performance rankings**: Fastest to slowest for each category
-* **Memory profiling**: Detailed memory allocation analysis
-* **Feature matrix**: Capability comparison across libraries
-* **Environment details**: Ruby version, platform, and library versions
+[source]
+----
+docker-results/  # or asdf-results/
+├── ruby-3.0/                   # Per-Ruby environment
+│   ├── benchmark.log
+│   ├── data/results.json
+│   └── reports/benchmark_report.html
+├── ruby-3.1/
+├── ruby-3.2/
+├── ruby-3.3/
+├── ruby-3.4/
+├── merged/                      # Cross-environment aggregation
+│   └── merged_results.json
+└── docs/                        # GitHub Pages dashboard
+    ├── index.html               # Interactive comparison dashboard
+    ├── merged_results.json      # Dashboard data
+    └── assets/
+        ├── css/themes.css       # Light/dark theme styles
+        └── js/dashboard.js      # Interactive functionality
+----
 
-=== Sample output
+=== Interactive dashboard features
+
+The modern format-based dashboard provides:
+
+==== Navigation and filtering
+* **Format tabs**: Dedicated views for XML, JSON, YAML, and TOML
+* **Operation sections**: Parsing, generation, streaming, and memory usage
+* **Dynamic filtering**: Platform, Ruby version, and image variant selection
+* **Real-time updates**: Charts update instantly based on filter selections
+
+==== Visualization capabilities
+* **Chart.js integration**: Interactive performance charts with hover details
+* **Multi-scale handling**: Automatic Y-axis scaling for different performance ranges
+* **Color-coded data**: Consistent color schemes across serializers and environments
+* **Responsive design**: Optimized for desktop and mobile viewing
+
+==== User experience
+* **Theme toggle**: Light and dark mode with persistent preferences
+* **Keyboard navigation**: Full accessibility support
+* **Fast loading**: Optimized JavaScript for quick dashboard initialization
+* **Export capabilities**: JSON data export for further analysis
+
+=== Data visualization scaling
+
+The dashboard handles performance data across multiple scales:
+
+* **Small data operations**: ~200,000+ operations per second
+* **Medium data operations**: ~1,000-10,000 operations per second
+* **Large data operations**: ~100-1,000 operations per second
+
+Each chart automatically adjusts its Y-axis scaling to provide optimal visualization for the selected data subset.
+
+=== Report generation commands
+
+Generate different types of reports:
+
+[source]
+----
+# Single benchmark report
+$ serialbench render_template results.json single_benchmark output/
+
+# Multi-version comparison dashboard
+$ serialbench render_template merged_results.json format_based output/
+
+# Platform comparison matrix
+$ serialbench render_template merged_results.json platform_matrix output/
+
+# GitHub Pages deployment
+$ serialbench github_pages ruby-3.0/ ruby-3.1/ ruby-3.2/ docs/
+----
+
+=== Sample dashboard output
+
+The interactive dashboard displays performance data with:
 
 [example]
 ====
-Serialbench - Comprehensive Serialization Performance Tests
-===========================================================
-Environment: Ruby 3.3.2 on arm64-darwin23
-Timestamp: 2025-06-07T10:30:00Z
+Format-Based Performance Dashboard
+==================================
+Environment: Multiple Ruby versions (3.0-3.4) on aarch64-linux
 
-Available serializers: rexml, json, oj, toml-rb
-Test formats: xml, json, toml
-Test data sizes: small, medium, large
+XML Performance (Small Data):
+  Ox:       380,343 ops/sec
+  Nokogiri:  45,231 ops/sec
+  REXML:      7,954 ops/sec
 
-Parsing Performance:
-  Small files:
-    JSON/oj: 0.08ms
-    JSON/json: 0.12ms
-    XML/rexml: 0.45ms
-    TOML/toml-rb: 0.52ms
+JSON Performance (Small Data):
+  Oj:       673,219 ops/sec
+  JSON:     633,252 ops/sec
+  YAJL:     521,043 ops/sec
 
-  Medium files:
-    JSON/oj: 8.23ms
-    JSON/json: 12.67ms
-    XML/rexml: 28.45ms
-    TOML/toml-rb: 35.21ms
+Interactive Controls:
+  [XML] [JSON] [YAML] [TOML]
+  Platform: [All] [aarch64-linux] [x86_64-linux]
+  Ruby: [All] [3.0] [3.1] [3.2] [3.3] [3.4]
+  Theme: [🌙 Dark] [☀️ Light]
 ====
 
 == Methodology
@@ -1448,36 +1684,208 @@ end
 
 == Architecture
 
-=== Serializer hierarchy
+=== System architecture overview
+
+Serialbench is a comprehensive benchmarking system that evaluates serialization library performance across multiple dimensions:
+
+* **Multiple platforms**: Runs locally as well as via Docker (container) / ASDF
+(local), supporting ARM64 / x86_64 architectures, and various operating
+systems (Linux, macOS, Windows)
+
+* **Multiple Ruby interpreters**: Ruby MRI (and others in the future)
+
+* **Multiple data sizes**: Small (~1KB), Medium (~1MB), Large (~10MB)
+
+* **Multiple formats**: XML, JSON, YAML, TOML
+
+As a result, **multiple format parsers** are put to the test!
+
+
+=== Template system architecture
+
+The template system uses Liquid templating with embedded JavaScript for interactive dashboards.
+
+==== Template hierarchy
 
 [source]
 ----
-BaseSerializer
-├── BaseXmlSerializer
-│   └── RexmlSerializer
-├── BaseJsonSerializer
-│   ├── JsonSerializer
-│   └── OjSerializer
-└── BaseTomlSerializer
-    └── TomlRbSerializer
+lib/serialbench/templates/
+├── base.liquid              # Base template structure
+├── format_based.liquid      # Modern format-based dashboard
+├── multi_version.liquid     # Multi-version comparison
+├── platform_matrix.liquid   # Platform comparison matrix
+├── single_benchmark.liquid  # Single benchmark report
+├── assets/
+│   ├── css/
+│   │   └── themes.css       # Light/dark theme styles
+│   └── js/
+│       └── dashboard.js     # Interactive functionality
+└── partials/
+    └── (shared components)
 ----
 
-=== Key components
+==== Data flow through templates
 
-* **Serializers**: Individual library implementations
-* **BenchmarkRunner**: Orchestrates benchmark execution
-* **ResultFormatter**: Formats and displays results
-* **ReportGenerator**: Creates HTML/AsciiDoc reports
-* **ChartGenerator**: Creates performance visualizations
-* **MemoryProfiler**: Analyzes memory usage patterns
+. **Input data**: Merged JSON results from multiple environments
+. **Template processing**: Liquid template engine processes data
+. **JavaScript embedding**: Dashboard data embedded as `window.benchmarkData`
+. **Client-side rendering**: JavaScript creates interactive charts and filters
+. **User interaction**: Real-time filtering and chart updates
 
-== Research and references
+==== Current data size handling limitation
 
-This benchmarking suite was developed based on research from:
+The current dashboard combines all data sizes (small, medium, large) into single charts, which creates scaling issues:
 
-* https://www.ohler.com/dev/xml_with_ruby/xml_with_ruby.html[XML with Ruby performance analysis]
-* https://gist.github.com/danneu/3977120[Ruby XML parser comparison]
-* https://gist.github.com/adilosa/d4277dc1c683da91990515352ffe5420[XML parsing benchmarks]
+* Small data operations: ~200,000+ ops/sec
+* Medium data operations: ~1,000-10,000 ops/sec
+* Large data operations: ~100-1,000 ops/sec
+
+This makes it difficult to visualize performance differences within each size category.
+
+=== Multi-platform execution workflow
+
+==== Docker runtime workflow
+
+. **Configuration**: `streambench-docker.yml` specifies Ruby versions and image variants
+. **Image building**:
+.. Pull official Ruby images (`ruby:3.x`, `ruby:3.x-alpine`)
+.. Install serialization libraries
+.. Create benchmark-ready containers
+. **Benchmark execution**:
+.. Run benchmarks in isolated containers
+.. Generate per-environment results
+.. Collect logs and performance data
+. **Result aggregation**:
+.. Merge results from all containers
+.. Generate cross-environment comparisons
+.. Create GitHub Pages dashboard
+
+==== ASDF runtime workflow
+
+. **Configuration**: `streambench-asdf.yml` specifies exact Ruby versions
+. **Ruby installation**:
+.. Check for existing Ruby versions via ASDF
+.. Install missing versions automatically
+.. Install required gems in each Ruby environment
+. **Benchmark execution**:
+.. Switch between Ruby versions using ASDF
+.. Run benchmarks in each environment
+.. Collect performance data
+. **Result processing**:
+.. Merge results from all Ruby versions
+.. Generate comparative analysis
+.. Create interactive dashboard
+
+==== Cross-platform data structure
+
+[source,json]
+----
+{
+  "environments": {
+    "3_3_8_aarch64_linux_musl": {
+      "ruby_version": "3.3.8",
+      "ruby_platform": "aarch64-linux-musl",
+      "source_file": "docker-results/ruby-3.3-alpine/data/results.yaml",
+      "environment": {
+        "serializer_versions": {
+          "ox": "2.14.23",
+          "nokogiri": "1.18.8",
+          "json": "2.12.2"
+        }
+      }
+    }
+  },
+  "combined_results": {
+    "parsing": {
+      "small": {
+        "xml": {
+          "ox": {
+            "3_3_8_aarch64_linux_musl": {
+              "iterations_per_second": 335188.01906371984,
+              "time_per_iteration": 0.000002983400190714747
+            }
+          }
+        }
+      },
+      "medium": { /* ... */ },
+      "large": { /* ... */ }
+    }
+  }
+}
+----
+
+=== Performance analysis capabilities
+
+==== Metrics collected
+
+* **Parsing performance**: Time to convert serialized data to Ruby objects
+* **Generation performance**: Time to convert Ruby objects to serialized strings
+* **Memory usage**: Allocation and retention during operations
+* **Streaming performance**: Event-based parsing for supported libraries
+
+==== Statistical analysis
+
+* **Multiple iterations**: Reduces timing variance
+* **Warmup iterations**: Eliminates JIT compilation effects
+* **Memory profiling**: Accounts for garbage collection
+* **Cross-platform comparison**: Identifies platform-specific optimizations
+
+==== Dashboard features
+
+* **Interactive filtering**: Platform, Ruby version, format selection
+* **Real-time charts**: Performance visualization with Chart.js
+* **Theme support**: Light/dark mode with persistent preferences
+* **Mobile responsive**: Touch-optimized interface
+* **Export capabilities**: JSON data export for further analysis
+
+=== Configuration management
+
+==== Docker configuration
+
+[source,yaml]
+----
+runtime: docker
+ruby_versions:
+  - "3.0"
+  - "3.1"
+  - "3.2"
+  - "3.3"
+  - "3.4"
+image_variants:
+  - "slim"      # Debian-based
+  - "alpine"    # Alpine-based
+output_dir: "docker-results"
+benchmark_config: "config/full.yml"
+----
+
+==== ASDF configuration
+
+[source,yaml]
+----
+runtime: asdf
+ruby_versions:
+  - "3.0.7"
+  - "3.1.7"
+  - "3.2.8"
+  - "3.3.8"
+  - "3.4.4"
+auto_install: true
+output_dir: "asdf-results"
+benchmark_config: "config/full.yml"
+----
+
+=== Future enhancements needed
+
+==== Data size visualization improvement
+
+The current dashboard needs enhancement to properly handle different data size scales:
+
+* **Separate charts per data size**: Small, medium, large data should have dedicated visualizations
+* **Size toggle controls**: Users should be able to switch between data sizes
+* **Appropriate scaling**: Each chart should use optimal Y-axis scaling for its data range
+* **Comparative analysis**: Side-by-side comparison of performance across sizes
+
+This enhancement would significantly improve the usability and analytical value of the performance dashboard.
 
 == Copyright
 

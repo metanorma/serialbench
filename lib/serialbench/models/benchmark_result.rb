@@ -11,7 +11,7 @@ module Serialbench
                     :ruby_version, :ruby_platform, :timestamp
 
       def initialize(data = {})
-        @environment = Environment.new(data['environment'] || data[:environment] || {})
+        @environment = BenchmarkEnvironment.new(data['environment'] || data[:environment] || {})
         @parsing = OperationResults.new(data['parsing'] || data[:parsing] || {})
         @generation = OperationResults.new(data['generation'] || data[:generation] || {})
         @memory = MemoryResults.new(data['memory'] || data[:memory] || {})
@@ -54,7 +54,7 @@ module Serialbench
         to_hash.to_yaml
       end
 
-      def to_json
+      def to_json(*_args)
         JSON.pretty_generate(to_hash)
       end
 
@@ -84,7 +84,7 @@ module Serialbench
       end
     end
 
-    class Environment
+    class BenchmarkEnvironment
       attr_accessor :ruby_version, :ruby_platform, :serializer_versions, :timestamp
 
       def initialize(data = {})
@@ -209,9 +209,11 @@ module Serialbench
       end
 
       def []=(serializer, performance_data)
-        @serializers[serializer] = performance_data.is_a?(PerformanceData) ?
-                                   performance_data :
-                                   PerformanceData.new(performance_data)
+        @serializers[serializer] = if performance_data.is_a?(PerformanceData)
+                                     performance_data
+                                   else
+                                     PerformanceData.new(performance_data)
+                                   end
       end
 
       def to_hash
@@ -244,9 +246,11 @@ module Serialbench
       end
 
       def []=(serializer, memory_data)
-        @serializers[serializer] = memory_data.is_a?(MemoryData) ?
-                                   memory_data :
-                                   MemoryData.new(memory_data)
+        @serializers[serializer] = if memory_data.is_a?(MemoryData)
+                                     memory_data
+                                   else
+                                     MemoryData.new(memory_data)
+                                   end
       end
 
       def to_hash

@@ -2,6 +2,15 @@
 
 require_relative 'models/benchmark_result'
 require_relative 'models/merged_benchmark_result'
+require_relative 'models/platform'
+require_relative 'models/run_result'
+require_relative 'models/run_set_result'
+require_relative 'models/run_set_manager'
+require_relative 'models/report'
+require_relative 'models/result_store'
+require_relative 'models/environment'
+require_relative 'models/result'
+require_relative 'models/result_set'
 
 module Serialbench
   module Models
@@ -35,6 +44,23 @@ module Serialbench
     # Convert any benchmark result to JSON format (for HTML templates)
     def self.to_json_file(result, file_path)
       result.to_json_file(file_path)
+    end
+
+    # Convenience methods for the new OO architecture
+    def self.result_store
+      ResultStore.default
+    end
+
+    def self.create_run(platform_string, benchmark_data, metadata: {})
+      RunResult.create(platform_string, benchmark_data, metadata: metadata)
+    end
+
+    def self.create_run_set(name, run_paths_or_objects, metadata: {})
+      RunSetResult.create(name, run_paths_or_objects, metadata: metadata)
+    end
+
+    def self.generate_report(source, output_path = '_site', template_type: nil)
+      Report.generate(source, output_path, template_type: template_type)
     end
   end
 end

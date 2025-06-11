@@ -121,17 +121,46 @@ module Serialbench
     def generate_github_pages_html(output_dir)
       FileUtils.mkdir_p(output_dir)
 
-      # Use new template system for multi-version reports
+      # Use format-based template for better dashboard experience
       renderer = TemplateRenderer.new
-      renderer.render_multi_version(@merged_results.to_hash, output_dir)
+
+      # Prepare data for format_based template
+      merged_hash = @merged_results.to_hash
+      template_data = {
+        page_title: "SerialBench - Multi-Version Comparison",
+        report_title: "SerialBench Multi-Version Performance Dashboard",
+        report_subtitle: "Performance comparison across serialization formats and Ruby versions",
+        combined_results: merged_hash['combined_results'] || {},
+        environments: merged_hash['environments'] || {},
+        metadata: {
+          generated_at: Time.now.strftime('%Y-%m-%d %H:%M:%S UTC'),
+          ruby_versions: merged_hash.dig('metadata', 'ruby_versions') || [],
+          platforms: merged_hash.dig('metadata', 'platforms') || [],
+          timestamp: merged_hash.dig('metadata', 'merged_at') || Time.now.iso8601
+        }
+      }
+
+      # Generate format-based dashboard
+      html_content = renderer.render_template('format_based', template_data)
 
       index_file = File.join(output_dir, 'index.html')
-      css_file = File.join(output_dir, 'styles.css')
+      File.write(index_file, html_content)
+
+      # Copy assets
+      assets_dir = File.join(output_dir, 'assets')
+      FileUtils.mkdir_p(File.join(assets_dir, 'css'))
+      FileUtils.mkdir_p(File.join(assets_dir, 'js'))
+
+      # Copy CSS and JS files
+      FileUtils.cp('lib/serialbench/templates/assets/css/themes.css', File.join(assets_dir, 'css/'))
+      FileUtils.cp('lib/serialbench/templates/assets/js/dashboard.js', File.join(assets_dir, 'js/'))
+
+      css_file = File.join(assets_dir, 'css', 'themes.css')
 
       # Also generate the legacy version for backward compatibility
       legacy_html = generate_combined_html
       File.write(File.join(output_dir, 'legacy.html'), legacy_html)
-      File.write(css_file, generate_css)
+      File.write(File.join(output_dir, 'styles.css'), generate_css)
 
       puts "GitHub Pages HTML generated: #{index_file}"
       puts "CSS file generated: #{css_file}"
