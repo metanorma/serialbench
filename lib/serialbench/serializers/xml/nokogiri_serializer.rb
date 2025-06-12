@@ -49,8 +49,6 @@ module Serialbench
           Nokogiri::VERSION
         end
 
-        protected
-
         def library_require_name
           'nokogiri'
         end

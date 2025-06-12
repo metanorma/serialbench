@@ -1,0 +1,29 @@
+# Configuration for comprehensive benchmarks - Full testing with all data sizes
+# Used by Docker script for complete performance analysis
+
+# Run name for identification
+name: full-benchmark
+
+data_sizes:
+- small
+- medium
+- large
+
+formats:
+- xml
+- json
+- yaml
+- toml
+
+iterations:
+  small: 20
+  medium: 5
+  large: 2
+
+operations:
+- parse
+- generate
+- streaming
+- memory
+
+warmup: 3

@@ -1,88 +1,35 @@
 # frozen_string_literal: true
 
-require 'rbconfig'
+require 'lutaml/model'
+require_relative '../ruby_build_manager'
 
 module Serialbench
   module Models
-    class Platform
-      attr_reader :runtime, :os, :arch, :ruby_version, :variant
+    # platform:
+    #   platform_string: docker-ruby-3.0
+    #   kind: docker
+    #   os: linux
+    #   arch: arm64
+    #   ruby_build_tag: 3.0.7
 
-      def initialize(runtime:, ruby_version:, variant: nil)
-        @runtime = runtime.to_s
-        @ruby_version = ruby_version
-        @variant = variant
-        @os = detect_os
-        @arch = detect_arch
+    class Platform < Lutaml::Model::Serializable
+      attribute :platform_string, :string
+      attribute :kind, :string, default: -> { 'local' }
+      attribute :os, :string, default: -> { detect_os }
+      attribute :arch, :string, default: -> { detect_arch }
+      attribute :ruby_version, :string, default: -> { RUBY_VERSION }
+      attribute :ruby_platform, :string, default: -> { RUBY_PLATFORM }
+      attribute :ruby_build_tag, :string, values: RubyBuildManager.list_definitions
+
+      def self.current_local
+        new(
+          platform_string: "local-#{RUBY_VERSION}",
+          kind: 'local',
+          ruby_build_tag: RUBY_VERSION
+        )
       end
 
-      def self.docker(ruby_version:, variant:)
-        new(runtime: :docker, ruby_version: ruby_version, variant: variant)
-      end
-
-      def self.local(ruby_version:)
-        new(runtime: :local, ruby_version: ruby_version)
-      end
-
-      def self.current_local(ruby_version: RUBY_VERSION)
-        new(runtime: :local, ruby_version: ruby_version)
-      end
-
-      def platform_string
-        case @runtime
-        when 'docker'
-          raise ArgumentError, "Docker platform requires variant" unless @variant
-          "docker-#{@variant}-#{@arch}-ruby-#{major_minor_version}"
-        when 'local'
-          "local-#{@os}-#{@arch}-ruby-#{@ruby_version}"
-        else
-          raise ArgumentError, "Unknown runtime: #{@runtime}"
-        end
-      end
-
-      def tags
-        base_tags = [@runtime, @arch, "ruby-#{major_minor_version}"]
-
-        case @runtime
-        when 'docker'
-          base_tags << @variant if @variant
-        when 'local'
-          base_tags << @os
-        end
-
-        base_tags
-      end
-
-      def docker?
-        @runtime == 'docker'
-      end
-
-      def local?
-        @runtime == 'local'
-      end
-
-      def to_hash
-        {
-          'runtime' => @runtime,
-          'os' => @os,
-          'arch' => @arch,
-          'ruby_version' => @ruby_version,
-          'variant' => @variant,
-          'platform_string' => platform_string,
-          'tags' => tags
-        }.reject { |_, v| v.nil? }
-      end
-
-      def ==(other)
-        other.is_a?(Platform) && platform_string == other.platform_string
-      end
-
-      def hash
-        platform_string.hash
-      end
-
-      private
-
-      def detect_os
+      def self.detect_os
         case RbConfig::CONFIG['host_os']
         when /darwin/i
           'macos'
@@ -95,7 +42,7 @@ module Serialbench
         end
       end
 
-      def detect_arch
+      def self.detect_arch
         case RbConfig::CONFIG['host_cpu']
         when /x86_64|amd64/i
           'x86_64'
@@ -106,10 +53,6 @@ module Serialbench
         else
           'unknown'
         end
-      end
-
-      def major_minor_version
-        @ruby_version.split('.')[0..1].join('.')
       end
     end
   end

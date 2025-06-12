@@ -93,7 +93,7 @@ jobs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: docker/Dockerfile.benchmark
+        file: docker/Dockerfile.ubuntu
         build-args: |
           RUBY_VERSION=${{ matrix.ruby-version }}
         push: true

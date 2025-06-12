@@ -77,8 +77,6 @@ module Serialbench
           false
         end
 
-        protected
-
         def supports_xpath?
           true
         end

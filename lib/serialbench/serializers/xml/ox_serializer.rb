@@ -40,8 +40,6 @@ module Serialbench
           Ox::VERSION
         end
 
-        protected
-
         def library_require_name
           'ox'
         end

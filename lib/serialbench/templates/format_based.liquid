@@ -158,40 +158,6 @@
             </div>
         </section>
 
-        <!-- Performance Summary -->
-        <section class="summary-section fade-in-up">
-            <h2 class="summary-title">Performance Summary</h2>
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <h3 class="summary-card-title">🚀 Fastest Serializers</h3>
-                    <div id="fastest-serializers">
-                        <p>Analysis based on current filters...</p>
-                    </div>
-                </div>
-
-                <div class="summary-card">
-                    <h3 class="summary-card-title">💾 Memory Efficient</h3>
-                    <div id="memory-efficient">
-                        <p>Analysis based on current filters...</p>
-                    </div>
-                </div>
-
-                <div class="summary-card">
-                    <h3 class="summary-card-title">⚖️ Best Balance</h3>
-                    <div id="balanced-performance">
-                        <p>Analysis based on current filters...</p>
-                    </div>
-                </div>
-
-                <div class="summary-card">
-                    <h3 class="summary-card-title">📊 Key Insights</h3>
-                    <div id="key-insights">
-                        <p>Performance insights based on current selection...</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
         <!-- Environment Information -->
         <section class="environment-section fade-in-up">
             <h2 class="summary-title">Environment Information</h2>
@@ -203,11 +169,7 @@
 
     <!-- Embedded Data -->
     <script>
-        window.benchmarkData = {
-            combined_results: {{ combined_results | jsonify }},
-            environments: {{ environments | jsonify }},
-            metadata: {{ metadata | jsonify }}
-        };
+        window.benchmarkData = {{ data }};
     </script>
 
     <!-- JavaScript -->

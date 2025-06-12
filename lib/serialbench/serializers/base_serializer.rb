@@ -1,26 +1,20 @@
 # frozen_string_literal: true
 
+require 'singleton'
+
 module Serialbench
   module Serializers
     class BaseSerializer
+      include Singleton
+
       def initialize
         # Override in subclasses
       end
 
-      def available?
-        raise NotImplementedError, 'Subclasses must implement #available?'
-      end
-
-      def name
-        raise NotImplementedError, 'Subclasses must implement #name'
-      end
-
-      def version
-        raise NotImplementedError, 'Subclasses must implement #version'
-      end
-
-      def format
-        raise NotImplementedError, 'Subclasses must implement #format'
+      %w[name version format library_require_name available?].each do |method_name|
+        define_method(method_name) do
+          self.class.send(method_name)
+        end
       end
 
       def parse(data)
@@ -43,8 +37,6 @@ module Serialbench
         # Override in subclasses that support streaming
         false
       end
-
-      protected
 
       def require_library(library_name)
         require library_name

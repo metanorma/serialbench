@@ -3,8 +3,9 @@
 require 'thor'
 require_relative 'cli/base_cli'
 require_relative 'cli/environment_cli'
-require_relative 'cli/run_cli'
-require_relative 'cli/runset_cli'
+require_relative 'cli/benchmark_cli'
+require_relative 'cli/resultset_cli'
+require_relative 'cli/ruby_build_cli'
 
 module Serialbench
   # Main CLI entry point for the new object-oriented command structure
@@ -13,13 +14,16 @@ module Serialbench
     subcommand 'environment', Serialbench::Cli::EnvironmentCli
 
     desc 'benchmark SUBCOMMAND', 'Manage individual benchmark runs'
-    subcommand 'benchmark', Serialbench::Cli::RunCli
+    subcommand 'benchmark', Serialbench::Cli::BenchmarkCli
 
-    desc 'runset SUBCOMMAND', 'Manage benchmark runsets (collections of runs)'
-    subcommand 'runset', Serialbench::Cli::RunsetCli
+    desc 'resultset SUBCOMMAND', 'Manage benchmark resultsets (collections of runs)'
+    subcommand 'resultset', Serialbench::Cli::ResultsetCli
+
+    desc 'ruby_build SUBCOMMAND', 'Manage Ruby-Build definitions for validation'
+    subcommand 'ruby_build', Serialbench::Cli::RubyBuildCli
 
     desc 'version', 'Show Serialbench version'
-    def version
+    def self.version
       puts "Serialbench version #{Serialbench::VERSION}"
     end
 
@@ -29,15 +33,16 @@ module Serialbench
         super(command)
       else
         puts <<~HELP
-          Serialbench - Object-Oriented Serialization Benchmarking Framework
+          Serialbench - Benchmarking Framework for Ruby Serialization Libraries
 
           USAGE:
             serialbench COMMAND [SUBCOMMAND] [OPTIONS]
 
           COMMANDS:
-            environment    Manage benchmark environments (Docker, ASDF, Local)
+            environment   Manage benchmark environments (Docker, ASDF, Local)
             benchmark     Manage individual benchmark runs
-            runset        Manage benchmark runsets (collections of runs)
+            resultset     Manage benchmark resultsets (collections of runs)
+            ruby-build    Manage Ruby-Build definitions for validation
             version       Show version information
             help          Show this help message
 
@@ -54,12 +59,12 @@ module Serialbench
             serialbench benchmark execute my-benchmark.yml
 
             # Create a result set for comparison
-            serialbench runset create comparison-set
-            serialbench runset add-run comparison-set results/my-benchmark
+            serialbench resultset create comparison-set
+            serialbench resultset add-result comparison-set results/my-benchmark
 
             # Generate static sites
             serialbench benchmark build-site results/my-benchmark
-            serialbench runset build-site resultsets/comparison-set
+            serialbench resultset build-site resultsets/comparison-set
 
           For detailed help on any command, use:
             serialbench COMMAND help

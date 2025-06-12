@@ -32,8 +32,6 @@ module Serialbench
           TomlRB.dump(object)
         end
 
-        protected
-
         def supports_comments?
           false
         end

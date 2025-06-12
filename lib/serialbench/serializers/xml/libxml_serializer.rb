@@ -49,8 +49,6 @@ module Serialbench
           LibXML::XML::VERSION
         end
 
-        protected
-
         def library_require_name
           'libxml'
         end

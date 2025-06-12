@@ -39,8 +39,6 @@ module Serialbench
           Tomlib::VERSION
         end
 
-        protected
-
         def library_require_name
           'tomlib'
         end
