@@ -1,0 +1,8 @@
+---
+adapter: tomlrb
+format: toml
+data_size: small
+total_allocated: 2824
+total_retained: 0
+allocated_memory: 137920
+retained_memory: 0

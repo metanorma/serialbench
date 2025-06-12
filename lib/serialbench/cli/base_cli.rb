@@ -11,6 +11,10 @@ module Serialbench
     class BaseCli < Thor
       include Thor::Actions
 
+      def self.exit_on_failure?
+        true
+      end
+
       protected
 
       def load_configuration(config_path)
@@ -29,9 +33,10 @@ module Serialbench
         end
       end
 
-      def validate_name(name)
-        return if name.nil? || name.empty?
+      def validate_name(name_with_path)
+        return if name_with_path.nil? || name_with_path.empty?
 
+        name = File.basename(name_with_path)
         return if name.match?(/\A[a-zA-Z0-9_-]+\z/)
 
         say "Invalid name '#{name}'. Names can only contain letters, numbers, hyphens, and underscores.", :red
@@ -40,11 +45,6 @@ module Serialbench
 
       def generate_timestamp
         Time.now.utc.strftime('%Y%m%d_%H%M%S')
-      end
-
-      def ensure_results_directory
-        FileUtils.mkdir_p('results/runs')
-        FileUtils.mkdir_p('results/sets')
       end
     end
   end

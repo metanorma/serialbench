@@ -53,8 +53,6 @@ module Serialbench
           false
         end
 
-        protected
-
         def supports_pretty_print?
           true
         end

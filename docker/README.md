@@ -4,7 +4,7 @@ This directory contains Docker infrastructure for running Serialbench across mul
 
 ## Files
 
-- `Dockerfile.benchmark` - Multi-stage Dockerfile for building benchmark environments
+- `Dockerfile.ubuntu` - Multi-stage Dockerfile for building benchmark environments
 - `run-benchmarks.sh` - Automated script for running benchmarks across multiple Ruby versions
 
 ## Quick Start
@@ -77,7 +77,7 @@ docker-results/
 docker build \
   --build-arg RUBY_VERSION=3.3 \
   -t serialbench:ruby-3.3 \
-  -f docker/Dockerfile.benchmark \
+  -f docker/Dockerfile.ubuntu \
   .
 ```
 

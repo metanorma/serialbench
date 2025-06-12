@@ -1,0 +1,5 @@
+platform_string: docker-ruby-3.0
+kind: docker
+os: linux
+arch: arm64
+ruby_build_tag: 3.0.7

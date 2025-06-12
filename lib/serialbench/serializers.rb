@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'serializers/base_serializer'
+require_relative 'models/benchmark_result'
 
 # XML Serializers
 require_relative 'serializers/xml/base_xml_serializer'
@@ -26,11 +27,12 @@ require_relative 'serializers/yaml/syck_serializer'
 require_relative 'serializers/toml/base_toml_serializer'
 require_relative 'serializers/toml/toml_rb_serializer'
 require_relative 'serializers/toml/tomlib_serializer'
+require_relative 'serializers/toml/tomlrb_serializer'
 
 module Serialbench
   module Serializers
     # Registry of all available serializers
-    SERIALIZERS = {
+    REGISTER = {
       xml: [
         Xml::RexmlSerializer,
         Xml::OxSerializer,
@@ -50,24 +52,39 @@ module Serialbench
       ],
       toml: [
         Toml::TomlRbSerializer,
-        Toml::TomlibSerializer
+        Toml::TomlibSerializer,
+        Toml::TomlrbSerializer
       ]
     }.freeze
 
     def self.all
-      SERIALIZERS.values.flatten
+      REGISTER.values.flatten.map(&:instance)
     end
 
     def self.for_format(format)
-      SERIALIZERS[format.to_sym] || []
+      REGISTER[format.to_sym]&.map(&:instance) || []
+    end
+
+    def self.information
+      return @information if @information
+
+      @information = available.map do |serializer_singleton|
+        Models::SerializerInformation.new(
+          name: serializer_singleton.name,
+          format: serializer_singleton.format.to_s,
+          version: serializer_singleton.version
+        )
+      end
+
+      @information
     end
 
     def self.available_for_format(format)
-      for_format(format).select { |serializer_class| serializer_class.new.available? }
+      for_format(format).select { |serializer_singleton| serializer_singleton.available? }
     end
 
     def self.available
-      all.select { |serializer_class| serializer_class.new.available? }
+      all.select { |serializer_singleton| serializer_singleton.available? }
     end
   end
 end

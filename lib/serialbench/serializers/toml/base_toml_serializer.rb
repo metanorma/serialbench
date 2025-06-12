@@ -6,7 +6,7 @@ module Serialbench
   module Serializers
     module Toml
       class BaseTomlSerializer < BaseSerializer
-        def format
+        def self.format
           :toml
         end
 
@@ -29,12 +29,14 @@ module Serialbench
           }
         end
 
+        def supports_generation?
+          true
+        end
+
         def supports_streaming?
           # TOML is typically not streamed due to its structure
           false
         end
-
-        protected
 
         def supports_comments?
           false

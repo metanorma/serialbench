@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_dependency 'benchmark-ips'
+  spec.add_dependency 'lutaml-model'
   spec.add_dependency 'memory_profiler'
   spec.add_dependency 'thor'
 
@@ -40,11 +41,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'liquid' # Template engine for HTML reports
 
   # XML serializers
-  spec.add_dependency 'rexml' # needed for Ruby 3.4+
   spec.add_dependency 'libxml-ruby'
   spec.add_dependency 'nokogiri'
   spec.add_dependency 'oga'
   spec.add_dependency 'ox'
+  spec.add_dependency 'rexml' # needed for Ruby 3.4+
 
   # JSON serializers
   spec.add_dependency 'oj'
@@ -57,4 +58,5 @@ Gem::Specification.new do |spec|
   # TOML serializers
   spec.add_dependency 'tomlib'
   spec.add_dependency 'toml-rb'
+  spec.add_dependency 'tomlrb'
 end

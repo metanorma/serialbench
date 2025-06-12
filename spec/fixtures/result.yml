@@ -1,0 +1,412 @@
+---
+platform:
+  platform_string: docker-ruby-3.0
+  kind: docker
+  os: linux
+  arch: arm64
+  ruby_build_tag: 3.0.7
+metadata:
+  benchmark_config_path: /app/benchmark_config.yml
+  environment_config_path: /app/environment_config.yml
+  created_at: "2025-06-13T14:07:11+00:00"
+  tags:
+  - local
+  - linux
+  - arm64
+  - ruby-3.0.7
+environment_config:
+  name: docker-ruby-3.0
+  kind: docker
+  created_at: "2025-06-13T15:18:43+08:00"
+  ruby_build_tag: 3.0.7
+  description: Docker environment for Ruby 3.0 benchmarks
+  docker:
+    image: ruby:3.0-slim
+    dockerfile: "../../docker/Dockerfile.ubuntu"
+benchmark_config:
+  formats:
+  - json
+  - yaml
+  iterations:
+    small: 5
+    medium: 2
+    large: 1
+  data_sizes:
+  - small
+benchmark_result:
+  serializers:
+  - format: xml
+    name: rexml
+    version: 3.4.1
+  - format: xml
+    name: ox
+    version: 2.14.23
+  - format: xml
+    name: nokogiri
+    version: 1.17.2
+  - format: xml
+    name: oga
+    version: 3.4
+  - format: xml
+    name: libxml
+    version: 5.0.4
+  - format: xml
+    name: json
+    version: 2.12.2
+  - format: xml
+    name: oj
+    version: 3.16.11
+  - format: xml
+    name: rapidjson
+    version: 0.4.0
+  - format: xml
+    name: yajl
+    version: 1.4.3
+  - format: xml
+    name: psych
+    version: 3.3.2
+  - format: xml
+    name: syck
+    version: 1.5.1.1
+  - format: xml
+    name: toml
+    version: 4.0.0
+  - format: xml
+    name: tomlib
+    version: 0.7.3
+  - format: xml
+    name: tomlrb
+    version: 2.0.3
+  parsing:
+  - adapter: rexml
+    format: xml
+    data_size: small
+    time_per_iterations: 0.000586999999541149
+    time_per_iteration: 0.0001173999999082298
+    iterations_per_second: 8517.887570542489
+    iterations_count: 5
+  - adapter: ox
+    format: xml
+    data_size: small
+    time_per_iterations: 1.4582999938284047e-05
+    time_per_iteration: 2.9165999876568095e-06
+    iterations_per_second: 342864.98122198717
+    iterations_count: 5
+  - adapter: nokogiri
+    format: xml
+    data_size: small
+    time_per_iterations: 3.508300051180413e-05
+    time_per_iteration: 7.016600102360826e-06
+    iterations_per_second: 142519.16674908364
+    iterations_count: 5
+  - adapter: oga
+    format: xml
+    data_size: small
+    time_per_iterations: 0.0022724169994035037
+    time_per_iteration: 0.00045448339988070076
+    iterations_per_second: 2200.3003855861275
+    iterations_count: 5
+  - adapter: libxml
+    format: xml
+    data_size: small
+    time_per_iterations: 3.204099994036369e-05
+    time_per_iteration: 6.408199988072738e-06
+    iterations_per_second: 156050.0611499719
+    iterations_count: 5
+  - adapter: json
+    format: json
+    data_size: small
+    time_per_iterations: 6.0840002333861776e-06
+    time_per_iteration: 1.2168000466772356e-06
+    iterations_per_second: 821827.713378825
+    iterations_count: 5
+  - adapter: oj
+    format: json
+    data_size: small
+    time_per_iterations: 8.25000006443588e-06
+    time_per_iteration: 1.650000012887176e-06
+    iterations_per_second: 606060.6013270244
+    iterations_count: 5
+  - adapter: rapidjson
+    format: json
+    data_size: small
+    time_per_iterations: 6.5409994931542315e-06
+    time_per_iteration: 1.3081998986308463e-06
+    iterations_per_second: 764409.1709887714
+    iterations_count: 5
+  - adapter: yajl
+    format: json
+    data_size: small
+    time_per_iterations: 1.529200017102994e-05
+    time_per_iteration: 3.058400034205988e-06
+    iterations_per_second: 326968.3458068679
+    iterations_count: 5
+  - adapter: psych
+    format: yaml
+    data_size: small
+    time_per_iterations: 0.0002234169996881974
+    time_per_iteration: 4.4683399937639476e-05
+    iterations_per_second: 22379.675704973397
+    iterations_count: 5
+  - adapter: syck
+    format: yaml
+    data_size: small
+    time_per_iterations: 6.245899930945598e-05
+    time_per_iteration: 1.2491799861891195e-05
+    iterations_per_second: 80052.51533453603
+    iterations_count: 5
+  - adapter: toml
+    format: toml
+    data_size: small
+    time_per_iterations: 0.005744916000367084
+    time_per_iteration: 0.0011489832000734167
+    iterations_per_second: 870.3347446125433
+    iterations_count: 5
+  - adapter: tomlib
+    format: toml
+    data_size: small
+    time_per_iterations: 1.3583000509242993e-05
+    time_per_iteration: 2.7166001018485985e-06
+    iterations_per_second: 368107.1790137671
+    iterations_count: 5
+  - adapter: tomlrb
+    format: toml
+    data_size: small
+    time_per_iterations: 0.00039841699981479906
+    time_per_iteration: 7.968339996295981e-05
+    iterations_per_second: 12549.665306260049
+    iterations_count: 5
+  generation:
+  - adapter: rexml
+    format: xml
+    data_size: small
+    time_per_iterations: 8.799999977782136e-05
+    time_per_iteration: 1.7599999955564273e-05
+    iterations_per_second: 56818.181961633934
+    iterations_count: 5
+  - adapter: ox
+    format: xml
+    data_size: small
+    time_per_iterations: 5.7920005929190665e-06
+    time_per_iteration: 1.1584001185838132e-06
+    iterations_per_second: 863259.5801375925
+    iterations_count: 5
+  - adapter: nokogiri
+    format: xml
+    data_size: small
+    time_per_iterations: 1.56659998538089e-05
+    time_per_iteration: 3.1331999707617795e-06
+    iterations_per_second: 319162.5205322814
+    iterations_count: 5
+  - adapter: oga
+    format: xml
+    data_size: small
+    time_per_iterations: 0.00013645899980474496
+    time_per_iteration: 2.729179996094899e-05
+    iterations_per_second: 36641.042416801734
+    iterations_count: 5
+  - adapter: libxml
+    format: xml
+    data_size: small
+    time_per_iterations: 8.875000276020728e-06
+    time_per_iteration: 1.7750000552041456e-06
+    iterations_per_second: 563380.2641684923
+    iterations_count: 5
+  - adapter: json
+    format: json
+    data_size: small
+    time_per_iterations: 3.957999979320448e-06
+    time_per_iteration: 7.915999958640896e-07
+    iterations_per_second: 1263264.2814865436
+    iterations_count: 5
+  - adapter: oj
+    format: json
+    data_size: small
+    time_per_iterations: 3.3340002119075507e-06
+    time_per_iteration: 6.668000423815102e-07
+    iterations_per_second: 1499699.9646677426
+    iterations_count: 5
+  - adapter: rapidjson
+    format: json
+    data_size: small
+    time_per_iterations: 3.6669998735305853e-06
+    time_per_iteration: 7.333999747061171e-07
+    iterations_per_second: 1363512.4549884435
+    iterations_count: 5
+  - adapter: yajl
+    format: json
+    data_size: small
+    time_per_iterations: 5.83300061407499e-06
+    time_per_iteration: 1.166600122814998e-06
+    iterations_per_second: 857191.749291957
+    iterations_count: 5
+  - adapter: psych
+    format: yaml
+    data_size: small
+    time_per_iterations: 0.00016533300004084595
+    time_per_iteration: 3.306660000816919e-05
+    iterations_per_second: 30241.99644816665
+    iterations_count: 5
+  - adapter: syck
+    format: yaml
+    data_size: small
+    time_per_iterations: 0.0001993749992834637
+    time_per_iteration: 3.987499985669274e-05
+    iterations_per_second: 25078.36999608558
+    iterations_count: 5
+  - adapter: toml
+    format: toml
+    data_size: small
+    time_per_iterations: 4.629199975170195e-05
+    time_per_iteration: 9.25839995034039e-06
+    iterations_per_second: 108010.02390950226
+    iterations_count: 5
+  - adapter: tomlib
+    format: toml
+    data_size: small
+    time_per_iterations: 4.916699981549755e-05
+    time_per_iteration: 9.833399963099509e-06
+    iterations_per_second: 101694.22618347335
+    iterations_count: 5
+  memory:
+  - adapter: rexml
+    format: xml
+    data_size: small
+    total_allocated: 3030
+    total_retained: 0
+    allocated_memory: 170030
+    retained_memory: 0
+  - adapter: ox
+    format: xml
+    data_size: small
+    total_allocated: 430
+    total_retained: 0
+    allocated_memory: 20080
+    retained_memory: 0
+  - adapter: nokogiri
+    format: xml
+    data_size: small
+    total_allocated: 70
+    total_retained: 0
+    allocated_memory: 41900
+    retained_memory: 0
+  - adapter: oga
+    format: xml
+    data_size: small
+    total_allocated: 4360
+    total_retained: 0
+    allocated_memory: 271600
+    retained_memory: 0
+  - adapter: libxml
+    format: xml
+    data_size: small
+    total_allocated: 30
+    total_retained: 0
+    allocated_memory: 1200
+    retained_memory: 0
+  - adapter: json
+    format: json
+    data_size: small
+    total_allocated: 84
+    total_retained: 0
+    allocated_memory: 8480
+    retained_memory: 0
+  - adapter: oj
+    format: json
+    data_size: small
+    total_allocated: 94
+    total_retained: 0
+    allocated_memory: 8880
+    retained_memory: 0
+  - adapter: rapidjson
+    format: json
+    data_size: small
+    total_allocated: 84
+    total_retained: 0
+    allocated_memory: 8480
+    retained_memory: 0
+  - adapter: yajl
+    format: json
+    data_size: small
+    total_allocated: 214
+    total_retained: 0
+    allocated_memory: 14320
+    retained_memory: 0
+  - adapter: psych
+    format: yaml
+    data_size: small
+    total_allocated: 1130
+    total_retained: 0
+    allocated_memory: 102880
+    retained_memory: 0
+  - adapter: syck
+    format: yaml
+    data_size: small
+    total_allocated: 770
+    total_retained: 0
+    allocated_memory: 45120
+    retained_memory: 0
+  - adapter: toml
+    format: toml
+    data_size: small
+    total_allocated: 19774
+    total_retained: 0
+    allocated_memory: 1808016
+    retained_memory: 0
+  - adapter: tomlib
+    format: toml
+    data_size: small
+    total_allocated: 184
+    total_retained: 0
+    allocated_memory: 12480
+    retained_memory: 0
+  - adapter: tomlrb
+    format: toml
+    data_size: small
+    total_allocated: 2824
+    total_retained: 0
+    allocated_memory: 137920
+    retained_memory: 0
+  streaming:
+  - adapter: ox
+    format: xml
+    data_size: small
+    time_per_iterations: 1.0333999853173736e-05
+    time_per_iteration: 2.0667999706347474e-06
+    iterations_per_second: 483839.7591484792
+    iterations_count: 5
+  - adapter: nokogiri
+    format: xml
+    data_size: small
+    time_per_iterations: 4.041600004711654e-05
+    time_per_iteration: 8.083200009423308e-06
+    iterations_per_second: 123713.38069504785
+    iterations_count: 5
+  - adapter: oga
+    format: xml
+    data_size: small
+    time_per_iterations: 0.0003738750001502922
+    time_per_iteration: 7.477500003005844e-05
+    iterations_per_second: 13373.453689040654
+    iterations_count: 5
+  - adapter: libxml
+    format: xml
+    data_size: small
+    time_per_iterations: 3.612500040617306e-05
+    time_per_iteration: 7.225000081234611e-06
+    iterations_per_second: 138408.30294206995
+    iterations_count: 5
+  - adapter: oj
+    format: json
+    data_size: small
+    time_per_iterations: 1.1500000255182385e-05
+    time_per_iteration: 2.300000051036477e-06
+    iterations_per_second: 434782.59904792515
+    iterations_count: 5
+  - adapter: yajl
+    format: json
+    data_size: small
+    time_per_iterations: 1.8374999854131602e-05
+    time_per_iteration: 3.6749999708263205e-06
+    iterations_per_second: 272108.8456975282
+    iterations_count: 5

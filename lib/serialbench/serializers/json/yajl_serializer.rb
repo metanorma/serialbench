@@ -60,8 +60,6 @@ module Serialbench
           end
         end
 
-        protected
-
         def library_require_name
           'yajl'
         end

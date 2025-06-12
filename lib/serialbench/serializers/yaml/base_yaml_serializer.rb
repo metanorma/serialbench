@@ -7,7 +7,7 @@ module Serialbench
     module Yaml
       # Base class for YAML serializers
       class BaseYamlSerializer < BaseSerializer
-        def format
+        def self.format
           :yaml
         end
 
@@ -39,6 +39,10 @@ module Serialbench
         # Stream parse YAML (if supported)
         def stream_parse(yaml_string, &block)
           raise NotImplementedError, 'Streaming not supported by this YAML serializer'
+        end
+
+        def supports_generation?
+          true
         end
 
         private

@@ -1,0 +1,8 @@
+---
+adapter: rexml
+format: xml
+data_size: small
+time_per_iterations: 0.000586999999541149
+time_per_iteration: 0.0001173999999082298
+iterations_per_second: 8517.887570542489
+iterations_count: 5

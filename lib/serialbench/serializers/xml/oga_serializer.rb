@@ -49,8 +49,6 @@ module Serialbench
           Oga::VERSION
         end
 
-        protected
-
         def library_require_name
           'oga'
         end

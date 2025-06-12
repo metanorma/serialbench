@@ -1,0 +1,9 @@
+---
+name: docker-ruby-3.0
+kind: docker
+created_at: "2025-06-13T15:18:43+08:00"
+ruby_build_tag: 3.0.7
+description: Docker environment for Ruby 3.0 benchmarks
+docker:
+  image: ruby:3.0-slim
+  dockerfile: "../../docker/Dockerfile.ubuntu"

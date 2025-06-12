@@ -6,7 +6,7 @@ module Serialbench
   module Serializers
     module Xml
       class BaseXmlSerializer < BaseSerializer
-        def format
+        def self.format
           :xml
         end
 
@@ -33,7 +33,9 @@ module Serialbench
           }
         end
 
-        protected
+        def supports_generation?
+          true
+        end
 
         def supports_xpath?
           false
@@ -46,13 +48,6 @@ module Serialbench
         def supports_validation?
           false
         end
-
-        # Subclasses should override this to specify their library name
-        def library_require_name
-          raise NotImplementedError, 'Subclasses must implement #library_require_name'
-        end
-
-        public
 
         # Check if the XML library is available
         def available?

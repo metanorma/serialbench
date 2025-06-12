@@ -6,7 +6,7 @@ module Serialbench
   module Serializers
     module Json
       class BaseJsonSerializer < BaseSerializer
-        def format
+        def self.format
           :json
         end
 
@@ -29,7 +29,9 @@ module Serialbench
           }
         end
 
-        protected
+        def supports_generation?
+          true
+        end
 
         def supports_pretty_print?
           true
@@ -47,8 +49,6 @@ module Serialbench
         def library_require_name
           raise NotImplementedError, 'Subclasses must implement #library_require_name'
         end
-
-        public
 
         # Check if the JSON library is available
         def available?

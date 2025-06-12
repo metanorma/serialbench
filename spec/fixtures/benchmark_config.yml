@@ -1,0 +1,10 @@
+---
+formats:
+- json
+- yaml
+iterations:
+  small: 5
+  medium: 2
+  large: 1
+data_sizes:
+- small

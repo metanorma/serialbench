@@ -1,0 +1,26 @@
+# Configuration for short benchmarks - Minimal memory usage for CI runners
+# Designed for Windows and Ubuntu runners with limited memory
+
+# Run name for identification
+name: short-benchmark
+
+data_sizes:
+- small
+
+formats:
+- xml
+- json
+- yaml
+- toml
+
+iterations:
+  small: 5
+  medium: 2
+  large: 1
+
+operations:
+- parse
+- generate
+- streaming
+
+warmup: 2
