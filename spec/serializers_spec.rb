@@ -451,7 +451,11 @@ RSpec.describe 'Serialbench Serializers' do
       Serialbench::Models::BenchmarkConfig.new.tap do |config|
         config.formats = [:json]
         config.data_sizes = [:small]
-        config.iterations = { small: 5, medium: 2, large: 1 }
+        config.iterations = Serialbench::Models::BenchmarkIteration.new.tap do |iter|
+          iter.small = 5
+          iter.medium = 2
+          iter.large = 1
+        end
       end
     end
 
@@ -491,12 +495,42 @@ RSpec.describe 'Serialbench Serializers' do
     end
 
     it 'can initialize with all formats' do
-      skip 'Skipping test that requires fixture files with correct structure'
+      all_formats_config = Serialbench::Models::BenchmarkConfig.new.tap do |config|
+        config.formats = [:xml, :json, :yaml, :toml]
+        config.data_sizes = [:small]
+        config.iterations = Serialbench::Models::BenchmarkIteration.new.tap do |iter|
+          iter.small = 5
+          iter.medium = 2
+          iter.large = 1
+        end
+      end
+
+      runner = Serialbench::BenchmarkRunner.new(
+        benchmark_config: all_formats_config,
+        environment_config: environment_config
+      )
+
+      expect(runner.test_data).to have_key(:small)
+      expect(runner.test_data[:small]).to have_key(:xml)
+      expect(runner.test_data[:small]).to have_key(:json)
+      expect(runner.test_data[:small]).to have_key(:yaml)
+      expect(runner.test_data[:small]).to have_key(:toml)
     end
 
-    # Mock the actual benchmark running to avoid long test times
-    it 'can run benchmarks (mocked)' do
-      skip 'Skipping mocked benchmark test - requires full implementation'
+    it 'can run parsing benchmarks' do
+      results = runner.run_parsing_benchmarks
+      expect(results).to be_an(Array)
+      expect(results).not_to be_empty
+
+      # Verify results have correct structure
+      results.each do |result|
+        expect(result).to be_a(Serialbench::Models::IterationPerformance)
+        expect(result.adapter).to be_a(String)
+        expect(result.format).to be_a(String)
+        expect(result.data_size).to be_a(String)
+        expect(result.iterations_count).to be_a(Integer)
+        expect(result.iterations_count).to be > 0
+      end
     end
   end
 
