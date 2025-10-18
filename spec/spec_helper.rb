@@ -1,10 +1,17 @@
 # frozen_string_literal: true
 
 require 'rspec'
+
+# Ensure we use Psych for YAML parsing BEFORE loading serialbench
+require 'psych'
+require 'yaml'
+Object.send(:remove_const, :YAML) if defined?(YAML)
+Object.const_set(:YAML, Psych)
+
 require_relative '../lib/serialbench'
 
-# Ensure we use Psych for YAML parsing
-require 'psych'
+# Force YAML back to Psych after loading serialbench (in case Syck was loaded)
+Object.send(:remove_const, :YAML) if defined?(YAML)
 Object.const_set(:YAML, Psych)
 
 # Helper method to create test XML
@@ -44,6 +51,12 @@ def create_test_xml(size)
 end
 
 RSpec.configure do |config|
+  # Ensure YAML is always Psych before each test
+  config.before(:each) do
+    Object.send(:remove_const, :YAML) if defined?(YAML) && YAML != Psych
+    Object.const_set(:YAML, Psych) unless defined?(YAML) && YAML == Psych
+  end
+
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = '.rspec_status'
 

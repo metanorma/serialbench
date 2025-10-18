@@ -233,7 +233,7 @@ generation:
   time_per_iteration: 9.833399963099509e-06
   iterations_per_second: 101694.22618347335
   iterations_count: 5
-memory_usage:
+memory:
 - adapter: rexml
   format: xml
   data_size: small
