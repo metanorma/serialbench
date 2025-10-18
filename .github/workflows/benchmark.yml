@@ -67,6 +67,9 @@ jobs:
       - name: Install gems
         run: bundle install
 
+      - name: Update Ruby-Build cache
+        run: bundle exec serialbench ruby-build update
+
       - name: Create environment config
         run: |
           mkdir -p config/environments
