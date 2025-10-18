@@ -242,6 +242,79 @@ module Serialbench
 
       private
 
+      def execute_local_benchmark(environment, config, benchmark_config_path)
+        say '🏠 Executing local benchmark', :green
+
+        runner = Serialbench::BenchmarkRunner.new(
+          environment_config: environment,
+          benchmark_config: config
+        )
+
+        # Run benchmarks
+        results = runner.run_all_benchmarks
+
+        platform = Serialbench::Models::Platform.current_local
+
+        metadata = Models::RunMetadata.new(
+          benchmark_config_path: benchmark_config_path,
+          environment_config_path: "config/environments/#{environment.name}.yml",
+          tags: [
+            'local',
+            platform.os,
+            platform.arch,
+            "ruby-#{environment.ruby_build_tag}"
+          ]
+        )
+
+        # Create results directory
+        result_dir = "results/runs/#{environment.name}-results"
+        FileUtils.mkdir_p(result_dir)
+
+        # Save results to single YAML file with platform and metadata merged in
+        results_model = Models::Result.new(
+          platform: platform,
+          metadata: metadata,
+          environment_config: environment,
+          benchmark_config: config,
+          benchmark_result: results
+        )
+
+        results_file = File.join(result_dir, 'results.yaml')
+        results_model.to_file(results_file)
+
+        say '✅ Local benchmark completed successfully!', :green
+        say "Results saved to: #{result_dir}", :cyan
+        say "Generate site: serialbench benchmark build-site #{result_dir}", :white
+      rescue StandardError => e
+        say "❌ Local benchmark failed: #{e.message}", :red
+        say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
+        raise e
+      end
+
+      def execute_docker_benchmark(environment, config, benchmark_config_path)
+        say '🐳 Executing Docker benchmark', :green
+
+        require_relative '../runners/docker_runner'
+
+        environment_config_path = "config/environments/#{environment.name}.yml"
+        runner = Runners::DockerRunner.new(environment, environment_config_path)
+
+        # Create results directory
+        result_dir = "results/runs/#{environment.name}-results"
+        FileUtils.mkdir_p(result_dir)
+
+        # Run benchmark
+        runner.run_benchmark(config, benchmark_config_path, result_dir)
+
+        say '✅ Docker benchmark completed successfully!', :green
+        say "Results saved to: #{result_dir}", :cyan
+        say "Generate site: serialbench benchmark build-site #{result_dir}", :white
+      rescue StandardError => e
+        say "❌ Docker benchmark failed: #{e.message}", :red
+        say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
+        raise e
+      end
+
       def show_execute_usage_and_exit
         say '❌ Error: Environment and config file arguments are required.', :red
         say ''
