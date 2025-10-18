@@ -19,7 +19,7 @@ module Serialbench
       attribute :arch, :string, default: -> { detect_arch }
       attribute :ruby_version, :string, default: -> { RUBY_VERSION }
       attribute :ruby_platform, :string, default: -> { RUBY_PLATFORM }
-      attribute :ruby_build_tag, :string, values: RubyBuildManager.list_definitions
+      attribute :ruby_build_tag, :string
 
       def self.current_local
         new(
