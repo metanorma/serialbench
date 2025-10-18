@@ -45,8 +45,7 @@ module Serialbench
       attribute :name, :string
       attribute :kind, :string
       attribute :created_at, :string, default: -> { Time.now.utc.iso8601 }
-      attribute :ruby_build_tag, :string, values:
-        RubyBuildManager.list_definitions
+      attribute :ruby_build_tag, :string
       attribute :description, :string
       attribute :docker, DockerEnvConfig
       attribute :asdf, AsdfEnvConfig
