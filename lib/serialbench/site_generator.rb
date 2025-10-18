@@ -32,15 +32,21 @@ module Serialbench
 
     def generate_site
       target_name = @result ? @result.environment_config.name : @resultset.name
-      data = @result ? @result.to_json : @resultset.to_json
 
       puts "🏗️  Generating HTML site for #{@result ? 'run' : 'resultset'}: #{target_name}"
       puts "Output: #{@output_path}"
 
+      # Transform data for dashboard.js compatibility
+      data = if @result
+               transform_result_for_dashboard(@result)
+             else
+               @resultset.to_json
+             end
+
       prepare_output_directory
       render_site(
         {
-          'data' => data,
+          'data' => JSON.generate(data),
           'kind' => @result ? 'run' : 'resultset'
         },
         'format_based.liquid'
@@ -100,6 +106,81 @@ module Serialbench
       return unless Dir.exist?(assets_source)
 
       FileUtils.cp_r(assets_source, assets_dest)
+    end
+
+    # Transform a single Result into dashboard-compatible format
+    # Dashboard expects: { combined_results: {...}, environments: {...}, metadata: {...} }
+    def transform_result_for_dashboard(result)
+      env_key = "env-#{result.platform.ruby_version}"
+
+      # Build combined_results structure
+      combined_results = build_combined_results(result, env_key)
+
+      # Build environments structure
+      environments = {
+        env_key => {
+          'ruby_version' => result.platform.ruby_version,
+          'ruby_platform' => result.platform.ruby_platform || "#{result.platform.os}-#{result.platform.arch}",
+          'os' => result.platform.os,
+          'arch' => result.platform.arch,
+          'source_file' => result.metadata.environment_config_path,
+          'timestamp' => result.metadata.created_at
+        }
+      }
+
+      {
+        'combined_results' => combined_results,
+        'environments' => environments,
+        'metadata' => {
+          'generated_at' => Time.now.iso8601
+        }
+      }
+    end
+
+    def build_combined_results(result, env_key)
+      combined = {}
+
+      %w[parsing generation streaming].each do |operation|
+        combined[operation] = {}
+
+        operation_results = result.benchmark_result.send(operation)
+        next if operation_results.nil? || operation_results.empty?
+
+        operation_results.each do |perf|
+          size = perf.data_size
+          format = perf.format
+          serializer = perf.adapter
+
+          combined[operation][size] ||= {}
+          combined[operation][size][format] ||= {}
+          combined[operation][size][format][serializer] ||= {}
+          combined[operation][size][format][serializer][env_key] = {
+            'iterations_per_second' => perf.iterations_per_second,
+            'time_per_iteration' => perf.time_per_iteration
+          }
+        end
+      end
+
+      # Handle memory separately
+      if result.benchmark_result.memory && !result.benchmark_result.memory.empty?
+        combined['memory'] = {}
+
+        result.benchmark_result.memory.each do |mem|
+          size = mem.data_size
+          format = mem.format
+          serializer = mem.adapter
+
+          combined['memory'][size] ||= {}
+          combined['memory'][size][format] ||= {}
+          combined['memory'][size][format][serializer] ||= {}
+          combined['memory'][size][format][serializer][env_key] = {
+            'allocated_memory' => mem.allocated_memory,
+            'retained_memory' => mem.retained_memory
+          }
+        end
+      end
+
+      combined
     end
   end
 end
