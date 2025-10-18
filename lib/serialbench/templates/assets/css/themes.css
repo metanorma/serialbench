@@ -259,7 +259,7 @@ body {
 
 .format-tab {
   padding: var(--space-sm) var(--space-lg);
-  background: transparent;
+  background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
@@ -271,14 +271,15 @@ body {
   letter-spacing: 0.05em;
 }
 
-.format-tab:hover {
-  background: var(--bg-hover);
+.format-tab:hover:not(.active) {
+  background: var(--bg-tertiary);
   color: var(--text-primary);
+  border-color: var(--border-secondary);
   transform: translateY(-1px);
 }
 
 .format-tab.active {
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border-color: var(--accent-primary);
   color: white;
   box-shadow: var(--shadow-md);
