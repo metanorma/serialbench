@@ -139,12 +139,13 @@ module Serialbench
       end
 
       def load_definitions_from_cache
-        ensure_cache_exists!
+        return [] unless cache_exists?
 
         cache_data = YAML.load_file(CACHE_FILE)
         cache_data['definitions'] || []
       rescue StandardError => e
-        raise "Failed to load Ruby-Build definitions from cache: #{e.message}"
+        warn "Warning: Failed to load Ruby-Build definitions from cache: #{e.message}"
+        []
       end
     end
   end
