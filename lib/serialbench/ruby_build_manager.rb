@@ -103,6 +103,8 @@ module Serialbench
 
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
+        # Disable CRL checking which can fail on some CI systems
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
         request = Net::HTTP::Get.new(uri)
         request['Accept'] = 'application/vnd.github.v3+json'
