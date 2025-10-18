@@ -123,7 +123,22 @@
             const rubyVersions = new Set();
             const platforms = new Set();
 
-            if (data.results) {
+            // Handle both single results (with environments) and resultsets (with results)
+            if (data.environments) {
+                // Single result format
+                Object.values(data.environments).forEach(env => {
+                    if (env.timestamp) {
+                        timestamps.push(new Date(env.timestamp));
+                    }
+                    if (env.ruby_version) {
+                        rubyVersions.add(env.ruby_version);
+                    }
+                    if (env.os && env.arch) {
+                        platforms.add(`${env.os} (${env.arch})`);
+                    }
+                });
+            } else if (data.results) {
+                // Resultset format
                 data.results.forEach(result => {
                     if (result.metadata && result.metadata.created_at) {
                         timestamps.push(new Date(result.metadata.created_at));
@@ -141,9 +156,13 @@
 
             // Update timestamp
             const timestampEl = document.getElementById('metadata-timestamp');
-            if (timestampEl && timestamps.length > 0) {
-                const latestDate = new Date(Math.max(...timestamps));
-                timestampEl.textContent = latestDate.toLocaleString();
+            if (timestampEl) {
+                if (timestamps.length > 0) {
+                    const latestDate = new Date(Math.max(...timestamps));
+                    timestampEl.textContent = latestDate.toLocaleString();
+                } else if (data.metadata && data.metadata.generated_at) {
+                    timestampEl.textContent = new Date(data.metadata.generated_at).toLocaleString();
+                }
             }
 
             // Update Ruby versions
@@ -237,12 +256,13 @@
     .dashboard-header h1 {
         font-size: 2.5rem;
         font-weight: 700;
-        color: var(--text-primary);
         margin-bottom: var(--space-md, 1rem);
-        background: var(--gradient-primary);
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        position: relative;
+        z-index: 1;
     }
 
     .dashboard-subtitle {
@@ -295,7 +315,13 @@
         border: 1px solid var(--border-primary);
         border-radius: 0.375rem;
         background: white;
+        color: var(--text-primary, #1f2937);
         font-size: 0.875rem;
+    }
+
+    .custom-select select option {
+        color: #1f2937;
+        background: white;
     }
 
     .format-tabs {
