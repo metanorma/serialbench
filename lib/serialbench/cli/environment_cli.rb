@@ -169,9 +169,9 @@ module Serialbench
         when 'asdf'
           require_relative '../runners/asdf_runner'
           Runners::AsdfRunner.new(environment_config, environment_config_path)
-        # when 'local'
-        #   require_relative '../runners/local_runner'
-        #   Runners::LocalRunner.new(environment_config, environment_config_path)
+        when 'local'
+          require_relative '../runners/local_runner'
+          Runners::LocalRunner.new(environment_config, environment_config_path)
         else
           raise "Unknown environment type: #{environment_config.kind}"
         end
