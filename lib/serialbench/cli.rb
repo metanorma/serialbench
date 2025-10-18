@@ -73,14 +73,14 @@ module Serialbench
     end
 
     # Handle unknown commands gracefully
-    def method_missing(method_name, *args)
+    def method_missing(method_name, *_args)
       puts "Unknown command: #{method_name}"
       puts ''
       help
       exit 1
     end
 
-    def respond_to_missing?(method_name, include_private = false)
+    def respond_to_missing?(_method_name, _include_private = false)
       false
     end
   end

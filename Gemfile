@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 gemspec
 
-gem 'lutaml-model', git: 'https://github.com/lutaml/lutaml-model.git'
+gem 'lutaml-model', '~> 0.7'
 gem 'rake'
 gem 'rspec'
 gem 'rubocop'

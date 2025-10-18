@@ -78,9 +78,7 @@ module Serialbench
 
       # Validate Docker is available
       def validate_docker_available
-        unless system('docker --version > /dev/null 2>&1')
-          raise DockerError, 'Docker is not installed or not available in PATH'
-        end
+        raise DockerError, 'Docker is not installed or not available in PATH' unless system('docker --version > /dev/null 2>&1')
 
         return if system('docker info > /dev/null 2>&1')
 
@@ -94,7 +92,7 @@ module Serialbench
       end
 
       # Run benchmark in container
-      def run_benchmark_in_container(benchmark_config, benchmark_config_path, result_dir)
+      def run_benchmark_in_container(_benchmark_config, benchmark_config_path, result_dir)
         puts '🏃 Running benchmark in Docker container...'
         puts "   📁 Results will be saved to: #{result_dir}"
         puts "   🐳 Using Docker image: #{docker_image_string}"

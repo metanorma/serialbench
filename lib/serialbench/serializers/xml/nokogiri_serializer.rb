@@ -109,10 +109,10 @@ module Serialbench
             @element_stack.push(@current_element)
           end
 
-          def end_element(name)
+          def end_element(_name)
             element = @element_stack.pop
             if @element_stack.empty?
-              @block&.call(element) if @block
+              @block&.call(element)
             else
               @element_stack.last[:children] << element
             end

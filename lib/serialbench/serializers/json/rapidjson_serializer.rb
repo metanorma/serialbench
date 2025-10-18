@@ -27,7 +27,7 @@ module Serialbench
           RapidJSON.parse(json_string)
         end
 
-        def generate(object, options = {})
+        def generate(object, _options = {})
           require 'rapidjson'
           RapidJSON.dump(object)
         end

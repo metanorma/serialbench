@@ -10,10 +10,6 @@ module Serialbench
       attribute :version, :string
     end
 
-    class SerializerInformationCollection < Lutaml::Model::Collection
-      instances :items, SerializerInformation
-    end
-
     class AdapterPerformance < Lutaml::Model::Serializable
       attribute :adapter, :string
       attribute :format, :string, values: %w[xml json yaml toml]

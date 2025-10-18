@@ -221,7 +221,7 @@ module Serialbench
               city: "City #{i % 100}",
               preferences: {
                 theme: i.even? ? 'dark' : 'light',
-                notifications: i % 3 == 0
+                notifications: (i % 3).zero?
               }
             }
           }
@@ -244,7 +244,7 @@ module Serialbench
               data: {
                 field1: "Value #{i}",
                 field2: i * 2,
-                field3: i % 100 == 0 ? 'special' : 'normal',
+                field3: (i % 100).zero? ? 'special' : 'normal',
                 nested: [
                   "Item #{i}-1",
                   "Item #{i}-2",

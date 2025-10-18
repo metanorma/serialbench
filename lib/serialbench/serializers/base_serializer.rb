@@ -25,7 +25,7 @@ module Serialbench
         raise NotImplementedError, 'Subclasses must implement #generate'
       end
 
-      def stream_parse(data, &block)
+      def stream_parse(data)
         # Default implementation falls back to regular parsing
         # Override in subclasses that support streaming
         result = parse(data)

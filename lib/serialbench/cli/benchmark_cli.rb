@@ -350,7 +350,7 @@ module Serialbench
       #   raise e
       # end
 
-      def execute_asdf_benchmark(environment, config, benchmark_config_path)
+      def execute_asdf_benchmark(environment, _config, benchmark_config_path)
         say '🔧 Executing ASDF benchmark', :green
 
         # Use the ASDF runner to execute the benchmark

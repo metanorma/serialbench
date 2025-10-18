@@ -34,9 +34,7 @@ module Serialbench
       def show_definition(tag)
         definitions = load_definitions_from_cache
 
-        unless definitions.include?(tag)
-          raise "Ruby-Build definition '#{tag}' not found. Available definitions: #{definitions.length}"
-        end
+        raise "Ruby-Build definition '#{tag}' not found. Available definitions: #{definitions.length}" unless definitions.include?(tag)
 
         {
           tag: tag,
@@ -66,7 +64,7 @@ module Serialbench
         variations = [
           ruby_version,
           "#{ruby_version}.0",
-          ruby_version.split('.')[0..1].join('.') + '.0'
+          "#{ruby_version.split('.')[0..1].join('.')}.0"
         ]
 
         variations.each do |variation|

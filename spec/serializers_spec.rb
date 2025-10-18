@@ -10,7 +10,7 @@ RSpec.describe 'Serialbench Serializers' do
   let(:test_toml) { "[config]\nname = \"test\"\nvalues = [1, 2, 3]" }
 
   describe Serialbench::Serializers::BaseSerializer do
-    let(:serializer) { Serialbench::Serializers::BaseSerializer.new }
+    let(:serializer) { Serialbench::Serializers::BaseSerializer.instance }
 
     it 'defines the interface' do
       expect(serializer).to respond_to(:available?)
@@ -32,7 +32,7 @@ RSpec.describe 'Serialbench Serializers' do
 
   describe 'XML Serializers' do
     shared_examples 'an XML serializer' do |serializer_class, expected_name|
-      let(:serializer) { serializer_class.new }
+      let(:serializer) { serializer_class.instance }
 
       it 'has correct format' do
         expect(serializer.format).to eq(:xml)
@@ -72,7 +72,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Xml::RexmlSerializer do
       include_examples 'an XML serializer', Serialbench::Serializers::Xml::RexmlSerializer, 'rexml'
 
-      let(:serializer) { Serialbench::Serializers::Xml::RexmlSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Xml::RexmlSerializer.instance }
 
       it 'is always available (built-in)' do
         expect(serializer).to be_available
@@ -94,7 +94,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Xml::OxSerializer do
       include_examples 'an XML serializer', Serialbench::Serializers::Xml::OxSerializer, 'ox'
 
-      let(:serializer) { Serialbench::Serializers::Xml::OxSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Xml::OxSerializer.instance }
 
       context 'when available' do
         before do
@@ -110,7 +110,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Xml::NokogiriSerializer do
       include_examples 'an XML serializer', Serialbench::Serializers::Xml::NokogiriSerializer, 'nokogiri'
 
-      let(:serializer) { Serialbench::Serializers::Xml::NokogiriSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Xml::NokogiriSerializer.instance }
 
       context 'when available' do
         before do
@@ -126,7 +126,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Xml::OgaSerializer do
       include_examples 'an XML serializer', Serialbench::Serializers::Xml::OgaSerializer, 'oga'
 
-      let(:serializer) { Serialbench::Serializers::Xml::OgaSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Xml::OgaSerializer.instance }
 
       context 'when available' do
         before do
@@ -142,7 +142,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Xml::LibxmlSerializer do
       include_examples 'an XML serializer', Serialbench::Serializers::Xml::LibxmlSerializer, 'libxml'
 
-      let(:serializer) { Serialbench::Serializers::Xml::LibxmlSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Xml::LibxmlSerializer.instance }
 
       context 'when available' do
         before do
@@ -158,7 +158,7 @@ RSpec.describe 'Serialbench Serializers' do
 
   describe 'JSON Serializers' do
     shared_examples 'a JSON serializer' do |serializer_class, expected_name|
-      let(:serializer) { serializer_class.new }
+      let(:serializer) { serializer_class.instance }
 
       it 'has correct format' do
         expect(serializer.format).to eq(:json)
@@ -202,7 +202,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Json::JsonSerializer do
       include_examples 'a JSON serializer', Serialbench::Serializers::Json::JsonSerializer, 'json'
 
-      let(:serializer) { Serialbench::Serializers::Json::JsonSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Json::JsonSerializer.instance }
 
       it 'is always available (built-in)' do
         expect(serializer).to be_available
@@ -216,7 +216,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Json::OjSerializer do
       include_examples 'a JSON serializer', Serialbench::Serializers::Json::OjSerializer, 'oj'
 
-      let(:serializer) { Serialbench::Serializers::Json::OjSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Json::OjSerializer.instance }
 
       context 'when available' do
         before do
@@ -232,7 +232,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Json::RapidjsonSerializer do
       include_examples 'a JSON serializer', Serialbench::Serializers::Json::RapidjsonSerializer, 'rapidjson'
 
-      let(:serializer) { Serialbench::Serializers::Json::RapidjsonSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Json::RapidjsonSerializer.instance }
 
       context 'when available' do
         before do
@@ -248,7 +248,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Json::YajlSerializer do
       include_examples 'a JSON serializer', Serialbench::Serializers::Json::YajlSerializer, 'yajl'
 
-      let(:serializer) { Serialbench::Serializers::Json::YajlSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Json::YajlSerializer.instance }
 
       context 'when available' do
         before do
@@ -264,7 +264,7 @@ RSpec.describe 'Serialbench Serializers' do
 
   describe 'YAML Serializers' do
     shared_examples 'a YAML serializer' do |serializer_class, expected_name|
-      let(:serializer) { serializer_class.new }
+      let(:serializer) { serializer_class.instance }
 
       it 'has correct format' do
         expect(serializer.format).to eq(:yaml)
@@ -302,7 +302,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Yaml::PsychSerializer do
       include_examples 'a YAML serializer', Serialbench::Serializers::Yaml::PsychSerializer, 'psych'
 
-      let(:serializer) { Serialbench::Serializers::Yaml::PsychSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Yaml::PsychSerializer.instance }
 
       it 'is always available (built-in)' do
         expect(serializer).to be_available
@@ -316,7 +316,7 @@ RSpec.describe 'Serialbench Serializers' do
     describe Serialbench::Serializers::Yaml::SyckSerializer do
       include_examples 'a YAML serializer', Serialbench::Serializers::Yaml::SyckSerializer, 'syck'
 
-      let(:serializer) { Serialbench::Serializers::Yaml::SyckSerializer.new }
+      let(:serializer) { Serialbench::Serializers::Yaml::SyckSerializer.instance }
 
       context 'when available' do
         before do
@@ -332,7 +332,7 @@ RSpec.describe 'Serialbench Serializers' do
 
   describe 'TOML Serializers' do
     shared_examples 'a TOML serializer' do |serializer_class, expected_name|
-      let(:serializer) { serializer_class.new }
+      let(:serializer) { serializer_class.instance }
 
       it 'has correct format' do
         expect(serializer.format).to eq(:toml)
@@ -394,7 +394,7 @@ RSpec.describe 'Serialbench Serializers' do
           format_serializers = Serialbench::Serializers.for_format(format)
           expect(format_serializers).not_to be_empty
           format_serializers.each do |serializer_class|
-            expect(serializer_class.new.format).to eq(format)
+            expect(serializer.format).to eq(format)
           end
         end
       end
@@ -403,7 +403,7 @@ RSpec.describe 'Serialbench Serializers' do
         available_serializers = Serialbench::Serializers.available
         expect(available_serializers).not_to be_empty
         available_serializers.each do |serializer_class|
-          expect(serializer_class.new).to be_available
+          expect(serializer_class.instance).to be_available
         end
       end
 
@@ -411,7 +411,7 @@ RSpec.describe 'Serialbench Serializers' do
         %i[xml json yaml toml].each do |format|
           available_format = Serialbench::Serializers.available_for_format(format)
           available_format.each do |serializer_class|
-            serializer = serializer_class.new
+            serializer = serializer_class.instance
             expect(serializer.format).to eq(format)
             expect(serializer).to be_available
           end
@@ -421,28 +421,28 @@ RSpec.describe 'Serialbench Serializers' do
       it 'includes all expected XML serializers' do
         xml_serializers = Serialbench::Serializers.for_format(:xml)
         expected_xml = %w[rexml ox nokogiri oga libxml]
-        actual_xml = xml_serializers.map { |s| s.new.name }
+        actual_xml = xml_serializers.map { |s| s.instance.name }
         expect(actual_xml).to match_array(expected_xml)
       end
 
       it 'includes all expected JSON serializers' do
         json_serializers = Serialbench::Serializers.for_format(:json)
         expected_json = %w[json oj rapidjson yajl]
-        actual_json = json_serializers.map { |s| s.new.name }
+        actual_json = json_serializers.map { |s| s.instance.name }
         expect(actual_json).to match_array(expected_json)
       end
 
       it 'includes all expected YAML serializers' do
         yaml_serializers = Serialbench::Serializers.for_format(:yaml)
         expected_yaml = %w[psych syck]
-        actual_yaml = yaml_serializers.map { |s| s.new.name }
+        actual_yaml = yaml_serializers.map { |s| s.instance.name }
         expect(actual_yaml).to match_array(expected_yaml)
       end
 
       it 'includes all expected TOML serializers' do
         toml_serializers = Serialbench::Serializers.for_format(:toml)
         expected_toml = %w[toml-rb tomlib]
-        actual_toml = toml_serializers.map { |s| s.new.name }
+        actual_toml = toml_serializers.map { |s| s.instance.name }
         expect(actual_toml).to match_array(expected_toml)
       end
     end
@@ -510,7 +510,7 @@ RSpec.describe 'Serialbench Serializers' do
 
     it 'can round-trip data through available serializers' do
       Serialbench::Serializers.available.each do |serializer_class|
-        serializer = serializer_class.new
+        serializer = serializer_class.instance
         next unless serializer.available?
 
         begin
@@ -548,7 +548,7 @@ RSpec.describe 'Serialbench Serializers' do
 
     it 'all available serializers can handle basic operations' do
       Serialbench::Serializers.available.each do |serializer_class|
-        serializer = serializer_class.new
+        serializer = serializer_class.instance
 
         # Test basic generation
         expect { serializer.generate(small_data) }.not_to raise_error
@@ -561,12 +561,12 @@ RSpec.describe 'Serialbench Serializers' do
 
     it 'streaming serializers report streaming support correctly' do
       streaming_serializers = Serialbench::Serializers.available.select do |serializer_class|
-        serializer_class.new.supports_streaming?
+        serializer.supports_streaming?
       end
 
       expect(streaming_serializers).not_to be_empty
       streaming_serializers.each do |serializer_class|
-        serializer = serializer_class.new
+        serializer = serializer_class.instance
         expect(serializer).to respond_to(:stream_parse)
       end
     end

@@ -20,7 +20,7 @@ module Serialbench
           serialbench resultset create cross-platform-test results/sets/cross-platform-test
       DESC
       def create(resultset_name, resultset_path)
-        store = Serialbench::Models::ResultStore.default
+        Serialbench::Models::ResultStore.default
 
         # Check if resultset already exists
         definition_path = File.join(resultset_path, 'resultset.yaml')
@@ -93,8 +93,8 @@ module Serialbench
           serialbench resultset remove-result results/sets/performance-comparison results/runs/my-run-local-macos-arm64-ruby-3.3.8
           serialbench resultset remove-result results/sets/cross-platform-test results/runs/my-docker-run
       DESC
-      def remove_result(resultset_path, result_path)
-        store = Serialbench::Models::ResultStore.default
+      def remove_result(resultset_path, _result_path)
+        Serialbench::Models::ResultStore.default
 
         # Find the resultset
         resultset = Serialbench::Models::ResultSet.load(resultset_path)

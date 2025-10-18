@@ -80,11 +80,11 @@ module Serialbench
     end
 
     def self.available_for_format(format)
-      for_format(format).select { |serializer_singleton| serializer_singleton.available? }
+      for_format(format).select(&:available?)
     end
 
     def self.available
-      all.select { |serializer_singleton| serializer_singleton.available? }
+      all.select(&:available?)
     end
   end
 end

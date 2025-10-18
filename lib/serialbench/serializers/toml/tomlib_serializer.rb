@@ -24,7 +24,7 @@ module Serialbench
           # TOML doesn't typically support streaming parsing
           # Parse the entire document and yield it
           result = parse(toml_string)
-          block&.call(result) if block
+          block&.call(result)
           1 # Return 1 document processed
         end
 

@@ -58,27 +58,23 @@ module Serialbench
         def build_xml_from_data(data, name = 'root')
           require 'oga'
 
+          element = Oga::XML::Element.new(name: name)
           case data
           when Hash
-            element = Oga::XML::Element.new(name: name)
             data.each do |key, value|
               child = build_xml_from_data(value, key.to_s)
               element.children << child
             end
-            element
           when Array
-            element = Oga::XML::Element.new(name: name)
             data.each_with_index do |item, index|
               child = build_xml_from_data(item, "item_#{index}")
               element.children << child
             end
-            element
           else
-            element = Oga::XML::Element.new(name: name)
             text_node = Oga::XML::Text.new(text: data.to_s)
             element.children << text_node
-            element
           end
+          element
         end
 
         # SAX handler for streaming
@@ -108,10 +104,10 @@ module Serialbench
             @element_stack.last[:text] += text if @element_stack.any?
           end
 
-          def after_element(namespace, name)
+          def after_element(_namespace, _name)
             element = @element_stack.pop
             if @element_stack.empty?
-              @block&.call(element) if @block
+              @block&.call(element)
             else
               @element_stack.last[:children] << element
             end

@@ -1,10 +1,10 @@
-name: benchmark
+name: Weekly Benchmark
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   schedule:
     # Run benchmarks weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
@@ -27,11 +27,11 @@ jobs:
       ruby-versions: ${{ steps.set-matrix.outputs.ruby-versions }}
       platforms: ${{ steps.set-matrix.outputs.platforms }}
     steps:
-    - name: Set matrix configurations
-      id: set-matrix
-      run: |
-        echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
-        echo 'platforms=["ubuntu-latest", "macos-latest", "windows-latest"]' >> $GITHUB_OUTPUT
+      - name: Set matrix configurations
+        id: set-matrix
+        run: |
+          echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
+          echo 'platforms=["ubuntu-latest", "macos-latest"]' >> $GITHUB_OUTPUT
 
   # Cross-platform native benchmarks
   benchmark:
@@ -44,233 +44,177 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Ruby ${{ matrix.ruby-version }}
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
 
-    - name: Install system dependencies (Ubuntu)
-      if: matrix.platform == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev build-essential
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.platform == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt1-dev build-essential
 
-    - name: Install system dependencies (macOS)
-      if: matrix.platform == 'macos-latest'
-      run: |
-        brew install libxml2 libxslt
+      - name: Install system dependencies (macOS)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew install libxml2 libxslt
 
-    - name: Install system dependencies (Windows)
-      if: matrix.platform == 'windows-latest'
-      run: |
-        # Windows dependencies are typically handled by gem installations
-        echo "Windows dependencies handled by gems"
+      - name: Install gems
+        run: bundle install
 
-    - name: Install gems
-      run: |
-        bundle install
+      - name: Create environment config
+        run: |
+          mkdir -p config/environments
+          cat > config/environments/ci-ruby-${{ matrix.ruby-version }}.yml << EOF
+          ---
+          name: ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
+          kind: local
+          created_at: '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
+          ruby_build_tag: "${{ matrix.ruby-version }}"
+          description: CI environment for Ruby ${{ matrix.ruby-version }} on ${{ matrix.platform }}
+          EOF
 
-    - name: List available serializers
-      run: bundle exec serialbench list
+      - name: Run benchmarks
+        run: |
+          bundle exec serialbench environment execute \
+            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
+            config/benchmarks/short.yml \
+            results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
 
-    - name: Run benchmarks
-      run: |
-        if [ "${{ matrix.platform }}" = "macos-latest" ]; then
-          # macOS can handle full benchmarks
-          bundle exec serialbench benchmark \
-            --formats xml json yaml toml \
-            --iterations 5 \
-            --warmup 2
-        else
-          # Windows and Ubuntu use short configuration for memory efficiency
-          bundle exec serialbench benchmark \
-            --config config/short.yml
-        fi
-      shell: bash
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/
+          retention-days: 30
 
-    - name: Run tests to verify functionality
-      run: bundle exec rspec --format documentation
-
-    - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}
-        path: results/
-        retention-days: 30
-
-  # Merge results and deploy to GitHub Pages
-  merge-and-deploy:
+  # Aggregate results and deploy to GitHub Pages
+  deploy-pages:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     needs: [setup, benchmark]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Ruby (for report generation)
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev build-essential
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt1-dev build-essential
 
-    - name: Install gems
-      run: bundle install
+      - name: Install gems
+        run: bundle install
 
-    - name: Download all benchmark artifacts
-      uses: actions/download-artifact@v4
-      with:
-        pattern: benchmark-results-*
-        path: artifacts/
+      - name: Download all benchmark artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-results-*
+          path: artifacts/
 
-    - name: List downloaded artifacts
-      run: |
-        echo "Downloaded artifacts:"
-        find artifacts/ -type f -name "*.json" -o -name "*.html" | head -20
+      - name: Create resultset
+        run: |
+          mkdir -p results/sets
+          bundle exec serialbench resultset create weekly-benchmark results/sets/weekly-benchmark
 
-    - name: Generate comprehensive GitHub Pages
-      run: |
-        mkdir -p docs
+      - name: Add all results to resultset
+        run: |
+          for dir in artifacts/benchmark-results-*/ci-ruby-*; do
+            if [ -d "$dir" ]; then
+              echo "Adding result from: $dir"
+              bundle exec serialbench resultset add-result results/sets/weekly-benchmark/ "$dir"
+            fi
+          done
 
-        # Find all result directories
-        RESULT_DIRS=""
-        for dir in artifacts/benchmark-results-*/; do
-          if [ -d "$dir" ]; then
-            RESULT_DIRS="$RESULT_DIRS $dir"
-          fi
-        done
+      - name: Generate GitHub Pages site
+        run: |
+          bundle exec serialbench resultset build-site results/sets/weekly-benchmark/ _site/
 
-        echo "Processing result directories: $RESULT_DIRS"
+      - name: Create summary page
+        run: |
+          cat > _site/README.md << 'EOF'
+          # Serialbench - Weekly Benchmark Results
 
-        # Generate GitHub Pages from all results
-        if [ -n "$RESULT_DIRS" ]; then
-          bundle exec serialbench github_pages $RESULT_DIRS docs/
-        else
-          echo "No result directories found, creating placeholder page"
-          echo "<html><body><h1>No benchmark results available</h1></body></html>" > docs/index.html
-        fi
+          This site contains automated benchmark results for Ruby serialization libraries.
 
-    - name: Create platform comparison summary
-      run: |
-        # Create a summary of cross-platform results
-        cat > docs/platform-summary.md << 'EOF'
-        # Cross-Platform Benchmark Summary
+          ## Benchmarked Libraries
 
-        This page contains benchmark results from multiple platforms and Ruby versions:
+          - **XML**: REXML, Ox, Nokogiri, Oga, LibXML
+          - **JSON**: JSON, Oj, RapidJSON, YAJL
+          - **YAML**: Psych
+          - **TOML**: TOML-RB, Tomlib, tomlrb
 
-        ## Platforms Tested
-        - **Ubuntu Latest**: Linux x86_64 environment
-        - **macOS Latest**: Apple Silicon and Intel Mac environment
-        - **Windows Latest**: Windows Server environment
+          ## Platforms Tested
 
-        ## Ruby Versions
-        - Ruby 3.1, 3.2, 3.3, 3.4
+          - Ubuntu Latest (Linux x86_64)
+          - macOS Latest (Apple Silicon/Intel)
 
-        ## Serialization Libraries
-        - **XML**: REXML, Ox, Nokogiri, Oga, LibXML
-        - **JSON**: JSON, Oj, RapidJSON, YAJL
-        - **YAML**: Psych, Syck
-        - **TOML**: TOML-RB, Tomlib
+          ## Ruby Versions
 
-        Results show performance variations across different operating systems and architectures.
-        EOF
+          - Ruby 3.1, 3.2, 3.3, 3.4
 
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
+          ## View Results
 
-    - name: Upload to GitHub Pages
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: docs
+          Open [index.html](./index.html) to view the interactive dashboard.
 
-    - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+          ---
 
-  # Performance comparison analysis
-  performance-analysis:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
-    needs: [benchmark]
+          *Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")*
+          EOF
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
-    - name: Download all benchmark results
-      uses: actions/download-artifact@v4
-      with:
-        pattern: benchmark-results-*-ruby-*
-        path: analysis/
+      - name: Upload to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
 
-    - name: Set up Ruby for analysis
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3'
-        bundler-cache: true
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libxml2-dev libxslt1-dev
-        bundle install
-
-    - name: Generate performance analysis
-      run: |
-        bundle exec serialbench analyze_performance analysis/benchmark-results-*/ performance_analysis.json
-
-    - name: Generate platform comparison report
-      run: |
-        bundle exec serialbench platform_comparison performance_analysis.json platform_comparison.json
-
-    - name: Upload performance analysis
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-analysis
-        path: |
-          performance_analysis.json
-          platform_comparison.json
-        retention-days: 90
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   # Summary job
   summary:
     runs-on: ubuntu-latest
-    needs: [setup, benchmark, merge-and-deploy, performance-analysis]
+    needs: [setup, benchmark, deploy-pages]
     if: always()
     steps:
-    - name: Generate workflow summary
-      run: |
-        echo "## Cross-Platform Benchmark Summary" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**Benchmark Status**: ${{ needs.benchmark.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Deploy Status**: ${{ needs.merge-and-deploy.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "**Analysis Status**: ${{ needs.performance-analysis.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Platforms Tested" >> $GITHUB_STEP_SUMMARY
-        echo "- Ubuntu Latest (Linux x86_64)" >> $GITHUB_STEP_SUMMARY
-        echo "- macOS Latest (Apple Silicon/Intel)" >> $GITHUB_STEP_SUMMARY
-        echo "- Windows Latest (Windows Server)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Ruby Versions" >> $GITHUB_STEP_SUMMARY
-        echo "- Ruby 3.1, 3.2, 3.3, 3.4" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### Serialization Libraries" >> $GITHUB_STEP_SUMMARY
-        echo "- **XML**: REXML, Ox, Nokogiri, Oga, LibXML" >> $GITHUB_STEP_SUMMARY
-        echo "- **JSON**: JSON, Oj, RapidJSON, YAJL" >> $GITHUB_STEP_SUMMARY
-        echo "- **YAML**: Psych, Syck" >> $GITHUB_STEP_SUMMARY
-        echo "- **TOML**: TOML-RB, Tomlib" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
-          echo "### Results" >> $GITHUB_STEP_SUMMARY
-          echo "📊 [View Interactive Results](https://metanorma.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
-          echo "📈 Performance analysis and platform comparison available in artifacts" >> $GITHUB_STEP_SUMMARY
-        fi
+      - name: Generate workflow summary
+        run: |
+          echo "## Weekly Benchmark Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Benchmark Status**: ${{ needs.benchmark.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Deploy Status**: ${{ needs.deploy-pages.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Platforms Tested" >> $GITHUB_STEP_SUMMARY
+          echo "- Ubuntu Latest (Linux x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS Latest (Apple Silicon/Intel)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Ruby Versions" >> $GITHUB_STEP_SUMMARY
+          echo "- Ruby 3.1, 3.2, 3.3, 3.4" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Serialization Libraries" >> $GITHUB_STEP_SUMMARY
+          echo "- **XML**: REXML, Ox, Nokogiri, Oga, LibXML" >> $GITHUB_STEP_SUMMARY
+          echo "- **JSON**: JSON, Oj, RapidJSON, YAJL" >> $GITHUB_STEP_SUMMARY
+          echo "- **YAML**: Psych" >> $GITHUB_STEP_SUMMARY
+          echo "- **TOML**: TOML-RB, Tomlib, tomlrb" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+            echo "### Results" >> $GITHUB_STEP_SUMMARY
+            echo "📊 [View Interactive Dashboard](https://metanorma.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
+          fi

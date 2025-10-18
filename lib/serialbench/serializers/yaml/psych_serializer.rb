@@ -31,7 +31,7 @@ module Serialbench
           end
         end
 
-        def generate(object, options = {})
+        def generate(object, _options = {})
           require 'psych'
           Psych.dump(object)
         end

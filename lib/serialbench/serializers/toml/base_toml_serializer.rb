@@ -59,8 +59,6 @@ module Serialbench
           raise NotImplementedError, 'Subclasses must implement #library_require_name'
         end
 
-        public
-
         # Check if the TOML library is available
         def available?
           return @available if defined?(@available)

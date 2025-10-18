@@ -27,7 +27,7 @@ module Serialbench
           TomlRB.parse(toml_string)
         end
 
-        def generate(object, options = {})
+        def generate(object, _options = {})
           require 'toml-rb'
           TomlRB.dump(object)
         end

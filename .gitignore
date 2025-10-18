@@ -1,0 +1,32 @@
+# RSpec
+.rspec_status
+
+# ASDF
+.tool-versions
+
+# Bundler
+Gemfile.lock
+
+# Generated sites
+_site/
+_site.bak/
+
+# Gem builds
+pkg/
+
+# Benchmark results
+results/
+
+# macOS
+.DS_Store
+
+# Ruby LSP
+.ruby-lsp/
+
+# Editor files
+*.swp
+*.tmp
+*.log
+
+# Ruby version manager files
+.ruby-version

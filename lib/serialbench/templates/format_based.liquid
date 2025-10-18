@@ -1,279 +1,366 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SerialBench - Format Performance Dashboard</title>
-
-    <!-- Preload fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js" defer></script>
-
-    <!-- Theme CSS -->
-    <link rel="stylesheet" href="assets/css/themes.css">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='%23F97316' viewBox='0 0 24 24'%3e%3cpath d='M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z'/%3e%3c/svg%3e">
-</head>
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <!-- Header -->
-            <div class="navbar-header">
-                <a href="#" class="navbar-brand">
-                    <div class="navbar-brand-icon">
-                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
-                        </svg>
-                    </div>
-                    SerialBench
-                </a>
-
-                <div class="navbar-controls">
-                    <button class="theme-toggle" title="Toggle theme">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="5"></circle>
-                            <line x1="12" y1="1" x2="12" y2="3"></line>
-                            <line x1="12" y1="21" x2="12" y2="23"></line>
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                            <line x1="1" y1="12" x2="3" y2="12"></line>
-                            <line x1="21" y1="12" x2="23" y2="12"></line>
-                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Filter Bar -->
-            <div class="filter-bar">
-                <div class="filter-container">
-                    <!-- Platform Filter -->
-                    <div class="filter-group">
-                        <label class="filter-label" for="platform-filter">Platform:</label>
-                        <div class="custom-select">
-                            <select id="platform-filter">
-                                <option value="">All Platforms</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Ruby Type Filter -->
-                    <div class="filter-group">
-                        <label class="filter-label" for="ruby-type-filter">Ruby Type:</label>
-                        <div class="custom-select">
-                            <select id="ruby-type-filter">
-                                <option value="">All Types</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Ruby Version Filter -->
-                    <div class="filter-group">
-                        <label class="filter-label" for="ruby-version-filter">Version:</label>
-                        <div class="custom-select">
-                            <select id="ruby-version-filter">
-                                <option value="">All Versions</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Format Tabs -->
-                    <div class="format-tabs">
-                        <button class="format-tab active" data-format="xml">XML</button>
-                        <button class="format-tab" data-format="json">JSON</button>
-                        <button class="format-tab" data-format="yaml">YAML</button>
-                        <button class="format-tab" data-format="toml">TOML</button>
-                    </div>
-                </div>
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-container">
+        <!-- Platform Filter -->
+        <div class="filter-group">
+            <label class="filter-label" for="platform-filter">Platform:</label>
+            <div class="custom-select">
+                <select id="platform-filter">
+                    <option value="">All Platforms</option>
+                </select>
             </div>
         </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Dashboard Header -->
-        <header class="dashboard-header">
-            <h1>Performance Dashboard</h1>
-            <p class="dashboard-subtitle">
-                Comprehensive serialization performance analysis across formats, platforms, and Ruby versions
-            </p>
-            <div class="dashboard-meta">
-                <span><strong>Generated:</strong> {{ metadata.timestamp | default: "Unknown" }}</span>
-                <span><strong>Ruby Versions:</strong> {{ metadata.ruby_versions | join: ", " | default: "Unknown" }}</span>
-                <span><strong>Platforms:</strong> {{ metadata.platforms | join: ", " | default: "Unknown" }}</span>
+        <!-- Ruby Type Filter -->
+        <div class="filter-group">
+            <label class="filter-label" for="ruby-type-filter">Ruby Type:</label>
+            <div class="custom-select">
+                <select id="ruby-type-filter">
+                    <option value="">All Types</option>
+                </select>
             </div>
-        </header>
+        </div>
 
-        <!-- Charts Grid -->
-        <section class="dashboard-grid">
-            <!-- Parsing Performance Chart -->
-            <div class="chart-card fade-in-up">
-                <div class="chart-header">
-                    <h2 class="chart-title">Parsing Performance</h2>
-                    <p class="chart-subtitle">Operations per second across different file sizes</p>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chart-parsing"></canvas>
-                </div>
+        <!-- Ruby Version Filter -->
+        <div class="filter-group">
+            <label class="filter-label" for="ruby-version-filter">Version:</label>
+            <div class="custom-select">
+                <select id="ruby-version-filter">
+                    <option value="">All Versions</option>
+                </select>
             </div>
+        </div>
 
-            <!-- Generation Performance Chart -->
-            <div class="chart-card fade-in-up">
-                <div class="chart-header">
-                    <h2 class="chart-title">Generation Performance</h2>
-                    <p class="chart-subtitle">Serialization speed across different file sizes</p>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chart-generation"></canvas>
-                </div>
-            </div>
+        <!-- Format Tabs -->
+        <div class="format-tabs">
+            <button class="format-tab active" data-format="xml">XML</button>
+            <button class="format-tab" data-format="json">JSON</button>
+            <button class="format-tab" data-format="yaml">YAML</button>
+            <button class="format-tab" data-format="toml">TOML</button>
+        </div>
+    </div>
+</div>
 
-            <!-- Memory Usage Chart -->
-            <div class="chart-card fade-in-up">
-                <div class="chart-header">
-                    <h2 class="chart-title">Memory Usage</h2>
-                    <p class="chart-subtitle">Memory consumption during operations</p>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chart-memory"></canvas>
-                </div>
-            </div>
+<!-- Dashboard Header -->
+<header class="dashboard-header">
+    <h1>Performance Dashboard</h1>
+    <p class="dashboard-subtitle">
+        Comprehensive serialization performance analysis across formats, platforms, and Ruby versions
+    </p>
+    <div class="dashboard-meta">
+        <span><strong>Generated:</strong> <span id="metadata-timestamp">Unknown</span></span>
+        <span><strong>Ruby Versions:</strong> <span id="metadata-ruby-versions">Unknown</span></span>
+        <span><strong>Platforms:</strong> <span id="metadata-platforms">Unknown</span></span>
+    </div>
+</header>
 
-            <!-- Streaming Performance Chart -->
-            <div class="chart-card fade-in-up">
-                <div class="chart-header">
-                    <h2 class="chart-title">Streaming Performance</h2>
-                    <p class="chart-subtitle">Streaming operations performance</p>
-                </div>
-                <div class="chart-container">
-                    <canvas id="chart-streaming"></canvas>
-                </div>
-            </div>
-        </section>
+<!-- Charts Grid -->
+<section class="dashboard-grid">
+    <!-- Parsing Performance Chart -->
+    <div class="chart-card fade-in-up">
+        <div class="chart-header">
+            <h2 class="chart-title">Parsing Performance</h2>
+            <p class="chart-subtitle">Operations per second across different file sizes</p>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-parsing"></canvas>
+        </div>
+    </div>
 
-        <!-- Environment Information -->
-        <section class="environment-section fade-in-up">
-            <h2 class="summary-title">Environment Information</h2>
-            <div class="environment-grid" id="environment-info">
-                <!-- Environment cards will be populated by JavaScript -->
-            </div>
-        </section>
-    </main>
+    <!-- Generation Performance Chart -->
+    <div class="chart-card fade-in-up">
+        <div class="chart-header">
+            <h2 class="chart-title">Generation Performance</h2>
+            <p class="chart-subtitle">Serialization speed across different file sizes</p>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-generation"></canvas>
+        </div>
+    </div>
 
-    <!-- Embedded Data -->
-    <script>
-        window.benchmarkData = {{ data }};
-    </script>
+    <!-- Memory Usage Chart -->
+    <div class="chart-card fade-in-up">
+        <div class="chart-header">
+            <h2 class="chart-title">Memory Usage</h2>
+            <p class="chart-subtitle">Memory consumption during operations</p>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-memory"></canvas>
+        </div>
+    </div>
 
-    <!-- JavaScript -->
-    <script src="assets/js/dashboard.js" defer></script>
+    <!-- Streaming Performance Chart -->
+    <div class="chart-card fade-in-up">
+        <div class="chart-header">
+            <h2 class="chart-title">Streaming Performance</h2>
+            <p class="chart-subtitle">Streaming operations performance</p>
+        </div>
+        <div class="chart-container">
+            <canvas id="chart-streaming"></canvas>
+        </div>
+    </div>
+</section>
 
-    <!-- Loading indicator -->
-    <style>
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--bg-primary);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            transition: opacity 0.3s ease;
+<!-- Environment Information -->
+<section class="environment-section fade-in-up">
+    <h2 class="summary-title">Environment Information</h2>
+    <div class="environment-grid" id="environment-info">
+        <!-- Environment cards will be populated by JavaScript -->
+    </div>
+</section>
+
+<!-- Embedded Data -->
+<script>
+    window.benchmarkData = {{ data }};
+
+    // Populate metadata on load
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            const data = window.benchmarkData;
+
+            // Extract metadata
+            const timestamps = [];
+            const rubyVersions = new Set();
+            const platforms = new Set();
+
+            if (data.results) {
+                data.results.forEach(result => {
+                    if (result.metadata && result.metadata.created_at) {
+                        timestamps.push(new Date(result.metadata.created_at));
+                    }
+                    if (result.platform) {
+                        if (result.platform.ruby_version) {
+                            rubyVersions.add(result.platform.ruby_version);
+                        }
+                        if (result.platform.os) {
+                            platforms.add(result.platform.os);
+                        }
+                    }
+                });
+            }
+
+            // Update timestamp
+            const timestampEl = document.getElementById('metadata-timestamp');
+            if (timestampEl && timestamps.length > 0) {
+                const latestDate = new Date(Math.max(...timestamps));
+                timestampEl.textContent = latestDate.toLocaleString();
+            }
+
+            // Update Ruby versions
+            const versionsEl = document.getElementById('metadata-ruby-versions');
+            if (versionsEl && rubyVersions.size > 0) {
+                versionsEl.textContent = Array.from(rubyVersions).sort().join(', ');
+            }
+
+            // Update platforms
+            const platformsEl = document.getElementById('metadata-platforms');
+            if (platformsEl && platforms.size > 0) {
+                platformsEl.textContent = Array.from(platforms).sort().join(', ');
+            }
+        } catch (error) {
+            console.error('Error populating metadata:', error);
         }
+    });
+</script>
 
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--border-primary);
-            border-top: 3px solid var(--accent-primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+<!-- Additional JavaScript -->
+<script src="assets/js/dashboard.js" defer></script>
+
+<!-- Theme CSS (additional to base) -->
+<link rel="stylesheet" href="assets/css/themes.css">
+<link rel="stylesheet" href="assets/css/format_based.css">
+
+<!-- Theme Toggle Button -->
+<script>
+    // Add theme toggle to navbar
+    document.addEventListener('DOMContentLoaded', function() {
+        const navbar = document.querySelector('.navbar-header');
+        if (navbar) {
+            const controls = document.createElement('div');
+            controls.className = 'navbar-controls';
+            controls.innerHTML = `
+                <button class="theme-toggle" title="Toggle theme">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            `;
+            navbar.appendChild(controls);
         }
+    });
+</script>
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+<!-- Loading indicator -->
+<style>
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--bg-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+    }
 
-        .dashboard-header {
-            text-align: center;
-            margin-bottom: var(--space-2xl);
-            padding: var(--space-xl) 0;
-        }
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-primary);
+        border-top: 3px solid var(--accent-primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
 
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: var(--space-2xl, 2rem);
+        padding: var(--space-xl, 1.5rem) 0;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-md, 1rem);
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .dashboard-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-lg, 1.25rem);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .dashboard-meta {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-lg, 1.25rem);
+        flex-wrap: wrap;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .filter-bar {
+        background: var(--bg-secondary, #f9fafb);
+        border-bottom: 1px solid var(--border-primary, #e5e7eb);
+        padding: 1rem;
+    }
+
+    .filter-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .custom-select select {
+        padding: 0.5rem 2rem 0.5rem 0.75rem;
+        border: 1px solid var(--border-primary);
+        border-radius: 0.375rem;
+        background: white;
+        font-size: 0.875rem;
+    }
+
+    .format-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-left: auto;
+    }
+
+    .format-tab {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border-primary);
+        border-radius: 0.375rem;
+        background: white;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .format-tab.active {
+        background: var(--accent-primary, #f97316);
+        color: white;
+        border-color: var(--accent-primary, #f97316);
+    }
+
+    @media (max-width: 768px) {
         .dashboard-header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: var(--space-md);
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .dashboard-subtitle {
-            font-size: 1.125rem;
-            color: var(--text-secondary);
-            margin-bottom: var(--space-lg);
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            font-size: 2rem;
         }
 
         .dashboard-meta {
-            display: flex;
-            justify-content: center;
-            gap: var(--space-lg);
-            flex-wrap: wrap;
-            font-size: 0.875rem;
-            color: var(--text-muted);
+            flex-direction: column;
+            gap: var(--space-sm, 0.5rem);
         }
 
-        @media (max-width: 768px) {
-            .dashboard-header h1 {
-                font-size: 2rem;
-            }
-
-            .dashboard-meta {
-                flex-direction: column;
-                gap: var(--space-sm);
-            }
+        .filter-container {
+            flex-direction: column;
+            align-items: stretch;
         }
-    </style>
 
-    <div class="loading-overlay" id="loading-overlay">
-        <div class="loading-spinner"></div>
-    </div>
+        .format-tabs {
+            margin-left: 0;
+        }
+    }
+</style>
 
-    <script>
-        // Hide loading overlay once everything is loaded
-        window.addEventListener('load', () => {
-            const overlay = document.getElementById('loading-overlay');
-            if (overlay) {
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.remove(), 300);
-            }
-        });
+<div class="loading-overlay" id="loading-overlay">
+    <div class="loading-spinner"></div>
+</div>
 
-        // Fallback to hide loading after 5 seconds
-        setTimeout(() => {
-            const overlay = document.getElementById('loading-overlay');
-            if (overlay) {
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.remove(), 300);
-            }
-        }, 5000);
-    </script>
-</body>
-</html>
+<script>
+    // Hide loading overlay once everything is loaded
+    window.addEventListener('load', () => {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 300);
+        }
+    });
+
+    // Fallback to hide loading after 5 seconds
+    setTimeout(() => {
+        const overlay = document.getElementById('loading-overlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 300);
+        }
+    }, 5000);
+</script>

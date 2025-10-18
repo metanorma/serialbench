@@ -32,7 +32,6 @@ module Serialbench
             say "\n📋 Recent Ruby versions available:", :white
             recent_versions.each { |version| say "  #{version}", :cyan }
           end
-
         rescue StandardError => e
           say "❌ Failed to update Ruby-Build definitions: #{e.message}", :red
           exit 1
@@ -52,42 +51,39 @@ module Serialbench
       DESC
       option :limit, type: :numeric, default: 50, desc: 'Maximum number of definitions to show'
       def list(filter = nil)
-        begin
-          definitions = RubyBuildManager.list_definitions(filter: filter)
+        definitions = RubyBuildManager.list_definitions(filter: filter)
 
-          if definitions.empty?
-            if filter
-              say "No Ruby-Build definitions found matching '#{filter}'", :yellow
-            else
-              say 'No Ruby-Build definitions found in cache', :yellow
-              say 'Update the cache first: serialbench ruby-build update', :white
-            end
-            return
+        if definitions.empty?
+          if filter
+            say "No Ruby-Build definitions found matching '#{filter}'", :yellow
+          else
+            say 'No Ruby-Build definitions found in cache', :yellow
+            say 'Update the cache first: serialbench ruby-build update', :white
           end
-
-          # Limit results if there are many
-          limited_definitions = definitions.first(options[:limit])
-
-          say "Ruby-Build Definitions#{filter ? " (filtered by '#{filter}')" : ''}:", :green
-          say '=' * 60, :green
-
-          limited_definitions.each do |definition|
-            say "  #{definition}", :cyan
-          end
-
-          if definitions.length > options[:limit]
-            remaining = definitions.length - options[:limit]
-            say "\n... and #{remaining} more definitions", :yellow
-            say "Use --limit to show more results", :white
-          end
-
-          say "\nTotal: #{definitions.length} definitions", :white
-
-        rescue StandardError => e
-          say "❌ Failed to list Ruby-Build definitions: #{e.message}", :red
-          say 'Try updating the cache: serialbench ruby-build update', :white
-          exit 1
+          return
         end
+
+        # Limit results if there are many
+        limited_definitions = definitions.first(options[:limit])
+
+        say "Ruby-Build Definitions#{filter ? " (filtered by '#{filter}')" : ''}:", :green
+        say '=' * 60, :green
+
+        limited_definitions.each do |definition|
+          say "  #{definition}", :cyan
+        end
+
+        if definitions.length > options[:limit]
+          remaining = definitions.length - options[:limit]
+          say "\n... and #{remaining} more definitions", :yellow
+          say 'Use --limit to show more results', :white
+        end
+
+        say "\nTotal: #{definitions.length} definitions", :white
+      rescue StandardError => e
+        say "❌ Failed to list Ruby-Build definitions: #{e.message}", :red
+        say 'Try updating the cache: serialbench ruby-build update', :white
+        exit 1
       end
 
       desc 'show TAG', 'Show details for a specific Ruby-Build definition'
@@ -99,21 +95,18 @@ module Serialbench
           serialbench ruby-build show 3.2.4
       DESC
       def show(tag)
-        begin
-          definition = RubyBuildManager.show_definition(tag)
+        definition = RubyBuildManager.show_definition(tag)
 
-          say "Ruby-Build Definition: #{tag}", :green
-          say '=' * 40, :green
-          say "Tag: #{definition[:tag]}", :cyan
-          say "Available: #{definition[:available] ? '✅ Yes' : '❌ No'}", :cyan
-          say "Source: #{definition[:source]}", :cyan
-          say "Cache file: #{definition[:cache_file]}", :white
-
-        rescue StandardError => e
-          say "❌ #{e.message}", :red
-          say 'Available definitions: serialbench ruby-build list', :white
-          exit 1
-        end
+        say "Ruby-Build Definition: #{tag}", :green
+        say '=' * 40, :green
+        say "Tag: #{definition[:tag]}", :cyan
+        say "Available: #{definition[:available] ? '✅ Yes' : '❌ No'}", :cyan
+        say "Source: #{definition[:source]}", :cyan
+        say "Cache file: #{definition[:cache_file]}", :white
+      rescue StandardError => e
+        say "❌ #{e.message}", :red
+        say 'Available definitions: serialbench ruby-build list', :white
+        exit 1
       end
 
       desc 'validate TAG', 'Validate a Ruby-Build tag'
@@ -125,31 +118,28 @@ module Serialbench
           serialbench ruby-build validate 3.2.4
       DESC
       def validate(tag)
-        begin
-          valid = RubyBuildManager.validate_tag(tag)
+        valid = RubyBuildManager.validate_tag(tag)
 
-          if valid
-            say "✅ Ruby-Build tag '#{tag}' is valid", :green
-          else
-            say "❌ Ruby-Build tag '#{tag}' is not valid", :red
+        if valid
+          say "✅ Ruby-Build tag '#{tag}' is valid", :green
+        else
+          say "❌ Ruby-Build tag '#{tag}' is not valid", :red
 
-            # Suggest similar tags
-            definitions = RubyBuildManager.list_definitions
-            similar = definitions.select { |d| d.include?(tag.split('.').first(2).join('.')) }.first(5)
+          # Suggest similar tags
+          definitions = RubyBuildManager.list_definitions
+          similar = definitions.select { |d| d.include?(tag.split('.').first(2).join('.')) }.first(5)
 
-            if similar.any?
-              say "\n💡 Similar available tags:", :yellow
-              similar.each { |s| say "  #{s}", :cyan }
-            end
-
-            exit 1
+          if similar.any?
+            say "\n💡 Similar available tags:", :yellow
+            similar.each { |s| say "  #{s}", :cyan }
           end
 
-        rescue StandardError => e
-          say "❌ Failed to validate tag: #{e.message}", :red
-          say 'Try updating the cache: serialbench ruby-build update', :white
           exit 1
         end
+      rescue StandardError => e
+        say "❌ Failed to validate tag: #{e.message}", :red
+        say 'Try updating the cache: serialbench ruby-build update', :white
+        exit 1
       end
 
       desc 'suggest', 'Suggest Ruby-Build tag for current Ruby version'
@@ -163,26 +153,23 @@ module Serialbench
           serialbench ruby-build suggest
       DESC
       def suggest
-        begin
-          current_ruby = RUBY_VERSION
-          suggested_tag = RubyBuildManager.suggest_current_ruby_tag
+        current_ruby = RUBY_VERSION
+        suggested_tag = RubyBuildManager.suggest_current_ruby_tag
 
-          say "Current Ruby version: #{current_ruby}", :cyan
-          say "Suggested ruby_build_tag: #{suggested_tag}", :green
+        say "Current Ruby version: #{current_ruby}", :cyan
+        say "Suggested ruby_build_tag: #{suggested_tag}", :green
 
-          # Validate the suggestion
-          if RubyBuildManager.validate_tag(suggested_tag)
-            say "✅ Suggested tag is valid", :green
-          else
-            say "⚠️  Suggested tag not found in ruby-build definitions", :yellow
-            say "You may need to update the cache or use a different tag", :white
-          end
-
-        rescue StandardError => e
-          say "❌ Failed to suggest tag: #{e.message}", :red
-          say 'Try updating the cache: serialbench ruby-build update', :white
-          exit 1
+        # Validate the suggestion
+        if RubyBuildManager.validate_tag(suggested_tag)
+          say '✅ Suggested tag is valid', :green
+        else
+          say '⚠️  Suggested tag not found in ruby-build definitions', :yellow
+          say 'You may need to update the cache or use a different tag', :white
         end
+      rescue StandardError => e
+        say "❌ Failed to suggest tag: #{e.message}", :red
+        say 'Try updating the cache: serialbench ruby-build update', :white
+        exit 1
       end
 
       desc 'cache-info', 'Show information about the Ruby-Build definitions cache'
@@ -203,19 +190,19 @@ module Serialbench
           say "Location: #{RubyBuildManager::CACHE_FILE}", :cyan
           say "Definitions: #{definitions_count}", :cyan
           say "Age: #{format_cache_age(cache_age)}", :cyan
-          say "Status: ✅ Available", :green
+          say 'Status: ✅ Available', :green
 
           if cache_age > 7 * 24 * 60 * 60 # 7 days
             say "\n💡 Cache is older than 7 days, consider updating:", :yellow
-            say "  serialbench ruby-build update", :white
+            say '  serialbench ruby-build update', :white
           end
         else
           say 'Ruby-Build Cache Information:', :green
           say '=' * 40, :green
           say "Location: #{RubyBuildManager::CACHE_FILE}", :cyan
-          say "Status: ❌ Not found", :red
+          say 'Status: ❌ Not found', :red
           say "\n📥 Update the cache first:", :yellow
-          say "  serialbench ruby-build update", :white
+          say '  serialbench ruby-build update', :white
         end
       end
 
@@ -225,12 +212,12 @@ module Serialbench
         days = (seconds / (24 * 60 * 60)).to_i
         hours = ((seconds % (24 * 60 * 60)) / (60 * 60)).to_i
 
-        if days > 0
+        if days.positive?
           "#{days} day#{'s' if days != 1}, #{hours} hour#{'s' if hours != 1}"
-        elsif hours > 0
+        elsif hours.positive?
           "#{hours} hour#{'s' if hours != 1}"
         else
-          "less than 1 hour"
+          'less than 1 hour'
         end
       end
     end

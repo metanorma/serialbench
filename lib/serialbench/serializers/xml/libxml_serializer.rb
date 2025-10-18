@@ -58,26 +58,22 @@ module Serialbench
         def build_xml_from_data(data, name = 'root')
           require 'libxml'
 
+          element = LibXML::XML::Node.new(name.to_s)
           case data
           when Hash
-            element = LibXML::XML::Node.new(name.to_s)
             data.each do |key, value|
               child = build_xml_from_data(value, key.to_s)
               element << child
             end
-            element
           when Array
-            element = LibXML::XML::Node.new(name.to_s)
             data.each_with_index do |item, index|
               child = build_xml_from_data(item, "item_#{index}")
               element << child
             end
-            element
           else
-            element = LibXML::XML::Node.new(name.to_s)
             element.content = data.to_s
-            element
           end
+          element
         end
 
         # SAX handler for streaming
@@ -100,10 +96,10 @@ module Serialbench
             @element_stack.push(@current_element)
           end
 
-          def on_end_element(element)
+          def on_end_element(_element)
             element_data = @element_stack.pop
             if @element_stack.empty?
-              @block&.call(element_data) if @block
+              @block&.call(element_data)
             else
               @element_stack.last[:children] << element_data
             end

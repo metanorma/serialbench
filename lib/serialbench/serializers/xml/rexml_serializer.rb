@@ -41,7 +41,7 @@ module Serialbench
 
           indent = options.fetch(:indent, 0)
           output = String.new
-          if indent > 0
+          if indent.positive?
             document.write(output, indent)
           else
             document.write(output)
@@ -120,7 +120,7 @@ module Serialbench
           @result = nil
         end
 
-        def start_element(uri, localname, qname, attributes)
+        def start_element(_uri, _localname, qname, attributes)
           @elements_processed += 1
           @block&.call(:start_element, { name: qname, attributes: attributes })
         end
@@ -132,7 +132,7 @@ module Serialbench
           @block&.call(:text, text)
         end
 
-        def end_element(uri, localname, qname)
+        def end_element(_uri, _localname, qname)
           @block&.call(:end_element, { name: qname })
         end
       end

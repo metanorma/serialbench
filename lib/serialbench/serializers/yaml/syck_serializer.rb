@@ -53,7 +53,7 @@ module Serialbench
           end
         end
 
-        def generate(object, options = {})
+        def generate(object, _options = {})
           return nil unless available?
 
           begin

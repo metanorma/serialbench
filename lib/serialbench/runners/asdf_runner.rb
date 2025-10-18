@@ -134,7 +134,7 @@ module Serialbench
       end
 
       # Run benchmark for specific Ruby version
-      def run_benchmark(benchmark_config, benchmark_config_path, result_dir)
+      def run_benchmark(benchmark_config, _benchmark_config_path, result_dir)
         puts "🚀 Running benchmark for #{@name}..."
 
         FileUtils.mkdir_p(result_dir)
