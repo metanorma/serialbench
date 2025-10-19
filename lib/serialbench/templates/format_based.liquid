@@ -192,31 +192,28 @@
         // Populate downloads grid
         try {
             const downloadsGrid = document.getElementById('downloads-grid');
-            if (downloadsGrid && data.results) {
-                // Create download cards for individual environment results
-                data.results.forEach(result => {
-                    if (result.platform) {
-                        const envKey = `${result.platform.os}-${result.platform.arch}-ruby-${result.platform.ruby_version}`;
-                        const filename = `${envKey}.yaml`;
+            if (downloadsGrid && data.environments) {
+                // Create download cards for individual environment results from environments object
+                Object.entries(data.environments).forEach(([envKey, env]) => {
+                    const filename = `${envKey}.yaml`;
 
-                        const card = document.createElement('div');
-                        card.className = 'download-card';
-                        card.innerHTML = `
-                            <div class="download-card-title">
-                                ${result.platform.os} ${result.platform.arch}
-                            </div>
-                            <div class="download-card-meta">
-                                Ruby ${result.platform.ruby_version}
-                            </div>
-                            <a href="data/${filename}" class="download-link" download>
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                                Download YAML
-                            </a>
-                        `;
-                        downloadsGrid.appendChild(card);
-                    }
+                    const card = document.createElement('div');
+                    card.className = 'download-card';
+                    card.innerHTML = `
+                        <div class="download-card-title">
+                            ${env.os} ${env.arch}
+                        </div>
+                        <div class="download-card-meta">
+                            Ruby ${env.ruby_version}
+                        </div>
+                        <a href="data/${filename}" class="download-link" download>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            Download YAML
+                        </a>
+                    `;
+                    downloadsGrid.appendChild(card);
                 });
 
                 // Add complete resultset download
