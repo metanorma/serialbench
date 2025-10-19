@@ -31,13 +31,15 @@ module Serialbench
         map 'ruby_build_tag', to: :ruby_build_tag
       end
 
-      def self.current_local
+      def self.current_local(ruby_version: nil)
+        version = ruby_version || RUBY_VERSION
         new(
-          platform_string: "local-#{RUBY_VERSION}",
+          platform_string: "local-#{version}",
           kind: 'local',
           os: detect_os,
           arch: detect_arch,
-          ruby_build_tag: RUBY_VERSION
+          ruby_version: version,
+          ruby_build_tag: version
         )
       end
 

@@ -58,6 +58,9 @@ module Serialbench
         # If benchmark_config.benchmark_name is identical;
 
         duplicates = results.select do |r|
+          # Skip results with nil platform (defensive check)
+          next if r.platform.nil? || result.platform.nil?
+
           r.platform.platform_string == result.platform.platform_string &&
             r.environment_config.created_at == result.environment_config.created_at &&
             r.benchmark_config.benchmark_name == result.benchmark_config.benchmark_name

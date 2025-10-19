@@ -30,8 +30,10 @@ module Serialbench
 
         results = runner.run_all_benchmarks
 
-        # Get platform information
-        platform = Serialbench::Models::Platform.current_local
+        # Get platform information with correct Ruby version from environment config
+        platform = Serialbench::Models::Platform.current_local(
+          ruby_version: @environment_config.ruby_build_tag
+        )
 
         # Create metadata
         metadata = Models::RunMetadata.new(

@@ -52,6 +52,9 @@ module Serialbench
         'format_based.liquid'
       )
 
+      # Export raw data files for download
+      export_raw_data
+
       puts "✅ Site generated successfully at: #{@output_path}"
       @output_path
     end
@@ -235,6 +238,46 @@ module Serialbench
       end
 
       combined
+    end
+
+    # Export raw data files for download
+    def export_raw_data
+      data_dir = File.join(@output_path, 'data')
+      FileUtils.mkdir_p(data_dir)
+
+      if @result
+        # Export single result
+        export_single_result(@result, data_dir)
+      elsif @resultset
+        # Export all results in resultset plus the complete resultset
+        export_resultset(@resultset, data_dir)
+      end
+
+      puts "📦 Raw data files exported to: #{data_dir}"
+    end
+
+    def export_single_result(result, data_dir)
+      # Create filename based on platform info
+      env_key = "#{result.platform.os}-#{result.platform.arch}-ruby-#{result.platform.ruby_version}"
+      filename = "#{env_key}.yaml"
+      filepath = File.join(data_dir, filename)
+
+      # Write result as YAML
+      File.write(filepath, result.to_yaml)
+      puts "   📄 Exported: #{filename}"
+    end
+
+    def export_resultset(resultset, data_dir)
+      # Export each individual result
+      resultset.results.each do |result|
+        export_single_result(result, data_dir)
+      end
+
+      # Export complete resultset
+      resultset_filename = 'resultset.yaml'
+      resultset_filepath = File.join(data_dir, resultset_filename)
+      File.write(resultset_filepath, resultset.to_yaml)
+      puts "   📄 Exported: #{resultset_filename} (complete dataset)"
     end
   end
 end
