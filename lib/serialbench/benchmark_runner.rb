@@ -36,7 +36,7 @@ module Serialbench
         serializers: Serializers.information,
         parsing: run_parsing_benchmarks,
         generation: run_generation_benchmarks,
-        memory_usage: run_memory_benchmarks,
+        memory: run_memory_benchmarks,
         streaming: run_streaming_benchmarks
       )
     end
