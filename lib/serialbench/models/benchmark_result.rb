@@ -8,12 +8,24 @@ module Serialbench
       attribute :format, :string, values: %w[xml json yaml toml]
       attribute :name, :string
       attribute :version, :string
+
+      yaml do
+        map 'format', to: :format
+        map 'name', to: :name
+        map 'version', to: :version
+      end
     end
 
     class AdapterPerformance < Lutaml::Model::Serializable
       attribute :adapter, :string
       attribute :format, :string, values: %w[xml json yaml toml]
       attribute :data_size, :string, values: %w[small medium large]
+
+      yaml do
+        map 'adapter', to: :adapter
+        map 'format', to: :format
+        map 'data_size', to: :data_size
+      end
     end
 
     class IterationPerformance < AdapterPerformance
@@ -21,6 +33,16 @@ module Serialbench
       attribute :time_per_iteration, :float
       attribute :iterations_per_second, :float
       attribute :iterations_count, :integer
+
+      yaml do
+        map 'adapter', to: :adapter
+        map 'format', to: :format
+        map 'data_size', to: :data_size
+        map 'time_per_iterations', to: :time_per_iterations
+        map 'time_per_iteration', to: :time_per_iteration
+        map 'iterations_per_second', to: :iterations_per_second
+        map 'iterations_count', to: :iterations_count
+      end
     end
 
     class MemoryPerformance < AdapterPerformance
@@ -28,6 +50,16 @@ module Serialbench
       attribute :total_retained, :integer
       attribute :allocated_memory, :integer
       attribute :retained_memory, :integer
+
+      yaml do
+        map 'adapter', to: :adapter
+        map 'format', to: :format
+        map 'data_size', to: :data_size
+        map 'total_allocated', to: :total_allocated
+        map 'total_retained', to: :total_retained
+        map 'allocated_memory', to: :allocated_memory
+        map 'retained_memory', to: :retained_memory
+      end
     end
 
     class BenchmarkResult < Lutaml::Model::Serializable
@@ -36,6 +68,14 @@ module Serialbench
       attribute :generation, IterationPerformance, collection: true
       attribute :memory, MemoryPerformance, collection: true
       attribute :streaming, IterationPerformance, collection: true
+
+      yaml do
+        map 'serializers', to: :serializers
+        map 'parsing', to: :parsing
+        map 'generation', to: :generation
+        map 'memory', to: :memory
+        map 'streaming', to: :streaming
+      end
     end
   end
 end
