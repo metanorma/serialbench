@@ -40,7 +40,7 @@ module Serialbench
       data = if @result
                transform_result_for_dashboard(@result)
              else
-               @resultset.to_json
+               transform_resultset_for_dashboard(@resultset)
              end
 
       prepare_output_directory
@@ -135,6 +135,60 @@ module Serialbench
           'generated_at' => Time.now.iso8601
         }
       }
+    end
+
+    # Transform a ResultSet (collection of Results) into dashboard-compatible format
+    # Combines all results into a single dashboard structure
+    def transform_resultset_for_dashboard(resultset)
+      combined_results = {}
+      environments = {}
+
+      resultset.results.each do |result|
+        # Create unique env key for this result
+        env_key = "#{result.platform.os}-#{result.platform.arch}-ruby-#{result.platform.ruby_version}"
+
+        # Merge this result's data into combined_results
+        result_combined = build_combined_results(result, env_key)
+        merge_combined_results!(combined_results, result_combined)
+
+        # Add environment info
+        environments[env_key] = {
+          'ruby_version' => result.platform.ruby_version,
+          'ruby_platform' => result.platform.ruby_platform || "#{result.platform.os}-#{result.platform.arch}",
+          'os' => result.platform.os,
+          'arch' => result.platform.arch,
+          'source_file' => result.metadata.environment_config_path,
+          'timestamp' => result.metadata.created_at
+        }
+      end
+
+      {
+        'combined_results' => combined_results,
+        'environments' => environments,
+        'metadata' => {
+          'resultset_name' => resultset.name,
+          'resultset_description' => resultset.description,
+          'total_runs' => resultset.results.size,
+          'generated_at' => Time.now.iso8601
+        }
+      }
+    end
+
+    # Deep merge results from multiple runs
+    def merge_combined_results!(target, source)
+      source.each do |operation, sizes|
+        target[operation] ||= {}
+        sizes.each do |size, formats|
+          target[operation][size] ||= {}
+          formats.each do |format, serializers|
+            target[operation][size][format] ||= {}
+            serializers.each do |serializer, envs|
+              target[operation][size][format][serializer] ||= {}
+              target[operation][size][format][serializer].merge!(envs)
+            end
+          end
+        end
+      end
     end
 
     def build_combined_results(result, env_key)
