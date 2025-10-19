@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'benchmark-ips'
   spec.add_dependency 'lutaml-model'
   spec.add_dependency 'memory_profiler'
+  spec.add_dependency 'octokit', '~> 8.0'
   spec.add_dependency 'thor'
 
   # Reporting dependencies

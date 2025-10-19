@@ -69,6 +69,8 @@ jobs:
 
       - name: Update Ruby-Build cache
         run: bundle exec serialbench ruby-build update
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create environment config
         run: |

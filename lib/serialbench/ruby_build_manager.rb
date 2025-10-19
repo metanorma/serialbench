@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
+require 'octokit'
 require 'yaml'
 require 'fileutils'
 
@@ -99,32 +98,28 @@ module Serialbench
       private
 
       def fetch_definitions_from_github
-        uri = URI(GITHUB_API_URL)
+        # Initialize client with optional authentication
+        # Falls back to unauthenticated if GITHUB_TOKEN not set
+        client_options = {}
+        client_options[:access_token] = ENV['GITHUB_TOKEN'] if ENV['GITHUB_TOKEN']
 
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        # Disable CRL checking which can fail on some CI systems
-        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        client = Octokit::Client.new(client_options)
 
-        request = Net::HTTP::Get.new(uri)
-        request['Accept'] = 'application/vnd.github.v3+json'
-        request['User-Agent'] = 'Serialbench Ruby-Build Manager'
-
-        response = http.request(request)
-
-        raise "GitHub API request failed: #{response.code} #{response.message}" unless response.code == '200'
-
-        data = JSON.parse(response.body)
+        contents = client.contents('rbenv/ruby-build', path: 'share/ruby-build')
 
         # Extract definition names from the file list
-        definitions = data
-                      .select { |item| item['type'] == 'file' }
-                      .map { |item| item['name'] }
+        definitions = contents
+                      .select { |item| item[:type] == 'file' && item[:name] != 'Makefile' }
+                      .map { |item| item[:name] }
                       .sort
 
         raise 'No Ruby-Build definitions found in GitHub response' if definitions.empty?
 
         definitions
+      rescue Octokit::Error => e
+        warn "Warning: Error fetching Ruby-Build definitions from GitHub: #{e.message}"
+        warn "Note: Set GITHUB_TOKEN environment variable to avoid rate limits"
+        []
       end
 
       def save_definitions_to_cache(definitions)

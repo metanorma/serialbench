@@ -125,6 +125,42 @@ $ sudo apt-get install libxml2-dev libxslt1-dev build-essential
 $ sudo yum install libxml2-devel libxslt-devel gcc gcc-c++
 ----
 
+=== GitHub API token (optional but recommended)
+
+Serialbench fetches Ruby build definitions from the GitHub API. While this works
+without authentication, GitHub imposes strict rate limits on unauthenticated
+requests (60 requests per hour). For better reliability, especially in CI/CD
+environments or when running multiple benchmarks, set the `GITHUB_TOKEN`
+environment variable.
+
+**Rate limits:**
+
+* **Without token**: 60 requests per hour
+* **With token**: 1,000 requests per hour
+
+**Setting the token:**
+
+[source,bash]
+----
+# For local usage
+export GITHUB_TOKEN=ghp_your_token_here
+
+# For GitHub Actions (automatic)
+# GitHub Actions automatically provides ${{ secrets.GITHUB_TOKEN }}
+# No manual configuration needed in workflows
+----
+
+**Creating a token:**
+
+. Go to https://github.com/settings/tokens
+. Click "Generate new token (classic)"
+. Select scope: `public_repo` (for accessing public repositories)
+. Copy the generated token
+. Store it securely in your environment
+
+NOTE: The token is optional. Serialbench will work without it but may hit rate
+limits when updating Ruby build definitions frequently.
+
 == Installation
 
 Add this line to your application's Gemfile:
