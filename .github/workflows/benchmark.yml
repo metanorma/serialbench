@@ -30,7 +30,7 @@ jobs:
         id: set-matrix
         run: |
           echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
-          echo 'platforms=["ubuntu-latest", "ubuntu-24.04-arm", "ubuntu-22.04-arm", "macos-13", "macos-15-large", "macos-14", "macos-15"]' >> $GITHUB_OUTPUT
+          echo 'platforms=["ubuntu-latest", "ubuntu-24.04-arm", "ubuntu-22.04-arm", "macos-13", "macos-15-intel", "macos-14", "macos-15"]' >> $GITHUB_OUTPUT
 
   # Cross-platform native benchmarks
   benchmark:
@@ -208,7 +208,7 @@ jobs:
           - Ubuntu 24.04 (Linux ARM64)
           - Ubuntu 22.04 (Linux ARM64)
           - macOS 13 (Intel x86_64)
-          - macOS 15 Large (Intel x86_64)
+          - macOS 15 Intel (Intel x86_64)
           - macOS 14 (Apple Silicon ARM64)
           - macOS 15 (Apple Silicon ARM64)
 
@@ -255,7 +255,7 @@ jobs:
           echo "- Ubuntu 24.04 (Linux ARM64)" >> $GITHUB_STEP_SUMMARY
           echo "- Ubuntu 22.04 (Linux ARM64)" >> $GITHUB_STEP_SUMMARY
           echo "- macOS 13 (Intel x86_64)" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 15 Large (Intel x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS 15 Intel (Intel x86_64)" >> $GITHUB_STEP_SUMMARY
           echo "- macOS 14 (Apple Silicon ARM64)" >> $GITHUB_STEP_SUMMARY
           echo "- macOS 15 (Apple Silicon ARM64)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
