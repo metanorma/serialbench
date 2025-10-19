@@ -136,8 +136,7 @@ module Serialbench
           serialbench resultset build-site results/sets/performance-comparison
           serialbench resultset build-site results/sets/cross-platform-test output/
       DESC
-      option :output_dir, type: :string, default: '_site', desc: 'Output directory for generated site'
-      def build_site(resultset_path)
+      def build_site(resultset_path, output_dir = '_site')
         unless Dir.exist?(resultset_path)
           say "ResultSet directory not found: #{resultset_path}", :red
           say "Please create a resultset first using 'serialbench resultset create'", :white
@@ -156,11 +155,11 @@ module Serialbench
         say "Runs in set: #{resultset.results.size}", :cyan
 
         # Use the unified site generator for resultsets
-        Serialbench::SiteGenerator.generate_for_resultset(resultset, options[:output_dir])
+        Serialbench::SiteGenerator.generate_for_resultset(resultset, output_dir)
 
         say '✅ HTML site generated successfully!', :green
-        say "Site location: #{options[:output_dir]}", :cyan
-        say "Open: #{File.join(options[:output_dir], 'index.html')}", :white
+        say "Site location: #{output_dir}", :cyan
+        say "Open: #{File.join(output_dir, 'index.html')}", :white
       rescue StandardError => e
         say "Error generating site: #{e.message}", :red
         say "Details: #{e.backtrace.first(3).join("\n")}", :red if options[:verbose]
