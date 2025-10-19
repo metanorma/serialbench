@@ -109,6 +109,15 @@
     </div>
 </section>
 
+<!-- Raw Data Downloads -->
+<section class="downloads-section fade-in-up">
+    <h2 class="summary-title">Raw Data Downloads</h2>
+    <p class="downloads-subtitle">Download benchmark data in YAML format for further analysis</p>
+    <div class="downloads-grid" id="downloads-grid">
+        <!-- Download links will be populated by JavaScript -->
+    </div>
+</section>
+
 <!-- Embedded Data -->
 <script>
     window.benchmarkData = {{ data }};
@@ -178,6 +187,60 @@
             }
         } catch (error) {
             console.error('Error populating metadata:', error);
+        }
+
+        // Populate downloads grid
+        try {
+            const downloadsGrid = document.getElementById('downloads-grid');
+            if (downloadsGrid && data.results) {
+                // Create download cards for individual environment results
+                data.results.forEach(result => {
+                    if (result.platform) {
+                        const envKey = `${result.platform.os}-${result.platform.arch}-ruby-${result.platform.ruby_version}`;
+                        const filename = `${envKey}.yaml`;
+
+                        const card = document.createElement('div');
+                        card.className = 'download-card';
+                        card.innerHTML = `
+                            <div class="download-card-title">
+                                ${result.platform.os} ${result.platform.arch}
+                            </div>
+                            <div class="download-card-meta">
+                                Ruby ${result.platform.ruby_version}
+                            </div>
+                            <a href="data/${filename}" class="download-link" download>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Download YAML
+                            </a>
+                        `;
+                        downloadsGrid.appendChild(card);
+                    }
+                });
+
+                // Add complete resultset download
+                const resultsetCard = document.createElement('div');
+                resultsetCard.className = 'download-card';
+                resultsetCard.style.gridColumn = 'span 1';
+                resultsetCard.innerHTML = `
+                    <div class="download-card-title">
+                        Complete Dataset
+                    </div>
+                    <div class="download-card-meta">
+                        All environments and results
+                    </div>
+                    <a href="data/resultset.yaml" class="download-link" download>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download YAML
+                    </a>
+                `;
+                downloadsGrid.appendChild(resultsetCard);
+            }
+        } catch (error) {
+            console.error('Error populating downloads:', error);
         }
     });
 </script>
@@ -323,6 +386,83 @@
     }
 
     /* Format tabs styles are in themes.css */
+
+    /* Downloads Section Styles */
+    .downloads-section {
+        margin-top: var(--space-2xl, 2rem);
+        padding: var(--space-xl, 1.5rem);
+        background: var(--bg-card);
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-primary);
+    }
+
+    .downloads-subtitle {
+        text-align: center;
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-lg, 1.25rem);
+    }
+
+    .downloads-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--space-lg, 1.25rem);
+        margin-top: var(--space-lg, 1.25rem);
+    }
+
+    .download-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 0.5rem;
+        padding: var(--space-lg, 1.25rem);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm, 0.5rem);
+    }
+
+    .download-card:hover {
+        border-color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .download-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--space-xs, 0.25rem);
+    }
+
+    .download-card-meta {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: var(--space-sm, 0.5rem);
+    }
+
+    .download-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.625rem 1rem;
+        background: var(--accent-primary);
+        color: white;
+        text-decoration: none;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: background 0.2s ease;
+        justify-content: center;
+    }
+
+    .download-link:hover {
+        background: var(--accent-dark);
+    }
+
+    .download-link svg {
+        width: 16px;
+        height: 16px;
+    }
 
     @media (max-width: 768px) {
         .dashboard-header h1 {
