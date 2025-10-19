@@ -1,10 +1,9 @@
-name: Weekly Benchmark
+name: benchmark-weekly
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
   schedule:
     # Run benchmarks weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
@@ -100,7 +99,7 @@ jobs:
 
   # Aggregate results and deploy to GitHub Pages
   deploy-pages:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     needs: [setup, benchmark]
     environment:
@@ -220,7 +219,7 @@ jobs:
           echo "- **YAML**: Psych" >> $GITHUB_STEP_SUMMARY
           echo "- **TOML**: TOML-RB, Tomlib, tomlrb" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "### Results" >> $GITHUB_STEP_SUMMARY
             echo "📊 [View Interactive Dashboard](https://metanorma.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
           fi
