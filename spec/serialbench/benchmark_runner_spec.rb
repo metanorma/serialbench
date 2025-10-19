@@ -53,6 +53,13 @@ RSpec.describe Serialbench::BenchmarkRunner do
       )
 
       original = runner.run_all_benchmarks
+
+      # Restore YAML to Psych before serialization
+      # The benchmark run may have loaded Syck which overrides YAML
+      Object.send(:remove_const, :YAML) if defined?(::YAML)
+      require 'psych'
+      ::YAML = Psych
+
       yaml_string = original.to_yaml
       round_tripped = Serialbench::Models::BenchmarkResult.from_yaml(yaml_string)
 
