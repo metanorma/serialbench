@@ -21,6 +21,16 @@ module Serialbench
       attribute :ruby_platform, :string, default: -> { RUBY_PLATFORM }
       attribute :ruby_build_tag, :string
 
+      key_value do
+        map 'platform_string', to: :platform_string
+        map 'kind', to: :kind
+        map 'os', to: :os
+        map 'arch', to: :arch
+        map 'ruby_version', to: :ruby_version
+        map 'ruby_platform', to: :ruby_platform
+        map 'ruby_build_tag', to: :ruby_build_tag
+      end
+
       def self.current_local
         new(
           platform_string: "local-#{RUBY_VERSION}",

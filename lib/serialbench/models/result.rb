@@ -14,6 +14,13 @@ module Serialbench
       attribute :benchmark_config_path, :string
       attribute :environment_config_path, :string
       attribute :tags, :string, collection: true
+
+      key_value do
+        map 'created_at', to: :created_at
+        map 'benchmark_config_path', to: :benchmark_config_path
+        map 'environment_config_path', to: :environment_config_path
+        map 'tags', to: :tags
+      end
     end
 
     class Result < Lutaml::Model::Serializable
@@ -22,6 +29,14 @@ module Serialbench
       attribute :environment_config, EnvironmentConfig
       attribute :benchmark_config, BenchmarkConfig
       attribute :benchmark_result, BenchmarkResult
+
+      key_value do
+        map 'platform', to: :platform
+        map 'metadata', to: :metadata
+        map 'environment_config', to: :environment_config
+        map 'benchmark_config', to: :benchmark_config
+        map 'benchmark_result', to: :benchmark_result
+      end
 
       def self.load(path)
         raise ArgumentError, "Path does not exist: #{path}" unless Dir.exist?(path)

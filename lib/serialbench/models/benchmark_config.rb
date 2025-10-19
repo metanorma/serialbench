@@ -53,6 +53,16 @@ module Serialbench
       attribute :warmup, :integer, default: -> { 1 }
       attribute :operations, :string, collection: true, values: %w[parse generate memory streaming]
 
+      key_value do
+        map 'name', to: :name
+        map 'description', to: :description
+        map 'data_sizes', to: :data_sizes
+        map 'formats', to: :formats
+        map 'iterations', to: :iterations
+        map 'warmup', to: :warmup
+        map 'operations', to: :operations
+      end
+
       def to_file(file_path)
         File.write(file_path, to_yaml)
       end

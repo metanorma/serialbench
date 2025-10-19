@@ -9,7 +9,7 @@ module Serialbench
       attribute :name, :string
       attribute :version, :string
 
-      yaml do
+      key_value do
         map 'format', to: :format
         map 'name', to: :name
         map 'version', to: :version
@@ -21,7 +21,7 @@ module Serialbench
       attribute :format, :string, values: %w[xml json yaml toml]
       attribute :data_size, :string, values: %w[small medium large]
 
-      yaml do
+      key_value do
         map 'adapter', to: :adapter
         map 'format', to: :format
         map 'data_size', to: :data_size
@@ -34,7 +34,7 @@ module Serialbench
       attribute :iterations_per_second, :float
       attribute :iterations_count, :integer
 
-      yaml do
+      key_value do
         map 'adapter', to: :adapter
         map 'format', to: :format
         map 'data_size', to: :data_size
@@ -51,7 +51,7 @@ module Serialbench
       attribute :allocated_memory, :integer
       attribute :retained_memory, :integer
 
-      yaml do
+      key_value do
         map 'adapter', to: :adapter
         map 'format', to: :format
         map 'data_size', to: :data_size
@@ -69,7 +69,7 @@ module Serialbench
       attribute :memory, MemoryPerformance, collection: true
       attribute :streaming, IterationPerformance, collection: true
 
-      yaml do
+      key_value do
         map 'serializers', to: :serializers
         map 'parsing', to: :parsing
         map 'generation', to: :generation
