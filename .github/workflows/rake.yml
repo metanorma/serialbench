@@ -6,7 +6,11 @@ on:
   push:
     branches: [ master, main ]
     tags: [ v* ]
+    paths-ignore:
+      - '.github/workflows/windows-debug.yml'
   pull_request:
+    paths-ignore:
+      - '.github/workflows/windows-debug.yml'
 
 jobs:
   rake:

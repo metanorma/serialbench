@@ -3,7 +3,11 @@ name: benchmark-weekly
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '.github/workflows/windows-debug.yml'
   pull_request:
+    paths-ignore:
+      - '.github/workflows/windows-debug.yml'
   schedule:
     # Run benchmarks weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'

@@ -1,0 +1,171 @@
+name: Windows Debug
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - '.github/workflows/windows-debug.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/windows-debug.yml'
+  workflow_dispatch:
+
+jobs:
+  test-libxml2-install:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ['3.1', '3.4']
+        method: ['vcpkg', 'msys2', 'direct']
+
+    name: Test ${{ matrix.method }} on Ruby ${{ matrix.ruby }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+
+      - name: Install via vcpkg
+        if: matrix.method == 'vcpkg'
+        shell: powershell
+        run: |
+          Write-Host "Installing libxml2 via vcpkg..."
+          vcpkg install libxml2:x64-windows
+          vcpkg integrate install
+
+          # Find the libxml2 installation
+          $vcpkgRoot = "C:\vcpkg"
+          $libxml2Path = Join-Path $vcpkgRoot "installed\x64-windows"
+
+          Write-Host "libxml2 installed at: $libxml2Path"
+
+          # Set environment variables
+          echo "LIBXML2_INCLUDE=$libxml2Path\include" >> $env:GITHUB_ENV
+          echo "LIBXML2_LIB=$libxml2Path\lib" >> $env:GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$libxml2Path\lib\pkgconfig" >> $env:GITHUB_ENV
+
+          # Add to PATH
+          $currentPath = [Environment]::GetEnvironmentVariable("PATH", "Process")
+          $newPath = "$libxml2Path\bin;$currentPath"
+          echo "$newPath" >> $env:GITHUB_PATH
+
+          # Verify installation
+          Get-ChildItem -Path $libxml2Path -Recurse | Where-Object { $_.Name -like "*libxml*" } | Select-Object FullName
+
+      - name: Install via msys2
+        if: matrix.method == 'msys2'
+        shell: powershell
+        run: |
+          Write-Host "Installing libxml2 via msys2..."
+          choco install -y msys2
+
+          # Initialize msys2 and install libxml2
+          C:\tools\msys64\usr\bin\bash -lc "pacman -Syu --noconfirm"
+          C:\tools\msys64\usr\bin\bash -lc "pacman -S --noconfirm mingw-w64-x86_64-libxml2 mingw-w64-x86_64-pkg-config"
+
+          # Set environment variables
+          $msys2Root = "C:\tools\msys64\mingw64"
+          echo "LIBXML2_INCLUDE=$msys2Root\include\libxml2" >> $env:GITHUB_ENV
+          echo "LIBXML2_LIB=$msys2Root\lib" >> $env:GITHUB_ENV
+          echo "PKG_CONFIG_PATH=$msys2Root\lib\pkgconfig" >> $env:GITHUB_ENV
+
+          # Add to PATH
+          echo "$msys2Root\bin" >> $env:GITHUB_PATH
+
+          # Verify installation
+          Get-ChildItem -Path $msys2Root -Recurse | Where-Object { $_.Name -like "*libxml*" } | Select-Object FullName
+
+      - name: Install via direct download
+        if: matrix.method == 'direct'
+        shell: powershell
+        run: |
+          Write-Host "Installing libxml2 via direct download..."
+
+          # Download pre-built binaries from gnome.org
+          $downloadDir = "$env:TEMP\libxml2"
+          New-Item -ItemType Directory -Force -Path $downloadDir
+
+          # Download libxml2 and dependencies
+          $libxml2Url = "https://download.gnome.org/binaries/win64/libxml2/2.9/libxml2-2.9.14-x64_dll.zip"
+          $zlibUrl = "https://download.gnome.org/binaries/win64/dependencies/zlib-1.2.13-x64_dll.zip"
+          $iconvUrl = "https://download.gnome.org/binaries/win64/dependencies/libiconv-1.17-x64_dll.zip"
+
+          Invoke-WebRequest -Uri $libxml2Url -OutFile "$downloadDir\libxml2.zip"
+          Invoke-WebRequest -Uri $zlibUrl -OutFile "$downloadDir\zlib.zip"
+          Invoke-WebRequest -Uri $iconvUrl -OutFile "$downloadDir\iconv.zip"
+
+          # Extract archives
+          Expand-Archive -Path "$downloadDir\libxml2.zip" -DestinationPath "C:\libxml2" -Force
+          Expand-Archive -Path "$downloadDir\zlib.zip" -DestinationPath "C:\libxml2" -Force
+          Expand-Archive -Path "$downloadDir\iconv.zip" -DestinationPath "C:\libxml2" -Force
+
+          # Set environment variables
+          echo "LIBXML2_INCLUDE=C:\libxml2\include" >> $env:GITHUB_ENV
+          echo "LIBXML2_LIB=C:\libxml2\lib" >> $env:GITHUB_ENV
+
+          # Add to PATH
+          echo "C:\libxml2\bin" >> $env:GITHUB_PATH
+
+          # Verify installation
+          Get-ChildItem -Path "C:\libxml2" -Recurse | Where-Object { $_.Name -like "*libxml*" } | Select-Object FullName
+
+      - name: Verify pkg-config
+        shell: powershell
+        run: |
+          Write-Host "Checking for pkg-config..."
+          try {
+            $pkgConfigPath = Get-Command pkg-config -ErrorAction Stop
+            Write-Host "pkg-config found at: $($pkgConfigPath.Source)"
+            pkg-config --version
+          } catch {
+            Write-Host "pkg-config not found, installing pkgconfiglite..."
+            choco install -y pkgconfiglite
+            pkg-config --version
+          }
+
+          # Try to find libxml2 via pkg-config
+          Write-Host "`nSearching for libxml-2.0.pc..."
+          if ($env:PKG_CONFIG_PATH) {
+            Write-Host "PKG_CONFIG_PATH: $env:PKG_CONFIG_PATH"
+            pkg-config --list-all | Select-String libxml
+          }
+
+      - name: Install bundler
+        run: gem install bundler
+
+      - name: Try to install libxml-ruby gem
+        shell: powershell
+        continue-on-error: true
+        run: |
+          Write-Host "Attempting to install libxml-ruby..."
+
+          # Set additional environment variables for gem installation
+          if ($env:LIBXML2_INCLUDE) {
+            $env:CFLAGS = "-I$env:LIBXML2_INCLUDE"
+            $env:CPPFLAGS = "-I$env:LIBXML2_INCLUDE"
+          }
+          if ($env:LIBXML2_LIB) {
+            $env:LDFLAGS = "-L$env:LIBXML2_LIB"
+          }
+
+          gem install libxml-ruby --verbose
+
+      - name: Report results
+        if: always()
+        shell: powershell
+        run: |
+          Write-Host "`n=== Installation Method: ${{ matrix.method }} ==="
+          Write-Host "Ruby Version: ${{ matrix.ruby }}"
+          Write-Host "`nEnvironment Variables:"
+          Write-Host "LIBXML2_INCLUDE: $env:LIBXML2_INCLUDE"
+          Write-Host "LIBXML2_LIB: $env:LIBXML2_LIB"
+          Write-Host "PKG_CONFIG_PATH: $env:PKG_CONFIG_PATH"
+          Write-Host "`nPATH:"
+          $env:PATH -split ';' | ForEach-Object { Write-Host "  $_" }
+
+          Write-Host "`nChecking for libxml2 files..."
+          Get-ChildItem C:\ -Recurse -ErrorAction SilentlyContinue -Include libxml2.dll,libxml2.lib,xml2-config.h 2>$null | Select-Object FullName
