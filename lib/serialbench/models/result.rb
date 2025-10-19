@@ -31,7 +31,19 @@ module Serialbench
 
         raise ArgumentError, "No results data found in #{path}" unless File.exist?(data_file)
 
-        from_yaml(IO.read(data_file))
+        yaml_content = IO.read(data_file)
+
+        # Debug: Check if yaml_content is empty or too small
+        if yaml_content.nil? || yaml_content.strip.empty?
+          raise ArgumentError, "Results file at #{data_file} is empty"
+        end
+
+        if yaml_content.bytesize < 200
+          warn "WARNING: Results file at #{data_file} is suspiciously small (#{yaml_content.bytesize} bytes)"
+          warn "Content preview: #{yaml_content[0..100]}"
+        end
+
+        from_yaml(yaml_content)
       end
 
       def self.find_all(base_path = 'results/runs')
