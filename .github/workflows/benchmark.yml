@@ -169,6 +169,17 @@ jobs:
           pattern: benchmark-results-*
           path: artifacts/
 
+      - name: List downloaded artifacts structure
+        run: |
+          echo "=== Artifacts directory structure ==="
+          ls -la artifacts/
+          echo ""
+          echo "=== Searching for results.yaml files ==="
+          find artifacts/ -name "results.yaml" -type f
+          echo ""
+          echo "=== Directory tree (first 3 levels) ==="
+          find artifacts/ -maxdepth 3 -type d | sort
+
       - name: Create resultset
         run: |
           mkdir -p results/sets
@@ -176,12 +187,36 @@ jobs:
 
       - name: Add all results to resultset
         run: |
-          for dir in artifacts/benchmark-results-*; do
-            if [ -d "$dir" ]; then
-              echo "Adding result from: $dir"
-              bundle exec serialbench resultset add-result results/sets/weekly-benchmark "$dir"
+          echo "=== Adding results to resultset ==="
+          for artifact_dir in artifacts/benchmark-results-*; do
+            if [ ! -d "$artifact_dir" ]; then
+              echo "⚠️  Skipping non-directory: $artifact_dir"
+              continue
             fi
+
+            echo "📦 Processing artifact: $artifact_dir"
+
+            # Find the actual results directory containing results.yaml
+            RESULTS_DIR=$(find "$artifact_dir" -name "results.yaml" -type f | head -1 | xargs dirname)
+
+            if [ -z "$RESULTS_DIR" ]; then
+              echo "❌ ERROR: No results.yaml found in $artifact_dir"
+              continue
+            fi
+
+            echo "   📁 Results directory: $RESULTS_DIR"
+
+            # Add the result
+            if bundle exec serialbench resultset add-result results/sets/weekly-benchmark "$RESULTS_DIR"; then
+              echo "   ✅ Successfully added result"
+            else
+              echo "   ❌ Failed to add result"
+            fi
+            echo ""
           done
+
+          echo "=== Summary ==="
+          echo "Total artifacts processed: $(ls -1d artifacts/benchmark-results-* 2>/dev/null | wc -l)"
 
       - name: Generate GitHub Pages site
         run: |
