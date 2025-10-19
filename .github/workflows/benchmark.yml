@@ -141,13 +141,13 @@ jobs:
           for dir in artifacts/benchmark-results-*/ci-ruby-*; do
             if [ -d "$dir" ]; then
               echo "Adding result from: $dir"
-              bundle exec serialbench resultset add-result results/sets/weekly-benchmark/ "$dir"
+              bundle exec serialbench resultset add-result results/sets/weekly-benchmark "$dir"
             fi
           done
 
       - name: Generate GitHub Pages site
         run: |
-          bundle exec serialbench resultset build-site results/sets/weekly-benchmark/ _site/
+          bundle exec serialbench resultset build-site results/sets/weekly-benchmark _site
 
       - name: Create summary page
         run: |
