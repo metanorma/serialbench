@@ -47,6 +47,11 @@ module Serialbench
 
         result = Result.load(result_path)
 
+        # Validate that the result has required fields
+        raise ArgumentError, "Result from #{result_path} is missing platform information" if result.platform.nil?
+        raise ArgumentError, "Result from #{result_path} is missing environment_config" if result.environment_config.nil?
+        raise ArgumentError, "Result from #{result_path} is missing benchmark_config" if result.benchmark_config.nil?
+
         # Check if result already exists:
         # If environment_config.created_at is identical;
         # If platform.platform_string is identical;
