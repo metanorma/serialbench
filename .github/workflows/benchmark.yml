@@ -138,7 +138,7 @@ jobs:
 
       - name: Add all results to resultset
         run: |
-          for dir in artifacts/benchmark-results-*/ci-ruby-*; do
+          for dir in artifacts/benchmark-results-*; do
             if [ -d "$dir" ]; then
               echo "Adding result from: $dir"
               bundle exec serialbench resultset add-result results/sets/weekly-benchmark "$dir"
