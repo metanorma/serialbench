@@ -53,50 +53,8 @@ jobs:
       - name: Install system dependencies (Windows)
         if: startsWith(matrix.platform, 'windows-')
         run: |
-          choco install -y libxml2
-          choco install -y pkgconfiglite
-        shell: powershell
-
-      - name: Configure libxml2 paths (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          # Find libxml2 installation directory
-          $libxmlBase = "C:\ProgramData\chocolatey\lib\libxml2\tools"
-          $libxmlDir = Get-ChildItem -Path $libxmlBase -Directory | Select-Object -First 1
-
-          if ($libxmlDir) {
-            $libxmlPath = $libxmlDir.FullName
-            Write-Host "Found libxml2 at: $libxmlPath"
-
-            # Set PKG_CONFIG_PATH
-            $pkgConfigPath = Join-Path $libxmlPath "lib\pkgconfig"
-            if (Test-Path $pkgConfigPath) {
-              echo "PKG_CONFIG_PATH=$pkgConfigPath" >> $env:GITHUB_ENV
-              $env:PKG_CONFIG_PATH = $pkgConfigPath
-            }
-
-            # Add bin directory to PATH
-            $binPath = Join-Path $libxmlPath "bin"
-            if (Test-Path $binPath) {
-              echo "PATH=$binPath;$env:PATH" >> $env:GITHUB_ENV
-              $env:PATH = "$binPath;$env:PATH"
-            }
-
-            # Set include and lib paths for gem installation
-            $includePath = Join-Path $libxmlPath "include\libxml2"
-            $libPath = Join-Path $libxmlPath "lib"
-
-            if (Test-Path $includePath) {
-              echo "LIBXML2_INCLUDE=$includePath" >> $env:GITHUB_ENV
-            }
-            if (Test-Path $libPath) {
-              echo "LIBXML2_LIB=$libPath" >> $env:GITHUB_ENV
-            }
-          } else {
-            Write-Error "Could not find libxml2 installation directory"
-            exit 1
-          }
-        shell: powershell
+          ridk exec pacman -S --noconfirm mingw-w64-x86_64-libxml2 mingw-w64-x86_64-pkg-config
+        shell: bash
 
       - name: Set up Ruby ${{ matrix.ruby-version }}
         uses: ruby/setup-ruby@v1
@@ -114,14 +72,6 @@ jobs:
         if: startsWith(matrix.platform, 'macos-')
         run: |
           brew install libxml2 libxslt
-
-      - name: Configure bundler for libxml-ruby (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          if ($env:LIBXML2_INCLUDE -and $env:LIBXML2_LIB) {
-            bundle config build.libxml-ruby "--with-xml2-include=$env:LIBXML2_INCLUDE --with-xml2-lib=$env:LIBXML2_LIB"
-          }
-        shell: powershell
 
       - name: Install gems
         run: bundle install
