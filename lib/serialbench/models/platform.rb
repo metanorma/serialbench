@@ -33,11 +33,23 @@ module Serialbench
 
       def self.current_local(ruby_version: nil)
         version = ruby_version || RUBY_VERSION
+
+        # Check for GitHub Actions runner platform
+        github_platform = ENV['GITHUB_RUNNER_PLATFORM']
+        if github_platform
+          os, arch = parse_github_platform(github_platform)
+          platform_string = "#{github_platform}-ruby-#{version}"
+        else
+          os = detect_os
+          arch = detect_arch
+          platform_string = "local-#{version}"
+        end
+
         new(
-          platform_string: "local-#{version}",
+          platform_string: platform_string,
           kind: 'local',
-          os: detect_os,
-          arch: detect_arch,
+          os: os,
+          arch: arch,
           ruby_version: version,
           ruby_build_tag: version
         )
@@ -66,6 +78,25 @@ module Serialbench
           'arm'
         else
           'unknown'
+        end
+      end
+
+      def self.parse_github_platform(platform_name)
+        # Parse GitHub Actions runner platform names
+        # Examples: ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-15-large, macos-14, macos-15
+
+        case platform_name
+        when /^ubuntu.*-arm$/
+          ['linux', 'arm64']
+        when /^ubuntu/
+          ['linux', 'x86_64']
+        when /^macos-(13|15-large)$/
+          ['macos', 'x86_64']
+        when /^macos-(14|15)$/
+          ['macos', 'arm64']
+        else
+          # Fallback to automatic detection
+          [detect_os, detect_arch]
         end
       end
     end

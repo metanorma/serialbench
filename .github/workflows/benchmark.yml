@@ -84,6 +84,8 @@ jobs:
           EOF
 
       - name: Run benchmarks
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
         run: |
           bundle exec serialbench environment execute \
             config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
