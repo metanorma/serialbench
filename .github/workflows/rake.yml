@@ -17,8 +17,8 @@ jobs:
     uses: metanorma/ci/.github/workflows/generic-rake.yml@main
     with:
       before-setup-ruby: |
-        if ($env:RUNNER_OS -eq "Windows") {
+        if [ "$RUNNER_OS" = "Windows" ]; then
           ridk exec pacman -S --noconfirm mingw-w64-x86_64-libxml2 mingw-w64-x86_64-pkg-config
-        }
+        fi
     secrets:
       pat_token: ${{ secrets.METANORMA_CI_PAT_TOKEN }}
