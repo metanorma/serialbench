@@ -25,6 +25,8 @@ module Serialbench
         new(
           platform_string: "local-#{RUBY_VERSION}",
           kind: 'local',
+          os: detect_os,
+          arch: detect_arch,
           ruby_build_tag: RUBY_VERSION
         )
       end

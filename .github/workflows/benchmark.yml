@@ -30,7 +30,7 @@ jobs:
         id: set-matrix
         run: |
           echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
-          echo 'platforms=["ubuntu-latest", "macos-latest"]' >> $GITHUB_OUTPUT
+          echo 'platforms=["ubuntu-latest", "macos-latest", "windows-latest"]' >> $GITHUB_OUTPUT
 
   # Cross-platform native benchmarks
   benchmark:
@@ -167,6 +167,7 @@ jobs:
 
           - Ubuntu Latest (Linux x86_64)
           - macOS Latest (Apple Silicon/Intel)
+          - Windows Latest (Windows x86_64)
 
           ## Ruby Versions
 
@@ -209,6 +210,7 @@ jobs:
           echo "### Platforms Tested" >> $GITHUB_STEP_SUMMARY
           echo "- Ubuntu Latest (Linux x86_64)" >> $GITHUB_STEP_SUMMARY
           echo "- macOS Latest (Apple Silicon/Intel)" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows Latest (Windows x86_64)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Ruby Versions" >> $GITHUB_STEP_SUMMARY
           echo "- Ruby 3.1, 3.2, 3.3, 3.4" >> $GITHUB_STEP_SUMMARY
