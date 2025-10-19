@@ -50,17 +50,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install system dependencies (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          ridk exec pacman -S --noconfirm mingw-w64-x86_64-libxml2 mingw-w64-x86_64-pkg-config
-        shell: bash
-
       - name: Set up Ruby ${{ matrix.ruby-version }}
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: false
+
+      - name: Install system dependencies (Windows)
+        if: startsWith(matrix.platform, 'windows-')
+        run: |
+          ridk exec pacman -S --noconfirm mingw-w64-x86_64-libxml2 mingw-w64-x86_64-pkg-config
+        shell: bash
 
       - name: Install system dependencies (Ubuntu)
         if: startsWith(matrix.platform, 'ubuntu-')
