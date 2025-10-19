@@ -54,6 +54,10 @@ module Serialbench
           benchmark_result: results
         )
 
+        # Restore YAML to use Psych for output, otherwise lutaml-model's to_yaml
+        # will have no output (Syck gem overrides YAML constant)
+        Object.const_set(:YAML, Psych)
+
         results_file = File.join(result_dir, 'results.yaml')
         results_model.to_file(results_file)
 
