@@ -17,7 +17,7 @@ jobs:
     uses: metanorma/ci/.github/workflows/generic-rake.yml@main
     with:
       before-setup-ruby: |
-        vcpkg install libxml2:x64-windows pkg-config:x64-windows 2>&1 || true
+        vcpkg install libxml2:x64-windows 2>&1 || true
         vcpkg integrate install 2>&1 || true
         mkdir -p .bundle 2>&1 || true
         echo "---" > .bundle/config 2>&1 || true
