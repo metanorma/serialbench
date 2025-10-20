@@ -17,6 +17,9 @@ jobs:
     uses: metanorma/ci/.github/workflows/generic-rake.yml@main
     with:
       before-setup-ruby: |
-        ridk exec pacman -S --noconfirm mingw-w64-x86_64-libxml2 mingw-w64-x86_64-pkg-config ; exit 0
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          vcpkg install libxml2:x64-windows pkg-config:x64-windows
+          vcpkg integrate install
+        fi
     secrets:
       pat_token: ${{ secrets.METANORMA_CI_PAT_TOKEN }}
