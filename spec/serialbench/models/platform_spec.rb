@@ -58,7 +58,7 @@ RSpec.describe Serialbench::Models::Platform do
       expect(arch).to eq('arm64')
     end
 
-    it 'parses Windows platforms' do
+    it 'parses Windows x86_64 platforms' do
       os, arch = described_class.parse_github_platform('windows-latest')
       expect(os).to eq('windows')
       expect(arch).to eq('x86_64')
@@ -66,6 +66,36 @@ RSpec.describe Serialbench::Models::Platform do
       os, arch = described_class.parse_github_platform('windows-2022')
       expect(os).to eq('windows')
       expect(arch).to eq('x86_64')
+
+      os, arch = described_class.parse_github_platform('windows-2025')
+      expect(os).to eq('windows')
+      expect(arch).to eq('x86_64')
+    end
+
+    it 'parses Windows ARM platforms' do
+      os, arch = described_class.parse_github_platform('windows-11-arm')
+      expect(os).to eq('windows')
+      expect(arch).to eq('arm64')
+    end
+
+    it 'parses Ubuntu with version numbers' do
+      os, arch = described_class.parse_github_platform('ubuntu-24.04')
+      expect(os).to eq('linux')
+      expect(arch).to eq('x86_64')
+
+      os, arch = described_class.parse_github_platform('ubuntu-22.04')
+      expect(os).to eq('linux')
+      expect(arch).to eq('x86_64')
+
+      os, arch = described_class.parse_github_platform('ubuntu-22.04-arm')
+      expect(os).to eq('linux')
+      expect(arch).to eq('arm64')
+    end
+
+    it 'parses macOS with newer versions' do
+      os, arch = described_class.parse_github_platform('macos-26')
+      expect(os).to eq('macos')
+      expect(arch).to eq('arm64')
     end
   end
 
