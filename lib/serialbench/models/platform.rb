@@ -83,7 +83,7 @@ module Serialbench
 
       def self.parse_github_platform(platform_name)
         # Parse GitHub Actions runner platform names
-        # Examples: ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-15-intel, macos-14, macos-15
+        # Examples: ubuntu-latest, ubuntu-24.04-arm, macos-13, macos-15-intel, macos-14, macos-15, windows-latest
 
         case platform_name
         when /^ubuntu.*-arm$/
@@ -94,6 +94,8 @@ module Serialbench
           ['macos', 'x86_64']
         when /^macos-(14|15)$/
           ['macos', 'arm64']
+        when /^windows/
+          ['windows', 'x86_64']
         else
           # Fallback to automatic detection
           [detect_os, detect_arch]
