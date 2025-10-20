@@ -41,10 +41,18 @@ jobs:
     runs-on: ${{ matrix.platform }}
     needs: setup
     strategy:
+      fail-fast: false
       matrix:
         platform: ${{ fromJson(needs.setup.outputs.platforms) }}
         ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
-      fail-fast: false
+        exclude:
+          # windows-11-arm only supports Ruby 3.4.x
+          - platform: windows-11-arm
+            ruby-version: "3.1"
+          - platform: windows-11-arm
+            ruby-version: "3.2"
+          - platform: windows-11-arm
+            ruby-version: "3.3"
 
     steps:
       - name: Checkout repository
