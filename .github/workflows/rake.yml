@@ -19,7 +19,6 @@ jobs:
       before-setup-ruby: |
         vcpkg install libxml2:x64-windows pkg-config:x64-windows 2>&1 || true
         vcpkg integrate install 2>&1 || true
-        mkdir -p .bundle 2>&1 || true
-        echo "BUNDLE_BUILD__LIBXML_RUBY: \"--with-xml2-dir=C:/vcpkg/installed/x64-windows --with-xml2-include=C:/vcpkg/installed/x64-windows/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/x64-windows/lib\"" > .bundle/config 2>&1 || true
+        echo "BUNDLE_BUILD__LIBXML_RUBY=--with-xml2-dir=C:/vcpkg/installed/x64-windows --with-xml2-include=C:/vcpkg/installed/x64-windows/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/x64-windows/lib" >> $GITHUB_ENV 2>&1 || true
     secrets:
       pat_token: ${{ secrets.METANORMA_CI_PAT_TOKEN }}
