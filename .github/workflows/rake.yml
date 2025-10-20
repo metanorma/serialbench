@@ -17,9 +17,9 @@ jobs:
     uses: metanorma/ci/.github/workflows/generic-rake.yml@main
     with:
       before-setup-ruby: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
+        if ($env:RUNNER_OS -eq "Windows") {
           vcpkg install libxml2:x64-windows pkg-config:x64-windows
           vcpkg integrate install
-        fi
+        }
     secrets:
       pat_token: ${{ secrets.METANORMA_CI_PAT_TOKEN }}
