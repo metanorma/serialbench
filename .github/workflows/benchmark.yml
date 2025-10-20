@@ -58,14 +58,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install system dependencies (Windows)
+      - name: Detect Windows architecture
+        id: windows-arch
         if: startsWith(matrix.platform, 'windows-')
         run: |
-          vcpkg install libxml2:x64-windows 2>&1 || true
+          if [[ "${{ matrix.platform }}" == *"-arm" ]]; then
+            echo "arch=arm64-windows" >> $GITHUB_OUTPUT
+          else
+            echo "arch=x64-windows" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Install vcpkg dependencies (Windows)
+        if: startsWith(matrix.platform, 'windows-')
+        run: |
+          vcpkg install libxml2:${{ steps.windows-arch.outputs.arch }} 2>&1 || true
           vcpkg integrate install 2>&1 || true
+        shell: bash
+
+      - name: Configure bundler for libxml2 (Windows)
+        if: startsWith(matrix.platform, 'windows-')
+        run: |
           mkdir -p .bundle 2>&1 || true
           echo "---" > .bundle/config 2>&1 || true
-          echo 'BUNDLE_BUILD__LIBXML___RUBY: "--with-xml2-dir=C:/vcpkg/installed/x64-windows --with-xml2-include=C:/vcpkg/installed/x64-windows/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/x64-windows/lib"' >> .bundle/config 2>&1 || true
+          echo 'BUNDLE_BUILD__LIBXML___RUBY: "--with-xml2-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }} --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib"' >> .bundle/config 2>&1 || true
         shell: bash
 
       - name: Set up Ruby ${{ matrix.ruby-version }}
