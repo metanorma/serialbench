@@ -19,5 +19,7 @@ jobs:
       before-setup-ruby: |
         vcpkg install libxml2:x64-windows pkg-config:x64-windows 2>&1 || true
         vcpkg integrate install 2>&1 || true
+        echo "PKG_CONFIG_PATH=C:/vcpkg/installed/x64-windows/lib/pkgconfig" >> $GITHUB_ENV || true
+        echo "LIBXML2_DIR=C:/vcpkg/installed/x64-windows" >> $GITHUB_ENV || true
     secrets:
       pat_token: ${{ secrets.METANORMA_CI_PAT_TOKEN }}
