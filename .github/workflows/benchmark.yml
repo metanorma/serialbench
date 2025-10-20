@@ -128,19 +128,11 @@ jobs:
           fi
 
           echo "✅ File size OK: $SIZE bytes"
-
-          echo "📝 Validating YAML syntax..."
-          if ! ruby -ryaml -e "YAML.load_file('$RESULTS_FILE')"; then
-            echo "❌ ERROR: Invalid YAML syntax in results.yaml"
-            exit 1
-          fi
-          echo "✅ YAML syntax valid"
-
-          echo "🔍 Displaying first 50 lines of results..."
-          head -50 "$RESULTS_FILE"
-
-          echo "✅ Verification complete - results.yaml is valid"
         shell: bash
+
+      - name: Validate YAML schema
+        run: |
+          bundle exec serialbench validate result results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
@@ -200,36 +192,7 @@ jobs:
 
       - name: Add all results to resultset
         run: |
-          echo "=== Adding results to resultset ==="
-          for artifact_dir in artifacts/benchmark-results-*; do
-            if [ ! -d "$artifact_dir" ]; then
-              echo "⚠️  Skipping non-directory: $artifact_dir"
-              continue
-            fi
-
-            echo "📦 Processing artifact: $artifact_dir"
-
-            # Find the actual results directory containing results.yaml
-            RESULTS_DIR=$(find "$artifact_dir" -name "results.yaml" -type f | head -1 | xargs dirname)
-
-            if [ -z "$RESULTS_DIR" ]; then
-              echo "❌ ERROR: No results.yaml found in $artifact_dir"
-              continue
-            fi
-
-            echo "   📁 Results directory: $RESULTS_DIR"
-
-            # Add the result
-            if bundle exec serialbench resultset add-result results/sets/weekly-benchmark "$RESULTS_DIR"; then
-              echo "   ✅ Successfully added result"
-            else
-              echo "   ❌ Failed to add result"
-            fi
-            echo ""
-          done
-
-          echo "=== Summary ==="
-          echo "Total artifacts processed: $(ls -1d artifacts/benchmark-results-* 2>/dev/null | wc -l)"
+          bundle exec serialbench resultset add-result results/sets/weekly-benchmark artifacts/benchmark-results-*/
 
       - name: Generate GitHub Pages site
         run: |

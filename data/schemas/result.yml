@@ -1,0 +1,29 @@
+---
+type: object
+title: Serialbench Result
+description: Schema for serialbench benchmark result files (basic structure validation)
+properties:
+  platform:
+    type: object
+    properties:
+      platform_string:
+        type: string
+      os:
+        type: string
+      arch:
+        type: string
+      ruby_version:
+        type: string
+  metadata:
+    type: object
+  environment_config:
+    type: object
+    properties:
+      name:
+        type: string
+      kind:
+        type: string
+  benchmark_config:
+    type: object
+  benchmark_result:
+    type: object

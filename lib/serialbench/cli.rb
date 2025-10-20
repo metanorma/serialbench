@@ -6,6 +6,7 @@ require_relative 'cli/environment_cli'
 require_relative 'cli/benchmark_cli'
 require_relative 'cli/resultset_cli'
 require_relative 'cli/ruby_build_cli'
+require_relative 'cli/validate_cli'
 
 module Serialbench
   # Main CLI entry point for the new object-oriented command structure
@@ -21,6 +22,9 @@ module Serialbench
 
     desc 'ruby_build SUBCOMMAND', 'Manage Ruby-Build definitions for validation'
     subcommand 'ruby_build', Serialbench::Cli::RubyBuildCli
+
+    desc 'validate SUBCOMMAND', 'Validate YAML files against schemas'
+    subcommand 'validate', Serialbench::Cli::ValidateCli
 
     desc 'version', 'Show Serialbench version'
     def self.version

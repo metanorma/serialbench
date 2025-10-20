@@ -49,36 +49,83 @@ module Serialbench
         exit 1
       end
 
-      desc 'add-result RESULT_PATH RESULTSET_PATH', 'Add a run to a resultset'
+      desc 'add-result RESULTSET_PATH RESULT_PATH...', 'Add one or more runs to a resultset'
       long_desc <<~DESC
-        Add an existing benchmark run to a resultset.
+        Add one or more benchmark runs to a resultset.
 
-        RESULT_PATH should be the path to a run result directory
-        RESULTSET_PATH must be specified explicitly
+        RESULTSET_PATH is the path to the resultset directory
+        RESULT_PATH... accepts multiple result paths (supports shell expansion)
 
         Examples:
-          serialbench resultset add-result results/sets/performance-comparison results/runs/my-run-local-macos-arm64-ruby-3.3.8
-          serialbench resultset add-result results/sets/cross-platform-test results/runs/my-docker-run
-      DESC
-      def add_result(resultset_path, result_path)
-        resultset = Serialbench::Models::ResultSet.load(resultset_path)
+          # Add single result
+          serialbench resultset add-result results/sets/weekly results/runs/my-run
 
-        # Validate that the run location exists
-        unless Dir.exist?(result_path)
-          say "Result directory not found: #{result_path}", :red
-          return
+          # Add multiple results explicitly
+          serialbench resultset add-result results/sets/weekly results/runs/run1 results/runs/run2
+
+          # Add multiple results with shell expansion
+          serialbench resultset add-result results/sets/weekly artifacts/benchmark-results-*/
+          serialbench resultset add-result results/sets/weekly results/runs/*
+      DESC
+      def add_result(resultset_path, *result_paths)
+        if result_paths.empty?
+          say '❌ Error: At least one result path must be provided', :red
+          exit 1
         end
 
-        # Add run to resultset
-        resultset.add_result(result_path)
+        resultset = Serialbench::Models::ResultSet.load(resultset_path)
+
+        say "📦 Adding #{result_paths.size} result(s) to resultset", :cyan
+        say "ResultSet: #{resultset_path}", :white
+        say ''
+
+        added_count = 0
+        failed_count = 0
+        skipped_count = 0
+
+        result_paths.each_with_index do |result_path, index|
+          say "#{index + 1}/#{result_paths.size} Processing: #{result_path}", :cyan
+
+          # Find results.yaml in the path or subdirectories
+          results_file = if File.exist?(File.join(result_path, 'results.yaml'))
+                           File.join(result_path, 'results.yaml')
+                         else
+                           Dir.glob(File.join(result_path, '**/results.yaml')).first
+                         end
+
+          unless results_file
+            say '  ⚠️  No results.yaml found - skipping', :yellow
+            skipped_count += 1
+            next
+          end
+
+          result_dir = File.dirname(results_file)
+
+          begin
+            resultset.add_result(result_dir)
+            say '  ✅ Added successfully', :green
+            added_count += 1
+          rescue StandardError => e
+            say "  ❌ Failed: #{e.message}", :red
+            failed_count += 1
+          end
+          say ''
+        end
+
         resultset.save(resultset_path)
 
-        say '✅ Added run to resultset', :green
-        say "Path: #{result_path}", :cyan
-        say "ResultSet: #{resultset_path}", :cyan
-        say "Total runs in set: #{resultset.results.count}", :white
+        say '=' * 60, :cyan
+        say 'Summary:', :green
+        say "  Total processed: #{result_paths.size}", :white
+        say "  ✅ Successfully added: #{added_count}", :green
+        say "  ❌ Failed: #{failed_count}", :red if failed_count > 0
+        say "  ⚠️  Skipped: #{skipped_count}", :yellow if skipped_count > 0
+        say "  📊 Total results in set: #{resultset.results.count}", :cyan
+        say '=' * 60, :cyan
+
+        exit 1 if failed_count > 0 && added_count == 0
       rescue StandardError => e
-        say "Error adding run to resultset: #{e.message}", :red
+        say "❌ Error: #{e.message}", :red
         exit 1
       end
 

@@ -26,6 +26,9 @@ Gem::Specification.new do |spec|
   spec.files = all_files_in_git
                .reject { |f| f.match(%r{\A(?:spec|features|bin|\.)/}) }
 
+  # Ensure data directory is included
+  spec.files += Dir['data/**/*'].select { |f| File.file?(f) }
+
   spec.bindir = 'exe'
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
@@ -60,4 +63,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'tomlib'
   spec.add_dependency 'toml-rb'
   spec.add_dependency 'tomlrb'
+
+  # YAML validation
+  spec.add_dependency 'json-schema'
 end
