@@ -85,23 +85,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create environment config (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          New-Item -ItemType Directory -Force -Path config/environments
-          $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-          @"
-          ---
-          name: ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
-          kind: local
-          created_at: '$timestamp'
-          ruby_build_tag: "${{ matrix.ruby-version }}"
-          description: CI environment for Ruby ${{ matrix.ruby-version }} on ${{ matrix.platform }}
-          "@ | Out-File -FilePath "config/environments/ci-ruby-${{ matrix.ruby-version }}.yml" -Encoding utf8
-        shell: powershell
-
-      - name: Create environment config (Unix)
-        if: ${{ !startsWith(matrix.platform, 'windows-') }}
+      - name: Create environment config
         run: |
           mkdir -p config/environments
           cat > config/environments/ci-ruby-${{ matrix.ruby-version }}.yml << EOF
@@ -112,6 +96,7 @@ jobs:
           ruby_build_tag: "${{ matrix.ruby-version }}"
           description: CI environment for Ruby ${{ matrix.ruby-version }} on ${{ matrix.platform }}
           EOF
+        shell: bash
 
       - name: Run benchmarks
         env:
@@ -119,48 +104,7 @@ jobs:
         run: |
           bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/short.yml results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
 
-      - name: Verify benchmark results before upload (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          Write-Host "=== Verifying benchmark results ==="
-          $resultsFile = "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml"
-
-          Write-Host "📁 Checking file exists..."
-          if (-not (Test-Path $resultsFile)) {
-            Write-Host "❌ ERROR: results.yaml not found at $resultsFile"
-            exit 1
-          }
-
-          Write-Host "📊 Checking file size..."
-          $size = (Get-Item $resultsFile).Length
-          Write-Host "   File size: $size bytes"
-
-          if ($size -lt 1000) {
-            Write-Host "❌ ERROR: results.yaml is suspiciously small ($size bytes)"
-            Write-Host "   Expected at least 1000 bytes for valid benchmark results"
-            Write-Host "=== File contents ==="
-            Get-Content $resultsFile
-            exit 1
-          }
-
-          Write-Host "✅ File size OK: $size bytes"
-
-          Write-Host "📝 Validating YAML syntax..."
-          ruby -ryaml -e "YAML.load_file('$resultsFile')"
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ ERROR: Invalid YAML syntax in results.yaml"
-            exit 1
-          }
-          Write-Host "✅ YAML syntax valid"
-
-          Write-Host "🔍 Displaying first 50 lines of results..."
-          Get-Content $resultsFile -Head 50
-
-          Write-Host "✅ Verification complete - results.yaml is valid"
-        shell: powershell
-
-      - name: Verify benchmark results before upload (Unix)
-        if: ${{ !startsWith(matrix.platform, 'windows-') }}
+      - name: Verify benchmark results before upload
         run: |
           echo "=== Verifying benchmark results ==="
           RESULTS_FILE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml"
@@ -196,6 +140,7 @@ jobs:
           head -50 "$RESULTS_FILE"
 
           echo "✅ Verification complete - results.yaml is valid"
+        shell: bash
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
