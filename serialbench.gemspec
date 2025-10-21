@@ -50,10 +50,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'ox'
   spec.add_dependency 'rexml' # needed for Ruby 3.4+
 
-  # libxml-ruby: Excluded on Windows ARM due to compilation issues
-  unless Gem::Platform.local.os == 'mingw32' && Gem::Platform.local.cpu == 'arm64'
-    spec.add_dependency 'libxml-ruby'
-  end
+  # Note: libxml-ruby is defined in Gemfile with platform conditionals
+  # to properly exclude it on Windows ARM where compilation fails
 
   # JSON serializers
   spec.add_dependency 'oj'
