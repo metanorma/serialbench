@@ -101,6 +101,18 @@ jobs:
         run: |
           brew install libxml2 libxslt
 
+      - name: Debug Ruby platform (Windows only)
+        if: startsWith(matrix.platform, 'windows-')
+        shell: ruby {0}
+        run: |
+          puts "=== Ruby Platform Debug Info ==="
+          puts "RUBY_PLATFORM: #{RUBY_PLATFORM}"
+          puts "Gem.win_platform?: #{Gem.win_platform?}"
+          puts "RbConfig::CONFIG['host_os']: #{RbConfig::CONFIG['host_os']}"
+          puts "RbConfig::CONFIG['host_cpu']: #{RbConfig::CONFIG['host_cpu']}"
+          puts "RbConfig::CONFIG['arch']: #{RbConfig::CONFIG['arch']}"
+          puts "================================"
+
       - name: Install gems
         run: bundle install
 
