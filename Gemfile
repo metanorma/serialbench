@@ -6,7 +6,7 @@ gemspec
 
 # Platform-specific dependencies
 # libxml-ruby fails to compile on Windows ARM, but works on other platforms
-unless Gem.win_platform? && RUBY_PLATFORM.include?('arm64')
+unless Gem.win_platform? && RUBY_PLATFORM.include?('aarch64')
   gem 'libxml-ruby'
 end
 
