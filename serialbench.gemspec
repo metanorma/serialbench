@@ -45,13 +45,13 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'liquid' # Template engine for HTML reports
 
   # XML serializers
-  spec.add_dependency 'nokogiri'
   spec.add_dependency 'oga'
   spec.add_dependency 'ox'
   spec.add_dependency 'rexml' # needed for Ruby 3.4+
 
-  # Note: libxml-ruby is defined in Gemfile with platform conditionals
-  # to properly exclude it on Windows ARM where compilation fails
+  # Note: nokogiri and libxml-ruby are defined in Gemfile with platform
+  # conditionals to properly exclude them on Windows ARM where libxml2
+  # compilation fails
 
   # JSON serializers
   spec.add_dependency 'oj'

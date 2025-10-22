@@ -5,8 +5,10 @@ source 'https://rubygems.org'
 gemspec
 
 # Platform-specific dependencies
-# libxml-ruby fails to compile on Windows ARM, but works on other platforms
+# nokogiri and libxml-ruby fail to compile on Windows ARM due to libxml2
+# compilation issues, but work on other platforms
 unless Gem.win_platform? && RUBY_PLATFORM.include?('aarch64')
+  gem 'nokogiri'
   gem 'libxml-ruby'
 end
 
