@@ -42,6 +42,11 @@ Serialbench is a comprehensive benchmarking suite that evaluates the performance
 | Pure Ruby XML parser with XPath support
 
 | XML
+| https://github.com/lutaml/taurus-ruby[Taurus]
+| v0.1.6
+| FFI binding to libtaurus (pure-C XML 1.0, XPath 1.0, SAX)
+
+| XML
 | https://github.com/ruby/rexml[REXML]
 | v3.4.1
 | Ruby's standard library XML parser
