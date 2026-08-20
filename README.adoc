@@ -43,7 +43,7 @@ Serialbench is a comprehensive benchmarking suite that evaluates the performance
 
 | XML
 | https://github.com/lutaml/taurus-ruby[Taurus]
-| v0.1.6
+| v0.1.7
 | FFI binding to libtaurus (pure-C XML 1.0, XPath 1.0, SAX)
 
 | XML
