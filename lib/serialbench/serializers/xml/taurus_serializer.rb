@@ -115,6 +115,18 @@ module Serialbench
             @element_stack = []
           end
 
+          # No-op callbacks the parser invokes unconditionally (the base
+          # Taurus::XML::SAX::Document normally provides these).
+          def start_document; end
+          def end_document; end
+          def xmldecl(_version, _encoding, _standalone); end
+          def comment(_string); end
+          def processing_instruction(_name, _content); end
+          def start_prefix_mapping(_prefix, _uri); end
+          def end_prefix_mapping(_prefix); end
+          def warning(_string); end
+          def error(_message, _line = 0, _column = 0); end
+
           def start_element(name, attrs = [])
             @elements_processed += 1
             @element_stack.push({ name: name, attributes: Hash[attrs], children: [], text: '' })
