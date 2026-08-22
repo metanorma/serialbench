@@ -12,7 +12,7 @@ unless Gem.win_platform? && RUBY_PLATFORM.include?('aarch64')
   gem 'libxml-ruby'
 end
 
-gem 'taurus'    # Needs the libtaurus shared library (TAURUS_LIB_PATH or system install)
+gem 'leptris'    # Needs the libleptris shared library (LEPTRIS_LIB_PATH or system install)
 gem 'base64'  # Required for Ruby 3.4+
 gem 'lutaml-model', '~> 0.7'
 gem 'octokit'

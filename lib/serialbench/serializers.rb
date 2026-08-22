@@ -10,7 +10,7 @@ require_relative 'serializers/xml/ox_serializer'
 require_relative 'serializers/xml/nokogiri_serializer'
 require_relative 'serializers/xml/oga_serializer'
 require_relative 'serializers/xml/libxml_serializer'
-require_relative 'serializers/xml/taurus_serializer'
+require_relative 'serializers/xml/leptris_serializer'
 
 # JSON Serializers
 require_relative 'serializers/json/base_json_serializer'
@@ -40,7 +40,7 @@ module Serialbench
         Xml::NokogiriSerializer,
         Xml::OgaSerializer,
         Xml::LibxmlSerializer,
-        Xml::TaurusSerializer
+        Xml::LeptrisSerializer
       ],
       json: [
         Json::JsonSerializer,
