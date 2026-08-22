@@ -12,12 +12,12 @@ module Serialbench
 
         def parse(xml_string)
           require 'leptris'
-          Taurus::XML.parse(xml_string)
+          Leptris::XML.parse(xml_string)
         end
 
         def generate(data)
           require 'leptris'
-          if data.is_a?(Taurus::XML::Document) || data.is_a?(Taurus::XML::Node)
+          if data.is_a?(Leptris::XML::Document) || data.is_a?(Leptris::XML::Node)
             data.to_xml(indent: 2)
           else
             build_document_from_data(data).to_xml(indent: 2)
@@ -28,7 +28,7 @@ module Serialbench
           require 'leptris'
 
           handler = StreamingHandler.new(&block)
-          parser = Taurus::XML::SAX::Parser.new(handler)
+          parser = Leptris::XML::SAX::Parser.new(handler)
           parser.parse_memory(xml_string)
           handler.elements_processed
         end
@@ -45,7 +45,7 @@ module Serialbench
           return 'unknown' unless available?
 
           require 'leptris'
-          Taurus::VERSION
+          Leptris::VERSION
         end
 
         def library_require_name
@@ -60,7 +60,7 @@ module Serialbench
 
           @available = begin
             require 'leptris'
-            Taurus::XML.parse('<probe/>')
+            Leptris::XML.parse('<probe/>')
             true
           rescue StandardError
             false
@@ -70,7 +70,7 @@ module Serialbench
         private
 
         def build_document_from_data(data, root_name = 'root')
-          document = Taurus::XML.parse('<root/>')
+          document = Leptris::XML.parse('<root/>')
           document.root.name = sanitize_element_name(root_name)
           append_data(document.root, data)
           document
@@ -102,9 +102,9 @@ module Serialbench
         end
 
         # SAX handler counting elements, mirroring the Nokogiri adapter's
-        # StreamingHandler shape (Taurus SAX delivers attrs as [name, value]
+        # StreamingHandler shape (Leptris SAX delivers attrs as [name, value]
         # pairs, same as Nokogiri::XML::SAX). Plain duck-typed class --
-        # Taurus::XML::SAX::Parser needs no base class, and subclassing it
+        # Leptris::XML::SAX::Parser needs no base class, and subclassing it
         # would trigger the FFI library load at file-load time.
         class StreamingHandler
           attr_reader :elements_processed
@@ -116,7 +116,7 @@ module Serialbench
           end
 
           # No-op callbacks the parser invokes unconditionally (the base
-          # Taurus::XML::SAX::Document normally provides these).
+          # Leptris::XML::SAX::Document normally provides these).
           def start_document; end
           def end_document; end
           def xmldecl(_version, _encoding, _standalone); end
