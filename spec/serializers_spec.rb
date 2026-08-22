@@ -152,14 +152,14 @@ RSpec.describe 'Serialbench Serializers' do
       end
     end
 
-    describe Serialbench::Serializers::Xml::TaurusSerializer do
-      include_examples 'an XML serializer', Serialbench::Serializers::Xml::TaurusSerializer, 'taurus'
+    describe Serialbench::Serializers::Xml::LeptrisSerializer do
+      include_examples 'an XML serializer', Serialbench::Serializers::Xml::LeptrisSerializer, 'leptris'
 
-      let(:serializer) { Serialbench::Serializers::Xml::TaurusSerializer.instance }
+      let(:serializer) { Serialbench::Serializers::Xml::LeptrisSerializer.instance }
 
       context 'when available' do
         before do
-          skip 'Taurus not available (needs libtaurus shared library)' unless serializer.available?
+          skip 'Leptris not available (needs libleptris shared library)' unless serializer.available?
         end
 
         it 'supports streaming' do
@@ -434,7 +434,7 @@ RSpec.describe 'Serialbench Serializers' do
 
       it 'includes all expected XML serializers' do
         xml_serializers = Serialbench::Serializers.for_format(:xml)
-        expected_xml = %w[rexml ox nokogiri oga libxml taurus]
+        expected_xml = %w[rexml ox nokogiri oga libxml leptris]
         actual_xml = xml_serializers.map { |s| s.name }
         expect(actual_xml).to match_array(expected_xml)
       end

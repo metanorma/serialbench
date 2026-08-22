@@ -5,18 +5,18 @@ require_relative 'base_xml_serializer'
 module Serialbench
   module Serializers
     module Xml
-      class TaurusSerializer < BaseXmlSerializer
+      class LeptrisSerializer < BaseXmlSerializer
         def name
-          'taurus'
+          'leptris'
         end
 
         def parse(xml_string)
-          require 'taurus'
+          require 'leptris'
           Taurus::XML.parse(xml_string)
         end
 
         def generate(data)
-          require 'taurus'
+          require 'leptris'
           if data.is_a?(Taurus::XML::Document) || data.is_a?(Taurus::XML::Node)
             data.to_xml(indent: 2)
           else
@@ -25,7 +25,7 @@ module Serialbench
         end
 
         def parse_streaming(xml_string, &block)
-          require 'taurus'
+          require 'leptris'
 
           handler = StreamingHandler.new(&block)
           parser = Taurus::XML::SAX::Parser.new(handler)
@@ -44,12 +44,12 @@ module Serialbench
         def version
           return 'unknown' unless available?
 
-          require 'taurus'
+          require 'leptris'
           Taurus::VERSION
         end
 
         def library_require_name
-          'taurus'
+          'leptris'
         end
 
         # The gem's require succeeds even when the libtaurus shared library is
@@ -59,7 +59,7 @@ module Serialbench
           return @available if defined?(@available)
 
           @available = begin
-            require 'taurus'
+            require 'leptris'
             Taurus::XML.parse('<probe/>')
             true
           rescue StandardError
