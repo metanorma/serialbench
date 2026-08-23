@@ -33,7 +33,7 @@ jobs:
       - name: Set matrix configurations
         id: set-matrix
         run: |
-          echo 'ruby-versions=["3.1", "3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
+          echo 'ruby-versions=["3.2", "3.3", "3.4"]' >> $GITHUB_OUTPUT
           echo 'platforms=["ubuntu-24.04", "ubuntu-24.04-arm", "ubuntu-22.04", "ubuntu-22.04-arm", "macos-14", "macos-15", "macos-15-intel", "macos-26", "macos-26-intel", "windows-2022", "windows-2025", "windows-11-arm"]' >> $GITHUB_OUTPUT
 
   # Cross-platform native benchmarks
@@ -47,8 +47,6 @@ jobs:
         ruby-version: ${{ fromJson(needs.setup.outputs.ruby-versions) }}
         exclude:
           # windows-11-arm only supports Ruby 3.4.x
-          - platform: windows-11-arm
-            ruby-version: "3.1"
           - platform: windows-11-arm
             ruby-version: "3.2"
           - platform: windows-11-arm
@@ -262,7 +260,7 @@ jobs:
 
           ## Ruby Versions
 
-          - Ruby 3.1, 3.2, 3.3, 3.4
+          - Ruby 3.2, 3.3, 3.4
 
           ## View Results
 
@@ -309,7 +307,7 @@ jobs:
           echo "- macOS 26 Intel (Intel x86_64)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Ruby Versions" >> $GITHUB_STEP_SUMMARY
-          echo "- Ruby 3.1, 3.2, 3.3, 3.4" >> $GITHUB_STEP_SUMMARY
+          echo "- Ruby 3.2, 3.3, 3.4" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Serialization Libraries" >> $GITHUB_STEP_SUMMARY
           echo "- **XML**: REXML, Ox, Nokogiri, Oga, LibXML, Leptris" >> $GITHUB_STEP_SUMMARY
