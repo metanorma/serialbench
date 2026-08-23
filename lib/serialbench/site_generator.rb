@@ -30,6 +30,23 @@ module Serialbench
       generator.generate_site
     end
 
+    def self.resultset_payload(resultset)
+      new(output_path: '/dev/null', resultset: resultset).resultset_payload
+    end
+
+    def self.export_raw_data(resultset, data_dir)
+      new(output_path: '/dev/null', resultset: resultset).export_raw_data_to(data_dir)
+    end
+
+    def resultset_payload
+      transform_resultset_for_dashboard(@resultset)
+    end
+
+    def export_raw_data_to(data_dir)
+      FileUtils.mkdir_p(data_dir)
+      export_resultset(@resultset, data_dir)
+    end
+
     def generate_site
       target_name = @result ? @result.environment_config.name : @resultset.name
 
