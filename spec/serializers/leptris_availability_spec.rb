@@ -4,7 +4,13 @@ require 'open3'
 
 RSpec.describe 'Leptris availability probe' do
   it 'reports unavailable instead of raising when the shared library cannot be loaded' do
-    skip 'leptris gem not in this bundle' unless Gem::Specification.find_by_name('leptris')
+    leptris_spec = Gem.loaded_specs['leptris']
+    skip 'leptris gem not in this bundle' unless leptris_spec
+    # Precompiled platform gems vendor libleptris and ignore LEPTRIS_LIB_PATH,
+    # so the load-failure path only reproduces with a pure-Ruby gem install.
+    # On CI the path is covered end-to-end by the ubuntu-22.04 benchmark legs
+    # (older glibc, vendored .so fails to dlopen).
+    skip 'platform gem vendors its library; failure path not reproducible' if leptris_spec.platform != Gem::Platform::RUBY
 
     script = <<~RUBY
       require 'serialbench/serializers'
