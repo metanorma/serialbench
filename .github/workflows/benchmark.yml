@@ -88,6 +88,11 @@ jobs:
           mkdir -p .bundle 2>&1 || true
           echo "---" > .bundle/config 2>&1 || true
           echo 'BUNDLE_BUILD__LIBXML___RUBY: "--with-xml2-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }} --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib"' >> .bundle/config 2>&1 || true
+          # windows-11-arm has no precompiled nokogiri (pulled transitively via
+          # moxml); build it against the vcpkg libxml2 instead of the vendored
+          # source build that fails on ucrt/ARM64. Harmless on x64 Windows,
+          # where the precompiled gem makes this config moot.
+          echo 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-xslt-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include --with-xslt-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-zlib-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}"' >> .bundle/config 2>&1 || true
         shell: bash
 
       - name: Set up Ruby ${{ matrix.ruby-version }}
