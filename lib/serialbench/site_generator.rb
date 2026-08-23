@@ -157,6 +157,18 @@ module Serialbench
       }
     end
 
+    # Environment identity for the site: use the CI platform_string
+    # ("macos-26-ruby-3.4") when it is runner-shaped, so each runner label is
+    # its own environment; fall back to os-arch for other sources (docker,
+    # local runs, older resultsets).
+    def env_identity(result)
+      platform_string = result.platform.platform_string
+      ruby = result.platform.ruby_version
+      return platform_string if platform_string&.end_with?("-ruby-#{ruby}")
+
+      "#{result.platform.os}-#{result.platform.arch}-ruby-#{ruby}"
+    end
+
     # Transform a ResultSet (collection of Results) into dashboard-compatible format
     # Combines all results into a single dashboard structure
     def transform_resultset_for_dashboard(resultset)
@@ -165,7 +177,7 @@ module Serialbench
 
       resultset.results.each do |result|
         # Create unique env key for this result
-        env_key = "#{result.platform.os}-#{result.platform.arch}-ruby-#{result.platform.ruby_version}"
+        env_key = env_identity(result)
 
         # Merge this result's data into combined_results
         result_combined = build_combined_results(result, env_key)
@@ -275,7 +287,7 @@ module Serialbench
 
     def export_single_result(result, data_dir)
       # Create filename based on platform info
-      env_key = "#{result.platform.os}-#{result.platform.arch}-ruby-#{result.platform.ruby_version}"
+      env_key = env_identity(result)
       filename = "#{env_key}.yaml"
       filepath = File.join(data_dir, filename)
 

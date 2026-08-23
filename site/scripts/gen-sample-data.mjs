@@ -14,11 +14,12 @@ const here = dirname(fileURLToPath(import.meta.url));
 const outPath = join(here, '..', 'src', 'data', 'sample.json');
 
 const envs = [
-  { key: 'macos-arm64-ruby-3.4', os: 'macos', arch: 'arm64', ruby: '3.4', factor: 1.0 },
-  { key: 'macos-x86_64-ruby-3.4', os: 'macos', arch: 'x86_64', ruby: '3.4', factor: 0.62 },
-  { key: 'linux-arm64-ruby-3.4', os: 'ubuntu-24.04', arch: 'arm64', ruby: '3.4', factor: 0.88 },
-  { key: 'linux-x86_64-ruby-3.3', os: 'ubuntu-24.04', arch: 'x86_64', ruby: '3.3', factor: 0.79 },
-  { key: 'linux-x86_64-ruby-3.2', os: 'ubuntu-22.04', arch: 'x86_64', ruby: '3.2', factor: 0.71 },
+  { key: 'macos-26-ruby-3.4.8', os: 'macos', arch: 'arm64', ruby: '3.4.8', factor: 1.0 },
+  { key: 'macos-26-intel-ruby-3.4.8', os: 'macos', arch: 'x86_64', ruby: '3.4.8', factor: 0.62 },
+  { key: 'macos-15-intel-ruby-3.4.8', os: 'macos', arch: 'x86_64', ruby: '3.4.8', factor: 0.58 },
+  { key: 'ubuntu-24.04-arm-ruby-3.4.8', os: 'ubuntu-24.04', arch: 'arm64', ruby: '3.4.8', factor: 0.88 },
+  { key: 'ubuntu-24.04-ruby-3.3.12', os: 'ubuntu-24.04', arch: 'x86_64', ruby: '3.3.12', factor: 0.79 },
+  { key: 'ubuntu-22.04-ruby-3.2.11', os: 'ubuntu-22.04', arch: 'x86_64', ruby: '3.2.11', factor: 0.71 },
 ];
 
 // Base rates in iterations/second on the reference env (macos arm64, ruby 3.4).
@@ -58,9 +59,9 @@ const memoryLarge = {
 
 // libs unavailable per env (glibc / platform gaps) -- mirrors real coverage
 const unavailable = new Set([
-  'linux-x86_64-ruby-3.2|xml|leptris', // ubuntu-22.04 glibc: precompiled gem skips
-  'linux-x86_64-ruby-3.2|xml|libxml-ruby',
-  'macos-arm64-ruby-3.4|toml|tomlrb',
+  'ubuntu-22.04-ruby-3.2.11|xml|leptris', // ubuntu-22.04 glibc: precompiled gem skips
+  'ubuntu-22.04-ruby-3.2.11|xml|libxml-ruby',
+  'macos-26-ruby-3.4.8|toml|tomlrb',
 ]);
 
 const sizes = ['small', 'medium', 'large'];

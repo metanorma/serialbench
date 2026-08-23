@@ -12,6 +12,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{ pin: [serializer: string] }>();
 
+const baseUrl = import.meta.env.BASE_URL;
+
 const logScale = ref(false);
 
 const effectiveReference = computed(() => props.reference ?? props.rows[0]?.serializer ?? null);
@@ -87,19 +89,25 @@ const ticks = computed(() => {
 
     <ul class="space-y-1.5" role="list">
       <li v-for="(row, i) in rows" :key="row.serializer">
-        <button
-          type="button"
-          class="grid grid-cols-[minmax(7rem,10rem)_1fr_minmax(8rem,9rem)] gap-x-3 items-center w-full text-left group rounded-sm focus-visible:outline-offset-4 py-0.5"
-          :aria-pressed="row.serializer === reference"
-          :title="row.serializer === reference ? 'Unpin reference' : 'Pin as reference'"
-          @click="emit('pin', row.serializer)"
-        >
-          <span class="flex items-center gap-2 font-mono text-[13px] truncate min-w-0" :style="{ color: channelColor(row.serializer) }">
+        <div class="grid grid-cols-[minmax(7rem,10rem)_1fr_minmax(8rem,9rem)] gap-x-3 items-center py-0.5 group">
+          <a
+            :href="`${baseUrl}library/${row.serializer}/`"
+            class="flex items-center gap-2 font-mono text-[13px] truncate min-w-0"
+            :style="{ color: channelColor(row.serializer) }"
+            :title="`${row.serializer} — library page`"
+          >
             <span class="h-2 w-2 shrink-0 rounded-full" :style="{ background: channelColor(row.serializer) }" />
             <span class="truncate group-hover:translate-x-0.5 transition-transform">{{ row.serializer }}</span>
-          </span>
+          </a>
 
-          <span class="relative h-7 graticule rounded-sm overflow-hidden">
+          <button
+            type="button"
+            class="relative h-7 graticule rounded-sm overflow-hidden w-full text-left"
+            :aria-pressed="row.serializer === reference"
+            :title="row.serializer === reference ? 'Unpin reference' : 'Pin as reference'"
+            :aria-label="`Pin ${row.serializer} as reference`"
+            @click="emit('pin', row.serializer)"
+          >
             <span
               class="absolute inset-y-[3px] left-0 rounded-[2px] trace-in"
               :style="{
@@ -109,7 +117,7 @@ const ticks = computed(() => {
                 animationDelay: `${i * 60}ms`,
               }"
             />
-          </span>
+          </button>
 
           <span class="flex items-baseline justify-end gap-2 whitespace-nowrap">
             <span class="tabular font-mono text-[13px] text-ink">{{ formatIps(row.ips) }}<span class="text-inkmute text-[11px]"> ips</span></span>
@@ -119,7 +127,7 @@ const ticks = computed(() => {
             >ref</span>
             <span v-else-if="row.ratioToRef" class="tabular font-mono text-[11px] text-inkmute">×{{ row.ratioToRef.toFixed(1) }}</span>
           </span>
-        </button>
+        </div>
       </li>
     </ul>
   </div>

@@ -92,10 +92,30 @@ export function environmentList(payload: Payload): { key: string; env: Environme
     .sort((a, b) => b.env.timestamp.localeCompare(a.env.timestamp));
 }
 
+// Env keys are runner-shaped ("macos-26-intel-ruby-3.4") when produced by CI,
+// or "macos-arm64-ruby-3.4" (os-arch) for docker/local/legacy results.
 export function environmentLabel(key: string, env: Environment): string {
-  const osName = env.os.replace('ubuntu-', 'Ubuntu ').replace('windows-', 'Windows ').replace('macos-', 'macOS ');
-  const arch = env.arch === 'x86_64' ? 'Intel' : env.arch === 'arm64' ? 'ARM' : env.arch;
+  const arch = env.arch === 'x86_64' ? 'x64' : env.arch;
+  const runner = key.replace(/-ruby-[^-]*$/, '');
+  const m = runner.match(/^(ubuntu|macos|windows)-(\d+(?:\.\d+)?)(?:-(arm|intel|large))?$/);
+  if (m) {
+    const osName = m[1].replace('ubuntu', 'Ubuntu').replace('windows', 'Windows').replace('macos', 'macOS');
+    const variant = m[3] === 'intel' ? ' Intel' : '';
+    return `${osName} ${m[2]}${variant} · ${arch} · Ruby ${env.ruby_version}`;
+  }
+  const osName = env.os.replace('ubuntu', 'Ubuntu').replace('windows', 'Windows').replace('macos', 'macOS');
   return `${osName} · ${arch} · Ruby ${env.ruby_version}`;
+}
+
+// Short runner label for table headers: "macos-26-intel-ruby-3.4" → "macOS 26 Intel"
+export function runnerShortLabel(key: string, env: Environment): string {
+  const runner = key.replace(/-ruby-[^-]*$/, '');
+  const m = runner.match(/^(ubuntu|macos|windows)-(\d+(?:\.\d+)?)(?:-(arm|intel|large))?$/);
+  if (m) {
+    const osName = m[1].replace('ubuntu', 'Ubuntu').replace('windows', 'Windows').replace('macos', 'macOS');
+    return `${osName} ${m[2]}${m[3] === 'intel' ? ' Intel' : ''}`;
+  }
+  return runner || env.os;
 }
 
 export function serializersFor(payload: Payload, format: string): string[] {
@@ -179,4 +199,63 @@ export function formatMemory(mb: number): string {
   if (mb >= 1000) return `${(mb / 1000).toFixed(2)} GB`;
   if (mb >= 1) return `${mb.toFixed(1)} MB`;
   return `${(mb * 1024).toFixed(0)} KB`;
+}
+
+export function primaryEnvKey(payload: Payload): string {
+  return environmentList(payload)[0]?.key ?? '';
+}
+
+export interface LibraryStat {
+  op: string;
+  size: string;
+  ips: number;
+  rank: number;
+  fieldSize: number;
+  bestSerializer: string;
+  ratioToBest: number | null;
+}
+
+/** All measured stats for one serializer on the primary environment. */
+export function libraryStats(payload: Payload, serializer: string, envKey: string): LibraryStat[] {
+  const stats: LibraryStat[] = [];
+  for (const [op, sizes] of Object.entries(payload.combined_results)) {
+    if (op === 'memory') continue;
+    for (const [size, formats] of Object.entries(sizes)) {
+      for (const bySerializer of Object.values(formats)) {
+        if (!(serializer in bySerializer)) continue;
+        const metric = bySerializer[serializer][envKey] as PerfMetric | undefined;
+        if (!metric || metric.iterations_per_second == null) continue;
+        const best = Object.entries(bySerializer)
+          .map(([name, byEnv]) => ({ name, ips: (byEnv[envKey] as PerfMetric | undefined)?.iterations_per_second ?? 0 }))
+          .sort((a, b) => b.ips - a.ips);
+        const ips = metric.iterations_per_second;
+        stats.push({
+          op,
+          size,
+          ips,
+          rank: best.findIndex((b) => b.name === serializer) + 1,
+          fieldSize: best.length,
+          bestSerializer: best[0].name,
+          ratioToBest: best[0].ips > 0 ? best[0].ips / ips : null,
+        });
+      }
+    }
+  }
+  return stats;
+}
+
+/** Formats a serializer participated in. */
+export function formatsForSerializer(payload: Payload, serializer: string): string[] {
+  const formats = new Set<string>();
+  for (const sizes of Object.values(payload.combined_results.parsing ?? {})) {
+    for (const [format, bySerializer] of Object.entries(sizes)) {
+      if (serializer in bySerializer) formats.add(format);
+    }
+  }
+  for (const sizes of Object.values(payload.combined_results.generation ?? {})) {
+    for (const [format, bySerializer] of Object.entries(sizes)) {
+      if (serializer in bySerializer) formats.add(format);
+    }
+  }
+  return [...formats].sort();
 }
