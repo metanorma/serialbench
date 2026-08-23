@@ -249,42 +249,9 @@ jobs:
 
       - name: Build site
         run: |
-          mkdir -p _site
-          cat > _site/README.md << 'EOF'
-          # Serialbench - Weekly Benchmark Results
-
-          This site contains automated benchmark results for Ruby serialization libraries.
-
-          ## Benchmarked Libraries
-
-          - **XML**: REXML, Ox, Nokogiri, Oga, LibXML, Leptris
-          - **JSON**: JSON, Oj, RapidJSON, YAJL
-          - **YAML**: Psych
-          - **TOML**: TOML-RB, Tomlib, tomlrb
-
-          ## Platforms Tested
-
-          - Ubuntu Latest (Linux x86_64)
-          - Ubuntu 24.04 (Linux ARM64)
-          - Ubuntu 22.04 (Linux ARM64)
-          - macOS 14 (Apple Silicon ARM64)
-          - macOS 15 (Apple Silicon ARM64)
-          - macOS 15 Intel (Intel x86_64)
-          - macOS 26 (Apple Silicon ARM64)
-          - macOS 26 Intel (Intel x86_64)
-
-          ## Ruby Versions
-
-          - Ruby 3.2, 3.3, 3.4
-
-          ## View Results
-
-          Open [index.html](./index.html) to view the interactive dashboard.
-
-          ---
-
-          *Last updated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")*
-          EOF
+          cd site
+          npm ci
+          npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
