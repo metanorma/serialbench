@@ -13,6 +13,7 @@ unless Gem.win_platform? && RUBY_PLATFORM.include?('aarch64')
 end
 
 gem 'leptris'    # Needs the libleptris shared library (LEPTRIS_LIB_PATH or system install)
+gem 'benchmark'  # Removed from stdlib in Ruby 4.0
 gem 'base64'  # Required for Ruby 3.4+
 gem 'lutaml-model', '~> 0.7'
 gem 'octokit'
