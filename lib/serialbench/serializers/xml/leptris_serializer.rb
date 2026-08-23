@@ -62,7 +62,7 @@ module Serialbench
             require 'leptris'
             Leptris::XML.parse('<probe/>')
             true
-          rescue StandardError
+          rescue StandardError, LoadError
             false
           end
         end
