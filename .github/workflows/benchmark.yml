@@ -43,6 +43,11 @@ jobs:
   benchmark:
     runs-on: ${{ matrix.platform }}
     needs: setup
+    # windows-11-arm: moxml (via lutaml-model) pulls nokogiri transitively;
+    # no precompiled aarch64-mingw-ucrt nokogiri exists, so the leg dies in a
+    # source build. Keep attempting the leg, but never block the site deploy
+    # on it — the availability matrix shows the gap honestly.
+    continue-on-error: ${{ matrix.platform == 'windows-11-arm' }}
     strategy:
       fail-fast: false
       matrix:
