@@ -244,7 +244,7 @@ jobs:
 
           ## Benchmarked Libraries
 
-          - **XML**: REXML, Ox, Nokogiri, Oga, LibXML
+          - **XML**: REXML, Ox, Nokogiri, Oga, LibXML, Leptris
           - **JSON**: JSON, Oj, RapidJSON, YAJL
           - **YAML**: Psych
           - **TOML**: TOML-RB, Tomlib, tomlrb
@@ -310,7 +310,7 @@ jobs:
           echo "- Ruby 3.1, 3.2, 3.3, 3.4" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Serialization Libraries" >> $GITHUB_STEP_SUMMARY
-          echo "- **XML**: REXML, Ox, Nokogiri, Oga, LibXML" >> $GITHUB_STEP_SUMMARY
+          echo "- **XML**: REXML, Ox, Nokogiri, Oga, LibXML, Leptris" >> $GITHUB_STEP_SUMMARY
           echo "- **JSON**: JSON, Oj, RapidJSON, YAJL" >> $GITHUB_STEP_SUMMARY
           echo "- **YAML**: Psych" >> $GITHUB_STEP_SUMMARY
           echo "- **TOML**: TOML-RB, Tomlib, tomlrb" >> $GITHUB_STEP_SUMMARY
