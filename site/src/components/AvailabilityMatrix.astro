@@ -1,6 +1,6 @@
 ---
 import type { Payload } from '../lib/dashboard';
-import { availability, environmentLabel, environmentList } from '../lib/dashboard';
+import { availability, environmentLabel, environmentList, runnerShortLabel } from '../lib/dashboard';
 import { channelColor } from '../lib/channels';
 
 interface Props {
@@ -26,7 +26,7 @@ const envs = environmentList(payload);
           {
             envs.map(({ key, env }) => (
               <th class="font-mono text-[10px] uppercase tracking-wider text-inkmute font-normal px-2 py-2 border-b border-line text-center whitespace-nowrap">
-                <span class="block">{env.os.replace('ubuntu-', 'U').replace('windows-', 'W').replace('macos-', 'mac')}</span>
+                <span class="block">{runnerShortLabel(key, env)}</span>
                 <span class="block text-inkmute/70">{env.arch === 'x86_64' ? 'x64' : 'arm64'} · {env.ruby_version}</span>
               </th>
             ))
@@ -37,9 +37,11 @@ const envs = environmentList(payload);
         {
           serializers.map((serializer) => (
             <tr>
-              <td class="px-3 py-1.5 border-b border-line/50 font-mono text-[12px] whitespace-nowrap flex items-center gap-2">
-                <span class="h-2 w-2 rounded-full" style={`background: ${channelColor(serializer)}`} />
-                {serializer}
+              <td class="px-3 py-1.5 border-b border-line/50 font-mono text-[12px] whitespace-nowrap">
+                <a class="flex items-center gap-2 hover:text-phosphor transition-colors" href={`${import.meta.env.BASE_URL}library/${serializer}/`}>
+                  <span class="h-2 w-2 rounded-full" style={`background: ${channelColor(serializer)}`} />
+                  {serializer}
+                </a>
               </td>
               {envKeys.map((envKey) => (
                 <td class="px-2 py-1.5 border-b border-line/50 text-center">

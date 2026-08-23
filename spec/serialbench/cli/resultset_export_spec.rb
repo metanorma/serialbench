@@ -12,12 +12,12 @@ RSpec.describe Serialbench::Cli::ResultsetCli do
     FileUtils.rm_rf(temp_dir)
   end
 
-  def write_run(name, ruby_version)
+  def write_run(name, ruby_version, platform_string: nil)
     run_dir = File.join(temp_dir, name)
     FileUtils.mkdir_p(run_dir)
 
     yaml = File.read(File.expand_path('../../fixtures/result.yml', __dir__))
-    yaml = yaml.gsub('platform_string: docker-ruby-3.0', "platform_string: docker-#{name}")
+    yaml = yaml.gsub('platform_string: docker-ruby-3.0', "platform_string: #{platform_string || "docker-#{name}"}")
                .gsub('ruby_build_tag: 3.0.7', "ruby_build_tag: #{ruby_version}")
     yaml = yaml.sub('  kind: docker', "  kind: docker\n  ruby_version: #{ruby_version}")
 
@@ -50,5 +50,24 @@ RSpec.describe Serialbench::Cli::ResultsetCli do
 
     expect(File).to exist(File.join(raw_dir, 'resultset.yaml'))
     expect(Dir[File.join(raw_dir, '*.yaml')].size).to eq(3)
+  end
+
+  it 'keys environments by the CI runner label when platform_string is runner-shaped' do
+    resultset = Serialbench::Models::ResultSet.new(
+      name: 'runner-identity',
+      description: 'env identity spec'
+    )
+    resultset.add_result(write_run('ci-a', '3.4.8', platform_string: 'macos-26-ruby-3.4.8'))
+    resultset.add_result(write_run('ci-b', '3.4.8', platform_string: 'macos-15-intel-ruby-3.4.8'))
+    resultset.save(resultset_path)
+
+    json_path = File.join(temp_dir, 'payload.json')
+
+    described_class.start(['export-data', resultset_path, json_path])
+
+    payload = JSON.parse(File.read(json_path))
+
+    expect(payload['environments'].keys)
+      .to contain_exactly('macos-26-ruby-3.4.8', 'macos-15-intel-ruby-3.4.8')
   end
 end
