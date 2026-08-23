@@ -15,8 +15,11 @@ module Serialbench
     class Platform < Lutaml::Model::Serializable
       attribute :platform_string, :string
       attribute :kind, :string, default: -> { 'local' }
-      attribute :os, :string, default: -> { detect_os }
-      attribute :arch, :string, default: -> { detect_arch }
+      # Fully qualified: lutaml-model 0.8+ instance-evals default
+      # lambdas, so bare detect_os/detect_arch (class methods) no
+      # longer resolve there.
+      attribute :os, :string, default: -> { Serialbench::Models::Platform.detect_os }
+      attribute :arch, :string, default: -> { Serialbench::Models::Platform.detect_arch }
       attribute :ruby_version, :string, default: -> { RUBY_VERSION }
       attribute :ruby_platform, :string, default: -> { RUBY_PLATFORM }
       attribute :ruby_build_tag, :string
