@@ -1,0 +1,59 @@
+---
+import type { Payload } from '../lib/dashboard';
+import { availability, environmentLabel, environmentList } from '../lib/dashboard';
+import { channelColor } from '../lib/channels';
+
+interface Props {
+  payload: Payload;
+}
+
+const { payload } = Astro.props;
+const { serializers, envKeys, cells } = availability(payload);
+const envs = environmentList(payload);
+---
+
+<section aria-label="Availability matrix" class="mt-12">
+  <div class="mb-3">
+    <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-inkmute">Will it run on my stack — coverage across measured environments</p>
+    <p class="font-mono text-[11px] text-inkmute mt-1">Derived from the runs themselves: a dot means the library loaded and completed the benchmark on that platform.</p>
+  </div>
+
+  <div class="overflow-x-auto border border-line bg-panel">
+    <table class="w-full border-collapse">
+      <thead>
+        <tr>
+          <th class="text-left font-mono text-[10px] uppercase tracking-[0.14em] text-inkmute font-normal px-3 py-2 border-b border-line">Library</th>
+          {
+            envs.map(({ key, env }) => (
+              <th class="font-mono text-[10px] uppercase tracking-wider text-inkmute font-normal px-2 py-2 border-b border-line text-center whitespace-nowrap">
+                <span class="block">{env.os.replace('ubuntu-', 'U').replace('windows-', 'W').replace('macos-', 'mac')}</span>
+                <span class="block text-inkmute/70">{env.arch === 'x86_64' ? 'x64' : 'arm64'} · {env.ruby_version}</span>
+              </th>
+            ))
+          }
+        </tr>
+      </thead>
+      <tbody>
+        {
+          serializers.map((serializer) => (
+            <tr>
+              <td class="px-3 py-1.5 border-b border-line/50 font-mono text-[12px] whitespace-nowrap flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full" style={`background: ${channelColor(serializer)}`} />
+                {serializer}
+              </td>
+              {envKeys.map((envKey) => (
+                <td class="px-2 py-1.5 border-b border-line/50 text-center">
+                  {cells.get(serializer)?.has(envKey) ? (
+                    <span class="inline-block h-2 w-2 rounded-full" style={`background: ${channelColor(serializer)}`} title={`measured on ${environmentLabel(envKey, payload.environments[envKey])}`} />
+                  ) : (
+                    <span class="inline-block h-2 w-2 rounded-full border border-line" title="not measured on this environment" />
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -213,6 +213,46 @@ module Serialbench
         exit 1
       end
 
+      desc 'export-data RESULTSET_PATH OUTPUT_JSON', 'Export a resultset as the site dashboard JSON payload'
+      long_desc <<~DESC
+        Write the aggregated dashboard payload (combined_results, environments,
+        metadata) for a resultset as JSON. This is the data contract consumed
+        by the Astro site in site/.
+
+        Optionally also export the raw per-environment YAML files and the
+        complete resultset YAML for download links.
+
+        Examples:
+          serialbench resultset export-data results/sets/weekly site/src/data/sample.json --raw-data-dir site/public/data
+      DESC
+      method_option 'raw-data-dir', type: :string,
+                                     desc: 'Also write per-environment YAML and resultset.yaml to this directory'
+      def export_data(resultset_path, output_json)
+        resultset = Serialbench::Models::ResultSet.load(resultset_path)
+
+        if resultset.results.empty?
+          say "ResultSet '#{resultset_path}' contains no runs", :yellow
+          say "Use 'serialbench resultset add-result' to add runs first", :white
+          exit 1
+        end
+
+        payload = Serialbench::SiteGenerator.resultset_payload(resultset)
+        output_dir = File.dirname(File.expand_path(output_json))
+        FileUtils.mkdir_p(output_dir)
+        File.write(output_json, JSON.pretty_generate(payload))
+
+        say "✅ Dashboard payload exported: #{output_json}", :green
+        say "Environments: #{payload['environments'].size}", :cyan
+
+        if options['raw-data-dir']
+          Serialbench::SiteGenerator.export_raw_data(resultset, options['raw-data-dir'])
+          say "📦 Raw YAML exported to: #{options['raw-data-dir']}", :cyan
+        end
+      rescue StandardError => e
+        say "Error exporting data: #{e.message}", :red
+        exit 1
+      end
+
       desc 'list', 'List all available resultsets'
       long_desc <<~DESC
         List all resultsets in the results/sets/ directory.

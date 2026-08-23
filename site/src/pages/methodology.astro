@@ -1,0 +1,54 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Methodology — Serialbench">
+  <section class="mb-10">
+    <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-phosphor mb-3">Calibration</p>
+    <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">Methodology</h1>
+    <p class="mt-3 text-inkdim max-w-2xl leading-relaxed">
+      A benchmark you can't reproduce is marketing. This page documents exactly how serialbench
+      produces every number on this site.
+    </p>
+  </section>
+
+  <div class="grid gap-6 md:grid-cols-2 max-w-4xl">
+    <section class="border border-line bg-panel p-5">
+      <h2 class="font-mono text-[11px] uppercase tracking-[0.14em] text-phosphor mb-3">Workloads</h2>
+      <p class="text-sm text-inkdim leading-relaxed">
+        Each serializer parses, generates, and (where supported) streams the same documents at each
+        configured size. Operations run after warmup iterations; throughput is reported as
+        iterations per second, memory as allocated and retained bytes measured around the operation.
+      </p>
+    </section>
+
+    <section class="border border-line bg-panel p-5">
+      <h2 class="font-mono text-[11px] uppercase tracking-[0.14em] text-phosphor mb-3">Environments</h2>
+      <p class="text-sm text-inkdim leading-relaxed">
+        Results are collected per GitHub-hosted runner platform and Ruby version, then aggregated into
+        one resultset. Runners differ in CPU and memory — compare within an environment, not across
+        environments, unless you are comparing environments.
+      </p>
+    </section>
+
+    <section class="border border-line bg-panel p-5">
+      <h2 class="font-mono text-[11px] uppercase tracking-[0.14em] text-phosphor mb-3">Fairness limits</h2>
+      <p class="text-sm text-inkdim leading-relaxed">
+        Libraries that fail to load or lack an operation are skipped for that leg rather than counted
+        as zero. A dot missing from the availability matrix means no measurement exists — never assume
+        a score. Microbenchmarks measure these workloads, not yours.
+      </p>
+    </section>
+
+    <section class="border border-line bg-panel p-5">
+      <h2 class="font-mono text-[11px] uppercase tracking-[0.14em] text-phosphor mb-3">Reproduce</h2>
+      <p class="text-sm text-inkdim leading-relaxed">
+        Clone
+        <a class="text-phosphor hover:underline" href="https://github.com/metanorma/serialbench">metanorma/serialbench</a>,
+        then run
+        <span class="font-mono text-[13px]">bundle exec serialbench environment execute &lt;env&gt; &lt;benchmark&gt; &lt;out&gt;</span>.
+        The raw YAML next to every chart is the exact output of that command.
+      </p>
+    </section>
+  </div>
+</Layout>
