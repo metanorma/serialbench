@@ -78,7 +78,7 @@ jobs:
       - name: Install vcpkg dependencies (Windows)
         if: startsWith(matrix.platform, 'windows-')
         run: |
-          vcpkg install libxml2:${{ steps.windows-arch.outputs.arch }} 2>&1 || true
+          vcpkg install libxml2:${{ steps.windows-arch.outputs.arch }} libxslt:${{ steps.windows-arch.outputs.arch }} 2>&1 || true
           vcpkg integrate install 2>&1 || true
         shell: bash
 
@@ -92,7 +92,7 @@ jobs:
           # moxml); build it against the vcpkg libxml2 instead of the vendored
           # source build that fails on ucrt/ARM64. Harmless on x64 Windows,
           # where the precompiled gem makes this config moot.
-          echo 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-xslt-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include --with-xslt-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-zlib-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}"' >> .bundle/config 2>&1 || true
+          echo 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-xslt-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxslt --with-xslt-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-zlib-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}"' >> .bundle/config 2>&1 || true
         shell: bash
 
       - name: Set up Ruby ${{ matrix.ruby-version }}
