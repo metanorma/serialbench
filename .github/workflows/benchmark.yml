@@ -147,7 +147,10 @@ jobs:
       - name: Build libleptris from source (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         run: |
-          LEPTRIS_VERSION=$(bundle exec ruby -e "require 'leptris'; print Leptris::VERSION")
+          # Read the version from the gemspec: leptris >= 1.9 ruby-platform fallback
+          # gems raise at require time when no library is found, and on 22.04
+          # the precompiled variant does not install at all.
+          LEPTRIS_VERSION=$(bundle exec ruby -e "print Gem::Specification.find_by_name('leptris').version")
           echo "Building libleptris ${LEPTRIS_VERSION}"
           curl -sL "https://github.com/leptris/leptris/archive/refs/tags/v${LEPTRIS_VERSION}.tar.gz" | tar xz
           cmake -S "leptris-${LEPTRIS_VERSION}" -B /tmp/leptris-build \
