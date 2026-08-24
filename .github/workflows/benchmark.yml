@@ -80,6 +80,9 @@ jobs:
         run: |
           vcpkg install libxml2:${{ steps.windows-arch.outputs.arch }} libxslt:${{ steps.windows-arch.outputs.arch }} 2>&1 || true
           vcpkg integrate install 2>&1 || true
+          # vcpkg dynamic triplets put the DLLs in bin/; nokogiri's compiled
+          # extension needs them on PATH at require time.
+          echo "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin" >> $GITHUB_PATH
         shell: bash
 
       - name: Configure bundler for libxml2 (Windows)
