@@ -104,6 +104,18 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
 
+      # The directory of ruby.exe is always in the DLL search path (unlike
+      # PATH manipulation across step boundaries), so stage the vcpkg DLLs
+      # there for the system-built nokogiri on Windows ARM.
+      - name: Stage vcpkg DLLs beside ruby.exe (Windows)
+        if: startsWith(matrix.platform, 'windows-')
+        run: |
+          RUBY_BIN="$(dirname "$(command -v ruby)")"
+          echo "Staging vcpkg DLLs into $RUBY_BIN"
+          ls "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin/" || true
+          cp -f "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin/"*.dll "$RUBY_BIN/" 2>&1 || true
+        shell: bash
+
       - name: Install system dependencies (Ubuntu)
         if: startsWith(matrix.platform, 'ubuntu-')
         run: |
