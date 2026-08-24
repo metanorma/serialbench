@@ -137,6 +137,28 @@ jobs:
       - name: Install gems
         run: bundle install
 
+      # ubuntu-22.04's glibc (2.35) predates the precompiled leptris gem's
+      # build host, so the gem's vendored libleptris.so fails to dlopen there
+      # and the adapter reports leptris unavailable (empty availability dots
+      # on the site). Leptris is pure C99 — build the lib from the gem's
+      # tagged source and point the FFI loader at it; LEPTRIS_LIB_PATH is the
+      # first candidate in the gem's ffi_lib list.
+      - name: Build libleptris from source (Ubuntu 22.04)
+        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
+        run: |
+          LEPTRIS_VERSION=$(bundle exec ruby -e "require 'leptris'; print Leptris::VERSION")
+          echo "Building libleptris ${LEPTRIS_VERSION}"
+          curl -sL "https://github.com/leptris/leptris/archive/refs/tags/v${LEPTRIS_VERSION}.tar.gz" | tar xz
+          cmake -S "leptris-${LEPTRIS_VERSION}" -B /tmp/leptris-build \
+            -DLEPTRIS_BUILD_SHARED=ON -DLEPTRIS_BUILD_STATIC=OFF -DBUILD_TESTING=OFF \
+            -DLEPTRIS_BUILD_CLI=OFF -DLEPTRIS_BUILD_BENCHMARKS=OFF -DLEPTRIS_BUILD_MAN_PAGES=OFF \
+            -DLEPTRIS_ENABLE_UTF8PROC=OFF -DLEPTRIS_ENABLE_ICONV=OFF
+          cmake --build /tmp/leptris-build -j"$(nproc)"
+          LIBLEPTRIS=$(find /tmp/leptris-build -name 'libleptris.so*' -type f | head -1)
+          echo "Built ${LIBLEPTRIS}"
+          echo "LEPTRIS_LIB_PATH=${LIBLEPTRIS}" >> "$GITHUB_ENV"
+        shell: bash
+
       - name: Update Ruby-Build cache
         run: bundle exec serialbench ruby-build update
         env:
