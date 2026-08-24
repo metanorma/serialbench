@@ -14,6 +14,7 @@ import {
   runnerShortLabel,
 } from '../../lib/dashboard';
 import { channelColor } from '../../lib/channels';
+import { BASE } from '../../config';
 
 export function getStaticPaths() {
   const payload = payloadData as unknown as Payload;
@@ -40,7 +41,7 @@ const runDate = payload.metadata.generated_at.slice(0, 10);
 <Layout title={`${serializer} — Serialbench`}>
   <section class="mb-8">
     <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-inkmute mb-3">
-      <a href="/" class="hover:text-phosphor transition-colors">← Field overview</a>
+      <a href={BASE} class="hover:text-phosphor transition-colors">← Field overview</a>
     </p>
     <div class="flex items-center gap-3">
       <span class="h-3 w-3 rounded-full" style={`background: ${color}`}></span>
@@ -113,7 +114,7 @@ const runDate = payload.metadata.generated_at.slice(0, 10);
       </table>
     </div>
     <p class="font-mono text-[11px] text-inkmute mt-2">
-      Compare every library on every environment on the <a href="/" class="text-phosphor hover:underline">dashboard</a>.
+      Compare every library on every environment on the <a href={BASE} class="text-phosphor hover:underline">dashboard</a>.
     </p>
   </section>
 
