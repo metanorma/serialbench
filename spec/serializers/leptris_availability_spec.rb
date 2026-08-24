@@ -6,10 +6,11 @@ RSpec.describe 'Leptris availability probe' do
   it 'reports unavailable instead of raising when the shared library cannot be loaded' do
     leptris_spec = Gem.loaded_specs['leptris']
     skip 'leptris gem not in this bundle' unless leptris_spec
-    # Precompiled platform gems vendor libleptris and ignore LEPTRIS_LIB_PATH,
-    # so the load-failure path only reproduces with a pure-Ruby gem install.
-    # On CI the path is covered end-to-end by the ubuntu-22.04 benchmark legs
-    # (older glibc, vendored .so fails to dlopen).
+    # The gem's ffi_lib list tries LEPTRIS_LIB_PATH first and falls through
+    # to the vendored library when it fails, so with a precompiled platform
+    # gem installed a bogus path never produces unavailability. The failure
+    # path only reproduces with a pure-Ruby gem install; on CI it is covered
+    # end-to-end by benchmark legs where the library cannot load at all.
     skip 'platform gem vendors its library; failure path not reproducible' if leptris_spec.platform != Gem::Platform::RUBY
 
     script = <<~RUBY
