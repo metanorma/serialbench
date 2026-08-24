@@ -16,9 +16,7 @@ module Serialbench
         end
 
         def features
-          features = %w[parsing generation]
-          features << 'streaming' if supports_streaming?
-          features
+          { streaming: supports_streaming? }
         end
 
         # Default YAML generation options

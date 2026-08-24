@@ -40,6 +40,31 @@ module Serialbench
 
     def resultset_payload
       transform_resultset_for_dashboard(@resultset)
+        .merge('libraries' => libraries_information(@resultset))
+    end
+
+    # Static capability matrix (adapter declarations) plus the versions
+    # actually measured in this resultset.
+    def libraries_information(resultset)
+      versions = {}
+      resultset.results.each do |result|
+        serializers = result.benchmark_result.serializers || []
+        serializers.each { |si| versions[si.name] ||= si.version }
+      end
+
+      Serialbench::Serializers.all.filter_map do |adapter|
+        next if adapter.name == 'syck'
+
+        features = adapter.features
+        next if features.is_a?(Array)
+
+        {
+          'name' => adapter.name,
+          'format' => adapter.format.to_s,
+          'version' => versions[adapter.name] || 'unknown',
+          'features' => features.transform_values { |v| v == true }
+        }
+      end
     end
 
     def export_raw_data_to(data_dir)

@@ -70,4 +70,24 @@ RSpec.describe Serialbench::Cli::ResultsetCli do
     expect(payload['environments'].keys)
       .to contain_exactly('macos-26-ruby-3.4.8', 'macos-15-intel-ruby-3.4.8')
   end
+
+  it 'exports the library feature matrix with truthful declarations' do
+    resultset = Serialbench::Models::ResultSet.new(
+      name: 'features',
+      description: 'library features spec'
+    )
+    resultset.add_result(write_run('run-a', '3.4.8'))
+    resultset.save(resultset_path)
+
+    json_path = File.join(temp_dir, 'payload.json')
+    described_class.start(['export-data', resultset_path, json_path])
+
+    libraries = JSON.parse(File.read(json_path))['libraries']
+    by_name = libraries.to_h { |l| [l['name'], l] }
+
+    expect(by_name['leptris']['features']).to include('stax' => true, 'streaming' => true, 'xpath' => true)
+    expect(by_name['nokogiri']['features']).to include('xpath' => true)
+    expect(by_name['rapidjson']['features']).to be_a(Hash)
+    expect(by_name['ox']['features']).to include('stax' => false) if by_name.key?('ox')
+  end
 end

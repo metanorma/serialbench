@@ -30,6 +30,7 @@ export interface Payload {
     total_runs?: number;
     generated_at: string;
   };
+  libraries?: LibraryInfo[];
 }
 
 export const OPERATIONS = ['parsing', 'generation', 'streaming'] as const;
@@ -258,4 +259,11 @@ export function formatsForSerializer(payload: Payload, serializer: string): stri
     }
   }
   return [...formats].sort();
+}
+
+export interface LibraryInfo {
+  name: string;
+  format: string;
+  version: string;
+  features: Record<string, boolean>;
 }

@@ -36,10 +36,6 @@ module Serialbench
           Psych.dump(object)
         end
 
-        def features
-          %w[parsing generation built-in]
-        end
-
         private
 
         def require_library(library_name)

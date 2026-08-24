@@ -38,6 +38,10 @@ module Serialbench
           handler.elements_processed
         end
 
+        def supports_xpath?
+          true
+        end
+
         def supports_streaming?
           true
         end

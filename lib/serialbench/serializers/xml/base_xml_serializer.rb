@@ -29,8 +29,13 @@ module Serialbench
             xpath: supports_xpath?,
             namespaces: supports_namespaces?,
             validation: supports_validation?,
-            streaming: supports_streaming?
+            streaming: supports_streaming?,
+            stax: supports_stax?
           }
+        end
+
+        def supports_stax?
+          false
         end
 
         def supports_generation?

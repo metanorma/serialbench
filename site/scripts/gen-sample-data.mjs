@@ -120,9 +120,27 @@ for (const env of envs) {
   }
 }
 
+const libraries = [
+  { name: 'leptris', format: 'xml', version: '1.6.0', features: { xpath: true, namespaces: true, validation: false, streaming: true, stax: true } },
+  { name: 'nokogiri', format: 'xml', version: '1.19.4', features: { xpath: true, namespaces: true, validation: false, streaming: true, stax: true } },
+  { name: 'ox', format: 'xml', version: '2.14.23', features: { xpath: false, namespaces: true, validation: false, streaming: true, stax: false } },
+  { name: 'oga', format: 'xml', version: '3.4', features: { xpath: true, namespaces: true, validation: false, streaming: true, stax: false } },
+  { name: 'rexml', format: 'xml', version: '3.4.1', features: { xpath: true, namespaces: true, validation: false, streaming: false, stax: false } },
+  { name: 'libxml-ruby', format: 'xml', version: '5.0.6', features: { xpath: true, namespaces: true, validation: false, streaming: true, stax: true } },
+  { name: 'oj', format: 'json', version: '3.16.11', features: { pretty_print: true, streaming: true, symbol_keys: true, custom_types: true } },
+  { name: 'json', format: 'json', version: '2.21.2', features: { pretty_print: true, streaming: false, symbol_keys: false, custom_types: false } },
+  { name: 'rapidjson', format: 'json', version: '0.4.0', features: { pretty_print: true, streaming: false, symbol_keys: false, custom_types: false } },
+  { name: 'yajl', format: 'json', version: '1.4.3', features: { pretty_print: true, streaming: true, symbol_keys: false, custom_types: false } },
+  { name: 'psych', format: 'yaml', version: '4.0.4', features: { streaming: false } },
+  { name: 'toml-rb', format: 'toml', version: '4.2.1', features: { comments: false, arrays_of_tables: true, inline_tables: true, multiline_strings: true } },
+  { name: 'tomlib', format: 'toml', version: '0.7.3', features: { comments: false, arrays_of_tables: true, inline_tables: true, multiline_strings: true } },
+  { name: 'tomlrb', format: 'toml', version: '2.0.4', features: { comments: false, arrays_of_tables: true, inline_tables: true, multiline_strings: true } },
+];
+
 const payload = {
   combined_results: combined,
   environments,
+  libraries,
   metadata: {
     resultset_name: 'weekly-benchmark',
     resultset_description: 'Sample data for development; CI replaces this with the live resultset',
