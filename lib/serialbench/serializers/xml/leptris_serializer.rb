@@ -41,6 +41,16 @@ module Serialbench
           true
         end
 
+        # leptris-ruby >= 1.6 exposes Leptris::XML::Pull, a StAX-style
+        # cursor (one event per #next). Declared by gem version so the
+        # check never triggers the FFI library load.
+        def supports_stax?
+          spec = Gem.loaded_specs['leptris'] || Gem::Specification.find_by_name('leptris')
+          !spec.nil? && spec.version >= Gem::Version.new('1.6.0')
+        rescue Gem::LoadError
+          false
+        end
+
         def version
           return 'unknown' unless available?
 

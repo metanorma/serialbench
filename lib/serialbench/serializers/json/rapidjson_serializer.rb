@@ -32,10 +32,6 @@ module Serialbench
           RapidJSON.dump(object)
         end
 
-        def features
-          %w[parsing generation high-performance c-extension]
-        end
-
         private
 
         def require_library(library_name)

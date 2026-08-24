@@ -182,7 +182,7 @@ jobs:
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
         run: |
-          bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/short.yml results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
+          bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/full.yml results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
 
       - name: Verify benchmark results before upload
         run: |

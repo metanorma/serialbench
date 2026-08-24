@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import DashboardConsole from '../components/DashboardConsole.vue';
 import AvailabilityMatrix from '../components/AvailabilityMatrix.astro';
+import FeaturesTable from '../components/FeaturesTable.astro';
 import payloadData from '../data/sample.json';
 import type { Payload } from '../lib/dashboard';
 
@@ -26,6 +27,8 @@ const runDate = payload.metadata.generated_at.slice(0, 10);
   <DashboardConsole client:load payload={payload} />
 
   <AvailabilityMatrix payload={payload} />
+
+  <FeaturesTable payload={payload} />
 
   <section class="mt-12 border border-line bg-panel px-5 py-5">
     <h2 class="font-mono text-[10px] uppercase tracking-[0.14em] text-inkmute mb-2">Raw data</h2>
