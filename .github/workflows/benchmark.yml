@@ -151,8 +151,16 @@ jobs:
           # gems raise at require time when no library is found, and on 22.04
           # the precompiled variant does not install at all.
           LEPTRIS_VERSION=$(bundle exec ruby -e "print Gem::Specification.find_by_name('leptris').version")
-          echo "Building libleptris ${LEPTRIS_VERSION}"
-          curl -sL "https://github.com/leptris/leptris/archive/refs/tags/v${LEPTRIS_VERSION}.tar.gz" | tar xz
+          # RubyGems and the git tags occasionally drift (the 1.9.1 gem
+          # shipped with no v1.9.1 tag); build from the highest tag that
+          # does not exceed the gem version.
+          LEPTRIS_TAG=$(curl -s "https://api.github.com/repos/leptris/leptris/tags?per_page=100" \
+            | grep -oE '"v[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"' | sort -V \
+            | awk -v v="v${LEPTRIS_VERSION}" '$0 <= v' | tail -1)
+          echo "Building libleptris ${LEPTRIS_VERSION} from tag ${LEPTRIS_TAG}"
+          test -n "${LEPTRIS_TAG}"
+          curl -sL "https://github.com/leptris/leptris/archive/refs/tags/${LEPTRIS_TAG}.tar.gz" | tar xz
+          ln -s "leptris-${LEPTRIS_TAG#v}" "leptris-${LEPTRIS_VERSION}"
           cmake -S "leptris-${LEPTRIS_VERSION}" -B /tmp/leptris-build \
             -DLEPTRIS_BUILD_SHARED=ON -DLEPTRIS_BUILD_STATIC=OFF -DBUILD_TESTING=OFF \
             -DLEPTRIS_BUILD_CLI=OFF -DLEPTRIS_BUILD_BENCHMARKS=OFF -DLEPTRIS_BUILD_MAN_PAGES=OFF \

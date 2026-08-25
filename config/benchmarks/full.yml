@@ -15,10 +15,14 @@ formats:
 - yaml
 - toml
 
+# Trimmed from 20/5/2 (warmup 3): a healthy leg took ~70 minutes at that
+# setting, which both inflates weekly cost and leaves legs exposed to
+# runner-eviction flakiness. 10/3/1 with warmup 2 halves runtime with
+# acceptable added noise.
 iterations:
-  small: 20
-  medium: 5
-  large: 2
+  small: 10
+  medium: 3
+  large: 1
 
 operations:
 - parse
@@ -26,4 +30,4 @@ operations:
 - streaming
 - memory
 
-warmup: 3
+warmup: 2
