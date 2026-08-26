@@ -200,6 +200,7 @@ jobs:
             bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/full-$fmt.yml "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/$fmt"
             echo "::endgroup::"
           done
+        shell: bash
 
       - name: Verify benchmark results before upload
         run: |
