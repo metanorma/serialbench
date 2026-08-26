@@ -205,32 +205,39 @@ jobs:
       - name: Verify benchmark results before upload
         run: |
           echo "=== Verifying benchmark results ==="
-          RESULTS_FILE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml"
+          # Results are nested one directory per format (see Run benchmarks)
+          BASE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}"
+          for fmt in xml json yaml toml; do
+            RESULTS_FILE="$BASE/$fmt/results.yaml"
 
-          echo "📁 Checking file exists..."
-          if [ ! -f "$RESULTS_FILE" ]; then
-            echo "❌ ERROR: results.yaml not found at $RESULTS_FILE"
-            exit 1
-          fi
+            echo "📁 [$fmt] Checking file exists..."
+            if [ ! -f "$RESULTS_FILE" ]; then
+              echo "❌ ERROR: results.yaml not found at $RESULTS_FILE"
+              exit 1
+            fi
 
-          echo "📊 Checking file size..."
-          SIZE=$(wc -c < "$RESULTS_FILE" | tr -d ' ')
-          echo "   File size: $SIZE bytes"
+            echo "📊 [$fmt] Checking file size..."
+            SIZE=$(wc -c < "$RESULTS_FILE" | tr -d ' ')
+            echo "   File size: $SIZE bytes"
 
-          if [ "$SIZE" -lt 1000 ]; then
-            echo "❌ ERROR: results.yaml is suspiciously small ($SIZE bytes)"
-            echo "   Expected at least 1000 bytes for valid benchmark results"
-            echo "=== File contents ==="
-            cat "$RESULTS_FILE"
-            exit 1
-          fi
+            if [ "$SIZE" -lt 1000 ]; then
+              echo "❌ ERROR: results.yaml is suspiciously small ($SIZE bytes)"
+              echo "   Expected at least 1000 bytes for valid benchmark results"
+              echo "=== File contents ==="
+              cat "$RESULTS_FILE"
+              exit 1
+            fi
 
-          echo "✅ File size OK: $SIZE bytes"
+            echo "✅ [$fmt] File size OK: $SIZE bytes"
+          done
         shell: bash
 
       - name: Validate YAML schema
         run: |
-          bundle exec serialbench validate result results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml
+          BASE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}"
+          for fmt in xml json yaml toml; do
+            bundle exec serialbench validate result "$BASE/$fmt/results.yaml"
+          done
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
