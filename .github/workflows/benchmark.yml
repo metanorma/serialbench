@@ -185,7 +185,13 @@ jobs:
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
         run: |
-          bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/full.yml results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
+          # One process per format: memory profiling large documents across
+          # all formats in a single process exhausted windows runner RAM.
+          for fmt in xml json yaml toml; do
+            echo "::group::format $fmt"
+            bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/full-$fmt.yml "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/$fmt"
+            echo "::endgroup::"
+          done
 
       - name: Verify benchmark results before upload
         run: |

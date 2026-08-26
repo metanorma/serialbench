@@ -1,0 +1,25 @@
+# Per-format split of full.yml: each format runs in its own process so
+# memory profiling of large documents cannot compound across formats
+# (windows runners OOMed with all four formats in one process).
+name: full-yaml
+
+data_sizes:
+- small
+- medium
+- large
+
+formats:
+- yaml
+
+iterations:
+  small: 10
+  medium: 3
+  large: 1
+
+operations:
+- parse
+- generate
+- streaming
+- memory
+
+warmup: 2
