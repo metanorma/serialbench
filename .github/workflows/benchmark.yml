@@ -16,13 +16,8 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  # Renamed off "pages": that group's server-side state is wedged (a queued
-  # run there returns 500 on cancel and blocks the single in-progress slot),
-  # which starved every benchmark-weekly run after 2026-08-23 10:22Z.
   group: "site-deploy"
   cancel-in-progress: false
 
@@ -76,8 +71,6 @@ jobs:
         run: |
           vcpkg install libxml2:${{ steps.windows-arch.outputs.arch }} libxslt:${{ steps.windows-arch.outputs.arch }} 2>&1 || true
           vcpkg integrate install 2>&1 || true
-          # vcpkg dynamic triplets put the DLLs in bin/; nokogiri's compiled
-          # extension needs them on PATH at require time.
           echo "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin" >> $GITHUB_PATH
         shell: bash
 
@@ -87,10 +80,6 @@ jobs:
           mkdir -p .bundle 2>&1 || true
           echo "---" > .bundle/config 2>&1 || true
           echo 'BUNDLE_BUILD__LIBXML___RUBY: "--with-xml2-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }} --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib"' >> .bundle/config 2>&1 || true
-          # windows-11-arm has no precompiled nokogiri (pulled transitively via
-          # moxml); build it against the vcpkg libxml2 instead of the vendored
-          # source build that fails on ucrt/ARM64. Harmless on x64 Windows,
-          # where the precompiled gem makes this config moot.
           echo 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-xslt-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxslt --with-xslt-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-zlib-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}"' >> .bundle/config 2>&1 || true
         shell: bash
 
@@ -100,14 +89,10 @@ jobs:
           ruby-version: ${{ matrix.ruby-version }}
           bundler-cache: true
 
-      # The directory of ruby.exe is always in the DLL search path (unlike
-      # PATH manipulation across step boundaries), so stage the vcpkg DLLs
-      # there for the system-built nokogiri on Windows ARM.
       - name: Stage vcpkg DLLs beside ruby.exe (Windows)
         if: startsWith(matrix.platform, 'windows-')
         run: |
           RUBY_BIN="$(dirname "$(command -v ruby)")"
-          echo "Staging vcpkg DLLs into $RUBY_BIN"
           ls "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin/" || true
           cp -f "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin/"*.dll "$RUBY_BIN/" 2>&1 || true
         shell: bash
@@ -123,37 +108,13 @@ jobs:
         run: |
           brew install libxml2 libxslt
 
-      - name: Debug Ruby platform (Windows only)
-        if: startsWith(matrix.platform, 'windows-')
-        shell: ruby {0}
-        run: |
-          puts "=== Ruby Platform Debug Info ==="
-          puts "RUBY_PLATFORM: #{RUBY_PLATFORM}"
-          puts "Gem.win_platform?: #{Gem.win_platform?}"
-          puts "RbConfig::CONFIG['host_os']: #{RbConfig::CONFIG['host_os']}"
-          puts "RbConfig::CONFIG['host_cpu']: #{RbConfig::CONFIG['host_cpu']}"
-          puts "RbConfig::CONFIG['arch']: #{RbConfig::CONFIG['arch']}"
-          puts "================================"
-
       - name: Install gems
         run: bundle install
 
-      # ubuntu-22.04's glibc (2.35) predates the precompiled leptris gem's
-      # build host, so the gem's vendored libleptris.so fails to dlopen there
-      # and the adapter reports leptris unavailable (empty availability dots
-      # on the site). Leptris is pure C99 — build the lib from the gem's
-      # tagged source and point the FFI loader at it; LEPTRIS_LIB_PATH is the
-      # first candidate in the gem's ffi_lib list.
       - name: Build libleptris from source (Ubuntu 22.04)
         if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
         run: |
-          # Read the version from the gemspec: leptris >= 1.9 ruby-platform fallback
-          # gems raise at require time when no library is found, and on 22.04
-          # the precompiled variant does not install at all.
           LEPTRIS_VERSION=$(bundle exec ruby -e "print Gem::Specification.find_by_name('leptris').version")
-          # RubyGems and the git tags occasionally drift (the 1.9.1 gem
-          # shipped with no v1.9.1 tag); build from the highest tag that
-          # does not exceed the gem version.
           LEPTRIS_TAG=$(curl -s "https://api.github.com/repos/leptris/leptris/tags?per_page=100" \
             | grep -oE '"v[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"' | sort -V \
             | awk -v v="v${LEPTRIS_VERSION}" '$0 <= v' | tail -1)
@@ -167,14 +128,8 @@ jobs:
             -DLEPTRIS_ENABLE_UTF8PROC=OFF -DLEPTRIS_ENABLE_ICONV=OFF
           cmake --build /tmp/leptris-build -j"$(nproc)"
           LIBLEPTRIS=$(find /tmp/leptris-build -name 'libleptris.so*' -type f | head -1)
-          echo "Built ${LIBLEPTRIS}"
           echo "LEPTRIS_LIB_PATH=${LIBLEPTRIS}" >> "$GITHUB_ENV"
         shell: bash
-
-      - name: Update Ruby-Build cache
-        run: bundle exec serialbench ruby-build update
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create environment config
         run: |
@@ -189,154 +144,168 @@ jobs:
           EOF
         shell: bash
 
-      - name: Run benchmarks
+      # Each format is an independent checkpoint with its own upload.
+      # A failure in one format doesn't prevent the others from uploading.
+      - name: Benchmark xml
+        continue-on-error: true
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
         run: |
-          # One process per format: memory profiling large documents across
-          # all formats in a single process exhausted windows runner RAM.
-          for fmt in xml json yaml toml; do
-            echo "::group::format $fmt"
-            bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/full-$fmt.yml "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/$fmt"
-            echo "::endgroup::"
-          done
-        shell: bash
+          bundle exec serialbench environment execute \
+            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
+            config/benchmarks/full-xml.yml \
+            "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml"
 
-      - name: Verify benchmark results before upload
-        run: |
-          echo "=== Verifying benchmark results ==="
-          # Results are nested one directory per format (see Run benchmarks)
-          BASE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}"
-          for fmt in xml json yaml toml; do
-            RESULTS_FILE="$BASE/$fmt/results.yaml"
-
-            echo "📁 [$fmt] Checking file exists..."
-            if [ ! -f "$RESULTS_FILE" ]; then
-              echo "❌ ERROR: results.yaml not found at $RESULTS_FILE"
-              exit 1
-            fi
-
-            echo "📊 [$fmt] Checking file size..."
-            SIZE=$(wc -c < "$RESULTS_FILE" | tr -d ' ')
-            echo "   File size: $SIZE bytes"
-
-            if [ "$SIZE" -lt 1000 ]; then
-              echo "❌ ERROR: results.yaml is suspiciously small ($SIZE bytes)"
-              echo "   Expected at least 1000 bytes for valid benchmark results"
-              echo "=== File contents ==="
-              cat "$RESULTS_FILE"
-              exit 1
-            fi
-
-            echo "✅ [$fmt] File size OK: $SIZE bytes"
-          done
-        shell: bash
-
-      - name: Validate YAML schema
-        run: |
-          BASE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}"
-          for fmt in xml json yaml toml; do
-            bundle exec serialbench validate result "$BASE/$fmt/results.yaml"
-          done
-
-      - name: Upload benchmark results
+      - name: Upload xml
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}
-          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-xml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml
           retention-days: 30
+          if-no-files-found: warn
 
-  # Aggregate results and deploy to GitHub Pages
-  # The site is built from whatever benchmark artifacts actually uploaded;
-  # missing legs/environments appear honestly in the availability matrix.
-  # This lets us deploy on the first partially-green attempt instead of
-  # waiting for one 46/46 clean window in an environment of recurring
-  # runner kills.
-  deploy-pages:
+      - name: Benchmark json
+        continue-on-error: true
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: |
+          bundle exec serialbench environment execute \
+            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
+            config/benchmarks/full-json.yml \
+            "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/json"
+
+      - name: Upload json
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-json
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Benchmark yaml
+        continue-on-error: true
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: |
+          bundle exec serialbench environment execute \
+            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
+            config/benchmarks/full-yaml.yml \
+            "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/yaml"
+
+      - name: Upload yaml
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-yaml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/yaml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Benchmark toml
+        continue-on-error: true
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: |
+          bundle exec serialbench environment execute \
+            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
+            config/benchmarks/full-toml.yml \
+            "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/toml"
+
+      - name: Upload toml
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-toml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/toml
+          retention-days: 30
+          if-no-files-found: warn
+
+  # Push results to the data repo and trigger a site rebuild.
+  # Runs regardless of benchmark job outcome — partial data is still data.
+  publish:
     if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     needs: [setup, benchmark]
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxslt1-dev build-essential
-
-      - name: Install gems
-        run: bundle install
-
       - name: Download all benchmark artifacts
         uses: actions/download-artifact@v4
         with:
           pattern: benchmark-results-*
           path: artifacts/
 
-      - name: List downloaded artifacts structure
+      - name: Push results to serialbench/data
+        env:
+          DATA_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
         run: |
-          echo "=== Artifacts directory structure ==="
-          ls -la artifacts/
-          echo ""
-          echo "=== Searching for results.yaml files ==="
-          find artifacts/ -name "results.yaml" -type f
-          echo ""
-          echo "=== Directory tree (first 3 levels) ==="
-          find artifacts/ -maxdepth 3 -type d | sort
+          if [ -z "$DATA_TOKEN" ]; then
+            echo "::warning::DATA_REPO_TOKEN not set — skipping data push"
+            echo "::notice::Create a fine-grained PAT with write access to serialbench/data"
+            exit 0
+          fi
 
-      - name: Create resultset
+          DATE=$(date -u +%Y-%m-%d)
+          git clone "https://x-access-token:${DATA_TOKEN}@github.com/serialbench/data.git" /tmp/data
+          mkdir -p "/tmp/data/runs/${DATE}"
+
+          # Copy each artifact's results.yaml into the data repo
+          find artifacts/ -name "results.yaml" -type f | while read -r file; do
+            # Extract platform, ruby, format from the artifact name
+            # artifacts/benchmark-results-{platform}-ruby-{version}-{format}/{format}/results.yaml
+            rel="${file#artifacts/}"
+            name=$(dirname "$rel" | cut -d/ -f1)
+            fmt=$(dirname "$rel" | cut -d/ -f2)
+
+            # Parse: benchmark-results-{platform}-ruby-{version}-{format}
+            if echo "$name" | grep -qE '^benchmark-results-'; then
+              rest="${name#benchmark-results-}"
+              # Extract format (last component after last dash)
+              fmt_from_name="${rest##*-}"
+              # Extract platform+ruby (everything before the last dash-format)
+              platform_ruby="${rest%-${fmt_from_name}}"
+              # platform_ruby looks like: {platform}-ruby-{version}
+
+              target="/tmp/data/runs/${DATE}/${platform_ruby}.${fmt_from_name}.yaml"
+              mkdir -p "$(dirname "$target")"
+              cp "$file" "$target"
+              echo "  $target"
+            fi
+          done
+
+          cd /tmp/data
+          if git diff --quiet; then
+            echo "No new data to push"
+          else
+            git config user.name "serialbench-bot"
+            git config user.email "serialbench-bot@users.noreply.github.com"
+            git add runs/
+            git commit -m "benchmark run ${DATE}"
+            git push origin main
+            echo "Pushed results to serialbench/data"
+          fi
+
+      - name: Trigger site rebuild
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.SITE_TRIGGER_TOKEN }}
         run: |
-          mkdir -p results/sets
-          bundle exec serialbench resultset create weekly-benchmark results/sets/weekly-benchmark
-
-      - name: Add all results to resultset
-        run: |
-          bundle exec serialbench resultset add-result results/sets/weekly-benchmark artifacts/benchmark-results-*/
-
-      - name: Export dashboard payload and raw data
-        run: |
-          bundle exec serialbench resultset export-data results/sets/weekly-benchmark site/src/data/sample.json --raw-data-dir site/public/data
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-
-      - name: Build site
-        run: |
-          cd site
-          npm ci
-          npm run build
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: site/dist
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::SITE_TRIGGER_TOKEN not set — skipping site trigger"
+            exit 0
+          fi
+          curl -sf -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/serialbench/serialbench.github.io/dispatches \
+            -d '{"event_type": "data-updated"}' \
+            && echo "Site rebuild triggered" \
+            || echo "::warning::Failed to trigger site rebuild"
 
   # Summary job
   summary:
     runs-on: ubuntu-latest
-    needs: [setup, benchmark, deploy-pages]
+    needs: [setup, benchmark, publish]
     if: always()
     steps:
       - name: Generate workflow summary
@@ -344,28 +313,19 @@ jobs:
           echo "## Weekly Benchmark Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Benchmark Status**: ${{ needs.benchmark.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Deploy Status**: ${{ needs.deploy-pages.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Publish Status**: ${{ needs.publish.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Platforms Tested" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu Latest (Linux x86_64)" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu 24.04 (Linux ARM64)" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu 22.04 (Linux ARM64)" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 14 (Apple Silicon ARM64)" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 15 (Apple Silicon ARM64)" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 15 Intel (Intel x86_64)" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 26 (Apple Silicon ARM64)" >> $GITHUB_STEP_SUMMARY
-          echo "- macOS 26 Intel (Intel x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "- Ubuntu 24.04 (x86_64 + ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "- Ubuntu 22.04 (x86_64 + ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "- macOS 14, 15, 26 (ARM64 + Intel)" >> $GITHUB_STEP_SUMMARY
+          echo "- Windows 2022, 2025, 11-ARM" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Ruby Versions" >> $GITHUB_STEP_SUMMARY
           echo "- Ruby 3.2, 3.3, 3.4, 4.0" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Serialization Libraries" >> $GITHUB_STEP_SUMMARY
-          echo "- **XML**: REXML, Ox, Nokogiri, Oga, LibXML, Leptris" >> $GITHUB_STEP_SUMMARY
-          echo "- **JSON**: JSON, Oj, RapidJSON, YAJL" >> $GITHUB_STEP_SUMMARY
-          echo "- **YAML**: Psych" >> $GITHUB_STEP_SUMMARY
-          echo "- **TOML**: TOML-RB, Tomlib, tomlrb" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "### Results" >> $GITHUB_STEP_SUMMARY
-            echo "📊 [View Interactive Dashboard](https://metanorma.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
+            echo "📊 [View Dashboard](https://serialbench.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
+            echo "📦 [Raw Data](https://github.com/serialbench/data)" >> $GITHUB_STEP_SUMMARY
           fi
