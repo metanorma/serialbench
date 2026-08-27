@@ -15,7 +15,7 @@ on:
     # Allow manual triggering
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -60,56 +60,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Detect Windows architecture
-        id: windows-arch
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          if [[ "${{ matrix.platform }}" == *"-arm" ]]; then
-            echo "arch=arm64-windows" >> $GITHUB_OUTPUT
-          else
-            echo "arch=x64-windows" >> $GITHUB_OUTPUT
-          fi
-        shell: bash
-
-      - name: Install vcpkg dependencies (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          vcpkg install libxml2:${{ steps.windows-arch.outputs.arch }} libxslt:${{ steps.windows-arch.outputs.arch }} 2>&1 || true
-          vcpkg integrate install 2>&1 || true
-          # vcpkg dynamic triplets put the DLLs in bin/; nokogiri's compiled
-          # extension needs them on PATH at require time.
-          echo "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin" >> $GITHUB_PATH
-        shell: bash
-
-      - name: Configure bundler for libxml2 (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          mkdir -p .bundle 2>&1 || true
-          echo "---" > .bundle/config 2>&1 || true
-          echo 'BUNDLE_BUILD__LIBXML___RUBY: "--with-xml2-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }} --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib"' >> .bundle/config 2>&1 || true
-          # windows-11-arm has no precompiled nokogiri (pulled transitively via
-          # moxml); build it against the vcpkg libxml2 instead of the vendored
-          # source build that fails on ucrt/ARM64. Harmless on x64 Windows,
-          # where the precompiled gem makes this config moot.
-          echo 'BUNDLE_BUILD__NOKOGIRI: "--use-system-libraries --with-xml2-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxml2 --with-xml2-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-xslt-include=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/include/libxslt --with-xslt-lib=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/lib --with-zlib-dir=C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}"' >> .bundle/config 2>&1 || true
-        shell: bash
-
-      - name: Set up Ruby ${{ matrix.ruby-version }}
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ matrix.ruby-version }}
-          bundler-cache: true
-
-      # The directory of ruby.exe is always in the DLL search path (unlike
-      # PATH manipulation across step boundaries), so stage the vcpkg DLLs
-      # there for the system-built nokogiri on Windows ARM.
-      - name: Stage vcpkg DLLs beside ruby.exe (Windows)
-        if: startsWith(matrix.platform, 'windows-')
-        run: |
-          RUBY_BIN="$(dirname "$(command -v ruby)")"
-          echo "Staging vcpkg DLLs into $RUBY_BIN"
-          ls "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin/" || true
-          cp -f "C:/vcpkg/installed/${{ steps.windows-arch.outputs.arch }}/bin/"*.dll "$RUBY_BIN/" 2>&1 || true
+      # Deep module: one command handles all platform bootstrapping
+      # (vcpkg, bundler config, DLL staging, source builds)
+      - name: Prepare platform
+        run: bundle exec serialbench ci prepare
         shell: bash
 
       - name: Install system dependencies (Ubuntu)
@@ -189,58 +143,72 @@ jobs:
           EOF
         shell: bash
 
-      - name: Run benchmarks
+      # Each format is an independent checkpoint: benchmark, verify, upload.
+      # A failure in one format (OOM, crash) doesn't prevent the others from
+      # running and uploading — partial results still reach the deploy.
+      - name: Benchmark xml
+        continue-on-error: true
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
-        run: |
-          # One process per format: memory profiling large documents across
-          # all formats in a single process exhausted windows runner RAM.
-          for fmt in xml json yaml toml; do
-            echo "::group::format $fmt"
-            bundle exec serialbench environment execute config/environments/ci-ruby-${{ matrix.ruby-version }}.yml config/benchmarks/full-$fmt.yml "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/$fmt"
-            echo "::endgroup::"
-          done
+        run: .github/scripts/benchmark-one-format.sh xml ${{ matrix.ruby-version }} ${{ matrix.platform }}
 
-      - name: Verify benchmark results before upload
-        run: |
-          echo "=== Verifying benchmark results ==="
-          RESULTS_FILE="results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml"
-
-          echo "📁 Checking file exists..."
-          if [ ! -f "$RESULTS_FILE" ]; then
-            echo "❌ ERROR: results.yaml not found at $RESULTS_FILE"
-            exit 1
-          fi
-
-          echo "📊 Checking file size..."
-          SIZE=$(wc -c < "$RESULTS_FILE" | tr -d ' ')
-          echo "   File size: $SIZE bytes"
-
-          if [ "$SIZE" -lt 1000 ]; then
-            echo "❌ ERROR: results.yaml is suspiciously small ($SIZE bytes)"
-            echo "   Expected at least 1000 bytes for valid benchmark results"
-            echo "=== File contents ==="
-            cat "$RESULTS_FILE"
-            exit 1
-          fi
-
-          echo "✅ File size OK: $SIZE bytes"
-        shell: bash
-
-      - name: Validate YAML schema
-        run: |
-          bundle exec serialbench validate result results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/results.yaml
-
-      - name: Upload benchmark results
+      - name: Upload xml results
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}
-          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-xml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml
           retention-days: 30
+          if-no-files-found: warn
+
+      - name: Benchmark json
+        continue-on-error: true
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: .github/scripts/benchmark-one-format.sh json ${{ matrix.ruby-version }} ${{ matrix.platform }}
+
+      - name: Upload json results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-json
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Benchmark yaml
+        continue-on-error: true
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: .github/scripts/benchmark-one-format.sh yaml ${{ matrix.ruby-version }} ${{ matrix.platform }}
+
+      - name: Upload yaml results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-yaml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/yaml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Benchmark toml
+        continue-on-error: true
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: .github/scripts/benchmark-one-format.sh toml ${{ matrix.ruby-version }} ${{ matrix.platform }}
+
+      - name: Upload toml results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-toml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/toml
+          retention-days: 30
+          if-no-files-found: warn
 
   # Aggregate results and deploy to GitHub Pages
   deploy-pages:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     needs: [setup, benchmark]
     environment:
@@ -248,8 +216,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (latest main, for accumulated resultset)
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -282,10 +252,18 @@ jobs:
           echo "=== Directory tree (first 3 levels) ==="
           find artifacts/ -maxdepth 3 -type d | sort
 
-      - name: Create resultset
+      # The resultset persists across runs: committed to the repo after each
+      # deploy, loaded at the start of the next. add-result merges new data
+      # into the accumulated set — evicted legs keep last week's numbers.
+      - name: Load or create the accumulated resultset
         run: |
           mkdir -p results/sets
-          bundle exec serialbench resultset create weekly-benchmark results/sets/weekly-benchmark
+          if [ -f results/sets/weekly-benchmark/resultset.yaml ]; then
+            echo "Loading accumulated resultset from repo"
+          else
+            echo "Creating fresh resultset"
+            bundle exec serialbench resultset create weekly-benchmark results/sets/weekly-benchmark
+          fi
 
       - name: Add all results to resultset
         run: |
@@ -319,6 +297,63 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # Persist the resultset so the next run builds on this one's data.
+      # Uses [skip ci] to avoid triggering another benchmark run.
+      - name: Persist resultset for next run
+        run: |
+          git config user.name "serialbench-bot"
+          git config user.email "serialbench-bot@users.noreply.github.com"
+          git add results/sets/weekly-benchmark/
+          if git diff --staged --quiet; then
+            echo "No new results to persist"
+          else
+            git commit -m "benchmark: accumulate resultset [skip ci]"
+            git push origin HEAD:main --force-with-lease
+            echo "Persisted resultset to main"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Smoke test: verify the live site is actually serving. Catches
+      # integration failures (wrong build path, missing data, broken links)
+      # in CI instead of relying on a human visiting the URL.
+      - name: Smoke test the deployed site
+        run: |
+          sleep 10  # allow CDN propagation
+          BASE_URL="https://serialbench.github.io/serialbench"
+          fail=0
+
+          echo "=== Smoke test: $BASE_URL ==="
+
+          # Index page must serve and contain expected markers
+          INDEX=$(curl -sf "$BASE_URL/" || echo "")
+          for marker in "Serialbench" "small" "medium"; do
+            if ! echo "$INDEX" | grep -q "$marker"; then
+              echo "FAIL: index.html missing marker '$marker'"
+              fail=1
+            fi
+          done
+
+          # Data payload must download
+          PAYLOAD_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$BASE_URL/data/resultset.yaml" || echo "000")
+          if [ "$PAYLOAD_CODE" != "200" ]; then
+            echo "FAIL: data/resultset.yaml returned HTTP $PAYLOAD_CODE"
+            fail=1
+          fi
+
+          # At least one library page must serve
+          LIB_CODE=$(curl -sf -o /dev/null -w "%{http_code}" "$BASE_URL/library/leptris/" || echo "000")
+          if [ "$LIB_CODE" != "200" ]; then
+            echo "FAIL: library/leptris/ returned HTTP $LIB_CODE"
+            fail=1
+          fi
+
+          if [ "$fail" = "1" ]; then
+            echo "=== SMOKE TEST FAILED ==="
+            exit 1
+          fi
+          echo "=== SMOKE TEST PASSED ==="
 
   # Summary job
   summary:

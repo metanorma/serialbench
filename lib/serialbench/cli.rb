@@ -7,10 +7,14 @@ require_relative 'cli/benchmark_cli'
 require_relative 'cli/resultset_cli'
 require_relative 'cli/ruby_build_cli'
 require_relative 'cli/validate_cli'
+require_relative 'cli/ci_cli'
 
 module Serialbench
   # Main CLI entry point for the new object-oriented command structure
   class CLI < Serialbench::Cli::BaseCli
+    desc 'ci SUBCOMMAND', 'CI platform bootstrapping'
+    subcommand 'ci', Serialbench::Cli::CiCli
+
     desc 'environment SUBCOMMAND', 'Manage benchmark environments'
     subcommand 'environment', Serialbench::Cli::EnvironmentCli
 
