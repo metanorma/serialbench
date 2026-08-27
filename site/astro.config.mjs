@@ -3,7 +3,7 @@ import vue from '@astrojs/vue';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  site: 'https://metanorma.github.io',
+  site: 'https://serialbench.github.io',
   base: '/serialbench/',
   integrations: [vue()],
   vite: {

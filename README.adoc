@@ -1,9 +1,9 @@
 = Serialbench: Ruby serialization library performance benchmarker
 
 image:https://img.shields.io/gem/v/serialbench.svg["Gem Version", link="https://rubygems.org/gems/serialbench"]
-image:https://github.com/metanorma/serialbench/actions/workflows/ci.yml/badge.svg["Build Status", link="https://github.com/metanorma/serialbench/actions/workflows/ci.yml"]
-image:https://github.com/metanorma/serialbench/actions/workflows/benchmark.yml/badge.svg["Benchmark Status", link="https://github.com/metanorma/serialbench/actions/workflows/benchmark.yml"]
-image:https://img.shields.io/github/issues-pr-raw/metanorma/serialbench.svg["Pull Requests", link="https://github.com/metanorma/serialbench/pulls"]
+image:https://github.com/serialbench/serialbench/actions/workflows/ci.yml/badge.svg["Build Status", link="https://github.com/serialbench/serialbench/actions/workflows/ci.yml"]
+image:https://github.com/serialbench/serialbench/actions/workflows/benchmark.yml/badge.svg["Benchmark Status", link="https://github.com/serialbench/serialbench/actions/workflows/benchmark.yml"]
+image:https://img.shields.io/github/issues-pr-raw/serialbench/serialbench.svg["Pull Requests", link="https://github.com/serialbench/serialbench/pulls"]
 
 == Overview
 

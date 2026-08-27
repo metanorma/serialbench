@@ -7,8 +7,8 @@ export const BASE = import.meta.env.BASE_URL;
 export const SITE = {
   name: 'Serialbench',
   tagline: 'ruby serialization · measurement console',
-  repoUrl: 'https://github.com/metanorma/serialbench',
-  footer: 'serialbench · automated weekly runs · metanorma',
+  repoUrl: 'https://github.com/serialbench/serialbench',
+  footer: 'serialbench · automated weekly runs',
   disclaimer: 'microbenchmarks indicate, they do not decide',
 };
 

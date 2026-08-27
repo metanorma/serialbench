@@ -354,5 +354,5 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.ref }}" == "refs/heads/main" ]; then
             echo "### Results" >> $GITHUB_STEP_SUMMARY
-            echo "📊 [View Interactive Dashboard](https://metanorma.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
+            echo "📊 [View Interactive Dashboard](https://serialbench.github.io/serialbench/)" >> $GITHUB_STEP_SUMMARY
           fi
