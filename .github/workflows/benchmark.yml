@@ -247,8 +247,13 @@ jobs:
           retention-days: 30
 
   # Aggregate results and deploy to GitHub Pages
+  # The site is built from whatever benchmark artifacts actually uploaded;
+  # missing legs/environments appear honestly in the availability matrix.
+  # This lets us deploy on the first partially-green attempt instead of
+  # waiting for one 46/46 clean window in an environment of recurring
+  # runner kills.
   deploy-pages:
-    if: github.ref == 'refs/heads/main'
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     needs: [setup, benchmark]
     environment:
