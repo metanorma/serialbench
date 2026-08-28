@@ -12,11 +12,13 @@ module Serialbench
 
         def parse(xml_string)
           require 'leptris'
+          require 'leptris/xml'
           Leptris::XML.parse(xml_string)
         end
 
         def generate(data)
           require 'leptris'
+          require 'leptris/xml'
           if data.is_a?(Leptris::XML::Document) || data.is_a?(Leptris::XML::Node)
             data.to_xml(indent: 2)
           else
@@ -26,6 +28,7 @@ module Serialbench
 
         def parse_streaming(xml_string, &block)
           require 'leptris'
+          require 'leptris/xml'
 
           handler = StreamingHandler.new(&block)
           parser = Leptris::XML::SAX::Parser.new(handler)
@@ -39,6 +42,13 @@ module Serialbench
 
         def supports_xpath?
           true
+        end
+
+        def xpath_query(document, expression)
+          require 'leptris'
+          require 'leptris/xml'
+          result = document.xpath(expression)
+          result.size
         end
 
         # leptris-ruby >= 1.6 exposes Leptris::XML::Pull, a StAX-style
@@ -55,6 +65,7 @@ module Serialbench
           return 'unknown' unless available?
 
           require 'leptris'
+          require 'leptris/xml'
           Leptris::VERSION
         end
 
@@ -70,6 +81,7 @@ module Serialbench
 
           @available = begin
             require 'leptris'
+          require 'leptris/xml'
             Leptris::XML.parse('<probe/>')
             true
           rescue StandardError, LoadError
