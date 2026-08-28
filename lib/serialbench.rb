@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'serialbench/version'
+require_relative 'serialbench/site_generator'
 require_relative 'serialbench/serializers'
 require_relative 'serialbench/benchmark_runner'
 require_relative 'serialbench/cli'

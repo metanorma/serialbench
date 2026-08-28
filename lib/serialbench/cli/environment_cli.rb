@@ -164,9 +164,11 @@ module Serialbench
       def create_environment_runner(environment_config, environment_config_path)
         case environment_config.kind
         when 'docker'
-          raise ArgumentError, "Docker runner removed; use kind: local"
+          require_relative '../runners/docker_runner'
+          Runners::DockerRunner.new(environment_config, environment_config_path)
         when 'asdf'
-          raise ArgumentError, "ASDF runner removed; use kind: local"
+          require_relative '../runners/asdf_runner'
+          Runners::AsdfRunner.new(environment_config, environment_config_path)
         when 'local'
           require_relative '../runners/local_runner'
           Runners::LocalRunner.new(environment_config, environment_config_path)
