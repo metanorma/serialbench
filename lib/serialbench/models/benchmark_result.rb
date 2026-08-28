@@ -68,6 +68,7 @@ module Serialbench
       attribute :generation, IterationPerformance, collection: true
       attribute :memory, MemoryPerformance, collection: true
       attribute :streaming, IterationPerformance, collection: true
+      attribute :xpath, IterationPerformance, collection: true
 
       key_value do
         map 'serializers', to: :serializers
@@ -75,6 +76,7 @@ module Serialbench
         map 'generation', to: :generation
         map 'memory', to: :memory
         map 'streaming', to: :streaming
+        map 'xpath', to: :xpath
       end
     end
   end

@@ -42,6 +42,10 @@ module Serialbench
           true
         end
 
+        def xpath_query(document, expression)
+          document.xpath(expression).size
+        end
+
         def supports_streaming?
           true
         end

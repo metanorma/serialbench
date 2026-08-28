@@ -37,7 +37,8 @@ module Serialbench
         parsing: run_parsing_benchmarks,
         generation: run_generation_benchmarks,
         memory: run_memory_benchmarks,
-        streaming: run_streaming_benchmarks
+        streaming: run_streaming_benchmarks,
+        xpath: run_xpath_benchmarks
       )
     end
 
@@ -51,6 +52,16 @@ module Serialbench
       run_benchmark_type('generation', 'generation') do |serializer, data|
         document = serializer.parse(data)
         serializer.generate(document)
+      end
+    end
+
+    def run_xpath_benchmarks
+      run_benchmark_type('xpath', 'xpath') do |serializer, data|
+        doc = serializer.parse(data)
+        # Three representative expressions from leptris's own benchmarks
+        serializer.xpath_query(doc, '//book')
+        serializer.xpath_query(doc, "//book[@id='101']")
+        serializer.xpath_query(doc, '//book[price > 30]/title')
       end
     end
 

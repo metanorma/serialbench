@@ -20,6 +20,7 @@ operations:
 - parse
 - generate
 - streaming
+- xpath
 - memory
 
 warmup: 2
