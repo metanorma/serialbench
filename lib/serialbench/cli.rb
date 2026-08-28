@@ -6,6 +6,7 @@ require_relative 'cli/environment_cli'
 require_relative 'cli/benchmark_cli'
 require_relative 'cli/ruby_build_cli'
 require_relative 'cli/validate_cli'
+require_relative 'cli/resultset_cli'
 
 module Serialbench
   # Main CLI entry point for the new object-oriented command structure
