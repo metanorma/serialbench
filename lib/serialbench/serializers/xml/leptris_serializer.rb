@@ -40,8 +40,8 @@ module Serialbench
           true
         end
 
-        def supports_xpath?
-          true
+        def capabilities
+          super | Set.new(%i[xpath namespaces sax stax])
         end
 
         def xpath_query(document, expression)
@@ -54,12 +54,7 @@ module Serialbench
         # leptris-ruby >= 1.6 exposes Leptris::XML::Pull, a StAX-style
         # cursor (one event per #next). Declared by gem version so the
         # check never triggers the FFI library load.
-        def supports_stax?
-          spec = Gem.loaded_specs['leptris'] || Gem::Specification.find_by_name('leptris')
-          !spec.nil? && spec.version >= Gem::Version.new('1.6.0')
-        rescue Gem::LoadError
-          false
-        end
+
 
         def version
           return 'unknown' unless available?

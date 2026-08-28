@@ -23,19 +23,15 @@ module Serialbench
           generate(document, options)
         end
 
-        # XML-specific features
+        # XML-specific features derive from the capability set
         def features
           {
-            xpath: supports_xpath?,
-            namespaces: supports_namespaces?,
-            validation: supports_validation?,
-            streaming: supports_streaming?,
-            stax: supports_stax?
+            xpath: supports?(:xpath),
+            namespaces: supports?(:namespaces),
+            validation: supports?(:validation),
+            streaming: supports?(:sax) || supports?(:streaming),
+            stax: supports?(:stax)
           }
-        end
-
-        def supports_stax?
-          false
         end
 
         def supports_generation?

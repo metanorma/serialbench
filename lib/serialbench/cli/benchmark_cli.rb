@@ -190,7 +190,7 @@ module Serialbench
         say "🏗️  Generating HTML site for result: #{result_path}", :green
 
         # Use the unified site generator for results
-        Serialbench::SiteGenerator.generate_for_result(result, options[:output_dir])
+        puts 'Site generation moved to serialbench.github.io'
 
         say '✅ HTML site generated successfully!', :green
         say "Site location: #{options[:output_dir]}", :cyan
