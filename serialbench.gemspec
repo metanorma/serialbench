@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = 'Comprehensive serialization benchmarking tool for Ruby'
   spec.description = 'A benchmarking suite for comparing performance of various serialization libraries in Ruby, including XML, JSON, and TOML parsers/generators.'
-  spec.homepage = 'https://github.com/metanorma/serialbench'
+  spec.homepage = 'https://github.com/serialbench/serialbench'
   spec.license = 'BSD-2-Clause'
   spec.required_ruby_version = Gem::Requirement.new('>= 2.7.0')
 
