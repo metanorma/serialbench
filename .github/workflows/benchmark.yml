@@ -111,26 +111,6 @@ jobs:
       - name: Install gems
         run: bundle install
 
-      - name: Build libleptris from source (Ubuntu 22.04)
-        if: matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-22.04-arm'
-        run: |
-          LEPTRIS_VERSION=$(bundle exec ruby -e "print Gem::Specification.find_by_name('leptris').version")
-          LEPTRIS_TAG=$(curl -s "https://api.github.com/repos/leptris/leptris/tags?per_page=100" \
-            | grep -oE '"v[0-9]+\.[0-9]+\.[0-9]+"' | tr -d '"' | sort -V \
-            | awk -v v="v${LEPTRIS_VERSION}" '$0 <= v' | tail -1)
-          echo "Building libleptris ${LEPTRIS_VERSION} from tag ${LEPTRIS_TAG}"
-          test -n "${LEPTRIS_TAG}"
-          curl -sL "https://github.com/leptris/leptris/archive/refs/tags/${LEPTRIS_TAG}.tar.gz" | tar xz
-          ln -s "leptris-${LEPTRIS_TAG#v}" "leptris-${LEPTRIS_VERSION}"
-          cmake -S "leptris-${LEPTRIS_VERSION}" -B /tmp/leptris-build \
-            -DLEPTRIS_BUILD_SHARED=ON -DLEPTRIS_BUILD_STATIC=OFF -DBUILD_TESTING=OFF \
-            -DLEPTRIS_BUILD_CLI=OFF -DLEPTRIS_BUILD_BENCHMARKS=OFF -DLEPTRIS_BUILD_MAN_PAGES=OFF \
-            -DLEPTRIS_ENABLE_UTF8PROC=OFF -DLEPTRIS_ENABLE_ICONV=OFF
-          cmake --build /tmp/leptris-build -j"$(nproc)"
-          LIBLEPTRIS=$(find /tmp/leptris-build -name 'libleptris.so*' -type f | head -1)
-          echo "LEPTRIS_LIB_PATH=${LIBLEPTRIS}" >> "$GITHUB_ENV"
-        shell: bash
-
       - name: Create environment config
         run: |
           mkdir -p config/environments
