@@ -534,7 +534,7 @@ RSpec.describe 'Serialbench Serializers' do
     end
 
     it 'can run parsing benchmarks' do
-      results = runner.run_parsing_benchmarks
+      results = runner.run_all_benchmarks.parsing
       expect(results).to be_an(Array)
       expect(results).not_to be_empty
 

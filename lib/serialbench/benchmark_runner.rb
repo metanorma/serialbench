@@ -24,6 +24,19 @@ module Serialbench
       load_test_data
     end
 
+    # Each operation maps to a lambda. Adding an operation = one entry.
+    OPERATIONS = {
+      'parsing' => ->(s, data) { s.parse(data) },
+      'generation' => ->(s, data) { s.generate(s.parse(data)) },
+      'xpath' => lambda { |s, data|
+        doc = s.parse(data)
+        s.xpath_query(doc, '//book')
+        s.xpath_query(doc, "//book[@id='101']")
+        s.xpath_query(doc, '//book[price > 30]/title')
+      },
+      'streaming' => ->(s, data) { s.stream_parse(data) { |_event, _data| } },
+    }.freeze
+
     def run_all_benchmarks
       puts 'Serialbench - Running comprehensive serialization performance tests'
       puts '=' * 70
@@ -32,43 +45,16 @@ module Serialbench
       puts "Test data sizes: #{@test_data.keys.join(', ')}"
       puts
 
+      results = {}
+      OPERATIONS.each do |name, handler|
+        results[name.to_sym] = run_benchmark_type(name, name, &handler)
+      end
+      results[:memory] = run_memory_benchmarks
+
       Models::BenchmarkResult.new(
         serializers: Serializers.information,
-        parsing: run_parsing_benchmarks,
-        generation: run_generation_benchmarks,
-        memory: run_memory_benchmarks,
-        streaming: run_streaming_benchmarks,
-        xpath: run_xpath_benchmarks
+        **results
       )
-    end
-
-    def run_parsing_benchmarks
-      run_benchmark_type('parsing', 'parse') do |serializer, data|
-        serializer.parse(data)
-      end
-    end
-
-    def run_generation_benchmarks
-      run_benchmark_type('generation', 'generation') do |serializer, data|
-        document = serializer.parse(data)
-        serializer.generate(document)
-      end
-    end
-
-    def run_xpath_benchmarks
-      run_benchmark_type('xpath', 'xpath') do |serializer, data|
-        doc = serializer.parse(data)
-        # Three representative expressions from leptris's own benchmarks
-        serializer.xpath_query(doc, '//book')
-        serializer.xpath_query(doc, "//book[@id='101']")
-        serializer.xpath_query(doc, '//book[price > 30]/title')
-      end
-    end
-
-    def run_streaming_benchmarks
-      run_benchmark_type('streaming', 'stream parse') do |serializer, data|
-        serializer.stream_parse(data) { |event, data| }
-      end
     end
 
     def run_memory_benchmarks

@@ -4,7 +4,6 @@ require 'thor'
 require_relative 'cli/base_cli'
 require_relative 'cli/environment_cli'
 require_relative 'cli/benchmark_cli'
-require_relative 'cli/resultset_cli'
 require_relative 'cli/ruby_build_cli'
 require_relative 'cli/validate_cli'
 
@@ -16,9 +15,6 @@ module Serialbench
 
     desc 'benchmark SUBCOMMAND', 'Manage individual benchmark runs'
     subcommand 'benchmark', Serialbench::Cli::BenchmarkCli
-
-    desc 'resultset SUBCOMMAND', 'Manage benchmark resultsets (collections of runs)'
-    subcommand 'resultset', Serialbench::Cli::ResultsetCli
 
     desc 'ruby_build SUBCOMMAND', 'Manage Ruby-Build definitions for validation'
     subcommand 'ruby_build', Serialbench::Cli::RubyBuildCli
@@ -45,7 +41,6 @@ module Serialbench
           COMMANDS:
             environment   Manage benchmark environments (Docker, ASDF, Local)
             benchmark     Manage individual benchmark runs
-            resultset     Manage benchmark resultsets (collections of runs)
             ruby-build    Manage Ruby-Build definitions for validation
             version       Show version information
             help          Show this help message
@@ -63,12 +58,9 @@ module Serialbench
             serialbench benchmark execute my-benchmark.yml
 
             # Create a result set for comparison
-            serialbench resultset create comparison-set
-            serialbench resultset add-result comparison-set results/my-benchmark
 
             # Generate static sites
             serialbench benchmark build-site results/my-benchmark
-            serialbench resultset build-site resultsets/comparison-set
 
           For detailed help on any command, use:
             serialbench COMMAND help

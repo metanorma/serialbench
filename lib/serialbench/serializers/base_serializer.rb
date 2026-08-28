@@ -1,3 +1,5 @@
+require 'set'
+
 # frozen_string_literal: true
 
 require 'singleton'
@@ -33,9 +35,19 @@ module Serialbench
         result
       end
 
+      # Capabilities: a Set of symbols declaring what this adapter can do.
+      # Subclasses override to add symbols; the base handles every query.
+      # This replaces the 12+ individual supports_X? predicates.
+      def capabilities
+        Set.new(%i[dom parse generate])
+      end
+
+      def supports?(capability)
+        capabilities.include?(capability)
+      end
+
       def supports_streaming?
-        # Override in subclasses that support streaming
-        false
+        supports?(:sax) || supports?(:streaming)
       end
 
       def require_library(library_name)
