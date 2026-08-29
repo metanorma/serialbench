@@ -8,11 +8,13 @@ module Serialbench
       attribute :format, :string, values: %w[xml json yaml toml]
       attribute :name, :string
       attribute :version, :string
+      attribute :features, :hash
 
       key_value do
         map 'format', to: :format
         map 'name', to: :name
         map 'version', to: :version
+        map 'features', to: :features
       end
     end
 
