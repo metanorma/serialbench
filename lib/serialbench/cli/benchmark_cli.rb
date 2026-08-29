@@ -284,7 +284,6 @@ module Serialbench
 
         say '✅ Local benchmark completed successfully!', :green
         say "Results saved to: #{result_dir}", :cyan
-        say "Generate site: serialbench benchmark build-site #{result_dir}", :white
       rescue StandardError => e
         say "❌ Local benchmark failed: #{e.message}", :red
         say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
@@ -308,7 +307,6 @@ module Serialbench
 
         say '✅ Docker benchmark completed successfully!', :green
         say "Results saved to: #{result_dir}", :cyan
-        say "Generate site: serialbench benchmark build-site #{result_dir}", :white
       rescue StandardError => e
         say "❌ Docker benchmark failed: #{e.message}", :red
         say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
@@ -357,92 +355,21 @@ module Serialbench
         exit 1
       end
 
-      # def execute_local_benchmark(environment, config, benchmark_config_path)
-      #   say '🏠 Executing local benchmark', :green
-
-      #   # Create benchmark runner with config
-      #   runner_options = {
-      #     formats: (config['formats'] || %w[xml json yaml toml]).map(&:to_sym),
-      #     iterations: config['iterations'] || 10,
-      #     warmup: config['warmup'] || 3,
-      #     config: config
-      #   }
-
-      #   runner = Serialbench::BenchmarkRunner.new(**runner_options)
-
-      #   # Run benchmarks
-      #   say "Running benchmarks with #{runner_options[:iterations]} iterations...", :white
-      #   results = runner.run_all_benchmarks
-
-      #   # Create platform-specific directory name using environment's ruby_build_tag
-      #   require_relative '../models/platform'
-      #   platform = Serialbench::Models::Platform.current_local
-      #   platform_string = "local-#{platform.os}-#{platform.arch}-ruby-#{environment['ruby_build_tag']}"
-
-      #   # Create results directory
-      #   result_dir = "results/runs/#{environment['name']}"
-      #   FileUtils.mkdir_p(result_dir)
-
-      #   # Save results to single YAML file with platform and metadata merged in
-      #   results_file = File.join(result_dir, 'results.yaml')
-      #   full_results = {
-      #     'platform' => {
-      #       'platform_string' => platform_string,
-      #       'os' => platform.os,
-      #       'arch' => platform.arch
-      #     },
-      #     'metadata' => {
-      #       'environment_name' => environment['name'],
-      #       'benchmark_config' => benchmark_config_path,
-      #       'created_at' => Time.now.iso8601,
-      #       'tags' => ['local', platform.os, platform.arch, "ruby-#{environment['ruby_build_tag']}"]
-      #     },
-      #     'environment' => {
-      #       'name' => environment['name'],
-      #       'type' => environment.kind,
-      #       'ruby_build_tag' => environment['ruby_build_tag'],
-      #       'created_at' => Time.now.iso8601
-      #     },
-      #     'config' => {
-      #       'benchmark_config' => benchmark_config_path,
-      #       'formats' => config['formats'],
-      #       'iterations' => config['iterations'],
-      #       'data_sizes' => config['data_sizes']
-      #     },
-      #     'results' => results
-      #   }
-
-      #   File.write(results_file, full_results.to_yaml)
-
-      #   say '✅ Local benchmark completed successfully!', :green
-      #   say "Results saved to: #{result_dir}", :cyan
-      #   say "Generate site: serialbench benchmark build-site #{result_dir}", :white
-      # rescue StandardError => e
-      #   say "❌ Local benchmark failed: #{e.message}", :red
-      #   say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
-      #   raise e
-      # end
-
-      def execute_asdf_benchmark(environment, _config, benchmark_config_path)
+      def execute_asdf_benchmark(environment, config, benchmark_config_path)
         say '🔧 Executing ASDF benchmark', :green
 
-        # Use the ASDF runner to execute the benchmark
-        require_relative '../asdf_runner'
+        require_relative '../runners/asdf_runner'
 
-        # Create a config object that AsdfRunner expects
-        asdf_config = environment.merge({
-                                          'benchmark_config' => benchmark_config_path
-                                        })
+        environment_config_path = "config/environments/#{environment.name}.yml"
+        runner = Runners::AsdfRunner.new(environment, environment_config_path)
 
-        runner = Serialbench::AsdfRunner.new(asdf_config)
+        result_dir = "results/runs/#{environment.name}-results"
+        FileUtils.mkdir_p(result_dir)
 
-        say "Installing Ruby #{environment['ruby_build_tag']} via ASDF...", :white
-        runner.prepare
-        runner.benchmark
+        runner.run_benchmark(config, benchmark_config_path, result_dir)
 
         say '✅ ASDF benchmark completed successfully!', :green
-        say "Results saved to: results/runs/#{environment['name']}", :cyan
-        say "Generate site: serialbench benchmark build-site results/runs/#{environment['name']}", :white
+        say "Results saved to: #{result_dir}", :cyan
       rescue StandardError => e
         say "❌ ASDF benchmark failed: #{e.message}", :red
         say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]

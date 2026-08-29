@@ -19,8 +19,8 @@ iterations:
   large: 1
 
 operations:
-- parse
-- generate
+- parsing
+- generation
 - streaming
 
 warmup: 2

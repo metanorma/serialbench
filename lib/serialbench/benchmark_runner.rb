@@ -21,6 +21,7 @@ module Serialbench
       @serializers = Serializers.available
       @test_data = {}
       @results = []
+      validate_operations!
       load_test_data
     end
 
@@ -45,11 +46,13 @@ module Serialbench
       puts "Test data sizes: #{@test_data.keys.join(', ')}"
       puts
 
+      selected = @benchmark_config.operations
+      selected = OPERATIONS.keys + ['memory'] if selected.nil? || selected.empty?
       results = {}
       OPERATIONS.each do |name, handler|
-        results[name.to_sym] = run_benchmark_type(name, name, &handler)
+        results[name.to_sym] = selected.include?(name) ? run_benchmark_type(name, name, &handler) : []
       end
-      results[:memory] = run_memory_benchmarks
+      results[:memory] = selected.include?('memory') ? run_memory_benchmarks : []
 
       Models::BenchmarkResult.new(
         serializers: Serializers.information,
@@ -163,6 +166,13 @@ module Serialbench
       when 'large' then iterations.large
       else raise ArgumentError, "no iteration count configured for #{size}"
       end
+    end
+
+    def validate_operations!
+      unknown = (@benchmark_config.operations || []) - (OPERATIONS.keys + ['memory'])
+      return if unknown.empty?
+
+      raise ArgumentError, "unknown operations #{unknown.inspect}; expected: #{OPERATIONS.keys.join(', ')}, memory"
     end
 
     def load_test_data

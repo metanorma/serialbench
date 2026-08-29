@@ -51,7 +51,7 @@ module Serialbench
       attribute :formats, :string, collection: true, values: %w[xml json yaml toml]
       attribute :iterations, BenchmarkIteration
       attribute :warmup, :integer, default: -> { 1 }
-      attribute :operations, :string, collection: true, values: %w[parse generate memory streaming]
+      attribute :operations, :string, collection: true, values: %w[parsing generation xpath streaming memory]
 
       key_value do
         map 'name', to: :name
