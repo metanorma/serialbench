@@ -46,6 +46,32 @@ module Serialbench
       def generate_timestamp
         Time.now.utc.strftime('%Y%m%d_%H%M%S')
       end
+
+      def load_environment_config(environment_config_path)
+        unless File.exist?(environment_config_path)
+          say "❌ Environment not found: #{environment_config_path}", :red
+          exit 1
+        end
+
+        require_relative '../models/environment_config'
+        Models::EnvironmentConfig.from_yaml(IO.read(environment_config_path))
+      rescue StandardError => e
+        say "❌ Failed to load environment config: #{e.message}", :red
+        exit 1
+      end
+
+      def load_benchmark_config(benchmark_config_path)
+        unless File.exist?(benchmark_config_path)
+          say "❌ Benchmark configuration file not found: #{benchmark_config_path}", :red
+          exit 1
+        end
+
+        require_relative '../models/benchmark_config'
+        Models::BenchmarkConfig.from_yaml(IO.read(benchmark_config_path))
+      rescue StandardError => e
+        say "❌ Failed to load benchmark config: #{e.message}", :red
+        exit 1
+      end
     end
   end
 end

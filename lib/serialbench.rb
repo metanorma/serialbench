@@ -9,6 +9,7 @@ require_relative 'serialbench/models'
 
 module Serialbench
   autoload :TestData, 'serialbench/test_data'
+  autoload :Runners, 'serialbench/runners'
 
   class Error < StandardError; end
 end

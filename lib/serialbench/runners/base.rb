@@ -7,8 +7,8 @@ require 'open3'
 require 'stringio'
 
 module Serialbench
-  # Handles ASDF-based benchmark execution
   module Runners
+    # Runner protocol: prepare, then run_benchmark(config, config_path, result_dir)
     class Base
       def initialize(environment_config, environment_config_path)
         @environment_config = environment_config
@@ -23,9 +23,8 @@ module Serialbench
         raise NotImplementedError, 'Subclasses must implement the prepare method'
       end
 
-      # Run benchmark
-      def benchmark
-        raise NotImplementedError, 'Subclasses must implement the benchmark method'
+      def run_benchmark(benchmark_config, benchmark_config_path, result_dir)
+        raise NotImplementedError, 'Subclasses must implement the run_benchmark method'
       end
     end
   end

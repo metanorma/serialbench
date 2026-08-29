@@ -76,22 +76,60 @@ module Serialbench
         say "Environment: #{environment.name} (#{environment.kind})", :cyan
         say "Configuration: #{benchmark_config_path}", :cyan
 
-        begin
-          # Execute benchmark based on environment type
-          case environment.kind
-          when 'local'
-            execute_local_benchmark(environment, config, benchmark_config_path)
-          when 'docker'
-            execute_docker_benchmark(environment, config, benchmark_config_path)
-          when 'asdf'
-            execute_asdf_benchmark(environment, config, benchmark_config_path)
-          else
-            raise "Unsupported environment type: #{environment.kind}"
-          end
-        rescue StandardError => e
-          say "❌ Error executing benchmark run: #{e.message}", :red
-          exit 1
+        result_dir = "results/runs/#{environment.name}-results"
+        FileUtils.mkdir_p(result_dir)
+
+        Runners.for(environment, environment_config_path)
+               .run_benchmark(config, benchmark_config_path, result_dir)
+
+        say '✅ Benchmark completed successfully!', :green
+        say "Results saved to: #{result_dir}", :cyan
+      rescue StandardError => e
+        say "❌ Error executing benchmark run: #{e.message}", :red
+        exit 1
+      end
+
+      desc 'create [NAME]', 'Generate a run configuration file'
+      long_desc <<~DESC
+        Generate a configuration file for a benchmark run.
+
+        NAME is optional - if not provided, a timestamped name will be generated.
+
+        Examples:
+          serialbench benchmark create                    # Creates config with timestamp
+          serialbench benchmark create my-benchmark       # Creates config/runs/my-benchmark.yml
+      DESC
+      option :formats, type: :array, default: %w[xml json yaml toml],
+                       desc: 'Formats to benchmark (xml, json, yaml, toml)'
+      option :warmup, type: :numeric, default: 3,
+                      desc: 'Number of warmup iterations'
+      option :data_sizes, type: :array, default: %w[small medium large],
+                          desc: 'Data sizes to test (small, medium, large)'
+      def create(name = nil)
+        raise 'Run name cannot be empty' if name&.strip&.empty?
+
+        validate_name(name)
+
+        config_dir = 'config/runs'
+        FileUtils.mkdir_p(config_dir)
+
+        benchmark_config_path = File.join(config_dir, "#{name}.yml")
+
+        if File.exist?(benchmark_config_path)
+          say "Configuration file already exists: #{benchmark_config_path}", :yellow
+          return unless yes?('Overwrite existing file? (y/n)')
         end
+
+        benchmark_config = Models::BenchmarkConfig.new(
+          formats: options[:formats],
+          warmup: options[:warmup],
+          data_sizes: options[:data_sizes]
+        )
+
+        benchmark_config.to_file(benchmark_config_path)
+
+        say "✅ Generated run configuration: #{benchmark_config_path}", :green
+        say 'Edit the file to customize benchmark settings', :cyan
       end
 
       desc '_docker_execute ENVIRONMENT_CONFIG_PATH BENCHMARK_CONFIG_PATH', '(Private) Execute a benchmark run'
@@ -242,77 +280,6 @@ module Serialbench
 
       private
 
-      def execute_local_benchmark(environment, config, benchmark_config_path)
-        say '🏠 Executing local benchmark', :green
-
-        runner = Serialbench::BenchmarkRunner.new(
-          environment_config: environment,
-          benchmark_config: config
-        )
-
-        # Run benchmarks
-        results = runner.run_all_benchmarks
-
-        platform = Serialbench::Models::Platform.current_local
-
-        metadata = Models::RunMetadata.new(
-          benchmark_config_path: benchmark_config_path,
-          environment_config_path: "config/environments/#{environment.name}.yml",
-          tags: [
-            'local',
-            platform.os,
-            platform.arch,
-            "ruby-#{environment.ruby_build_tag}"
-          ]
-        )
-
-        # Create results directory
-        result_dir = "results/runs/#{environment.name}-results"
-        FileUtils.mkdir_p(result_dir)
-
-        # Save results to single YAML file with platform and metadata merged in
-        results_model = Models::Result.new(
-          platform: platform,
-          metadata: metadata,
-          environment_config: environment,
-          benchmark_config: config,
-          benchmark_result: results
-        )
-
-        results_file = File.join(result_dir, 'results.yaml')
-        results_model.to_file(results_file)
-
-        say '✅ Local benchmark completed successfully!', :green
-        say "Results saved to: #{result_dir}", :cyan
-      rescue StandardError => e
-        say "❌ Local benchmark failed: #{e.message}", :red
-        say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
-        raise e
-      end
-
-      def execute_docker_benchmark(environment, config, benchmark_config_path)
-        say '🐳 Executing Docker benchmark', :green
-
-        require_relative '../runners/docker_runner'
-
-        environment_config_path = "config/environments/#{environment.name}.yml"
-        runner = Runners::DockerRunner.new(environment, environment_config_path)
-
-        # Create results directory
-        result_dir = "results/runs/#{environment.name}-results"
-        FileUtils.mkdir_p(result_dir)
-
-        # Run benchmark
-        runner.run_benchmark(config, benchmark_config_path, result_dir)
-
-        say '✅ Docker benchmark completed successfully!', :green
-        say "Results saved to: #{result_dir}", :cyan
-      rescue StandardError => e
-        say "❌ Docker benchmark failed: #{e.message}", :red
-        say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
-        raise e
-      end
-
       def show_execute_usage_and_exit
         say '❌ Error: Environment and config file arguments are required.', :red
         say ''
@@ -329,52 +296,6 @@ module Serialbench
         exit 1
       end
 
-      def load_environment_config(environment_config_path)
-        unless File.exist?(environment_config_path)
-          say "❌ Environment not found: #{environment_config_path}", :red
-          exit 1
-        end
-
-        Models::EnvironmentConfig.from_file(environment_config_path)
-      rescue StandardError => e
-        say "❌ Failed to load environment: #{e.message}", :red
-        say "Environment file: #{environment_config_path}", :white
-        exit 1
-      end
-
-      def load_benchmark_config(benchmark_config_path)
-        unless File.exist?(benchmark_config_path)
-          say "❌ Benchmark config not found: #{benchmark_config_path}", :red
-          exit 1
-        end
-
-        Models::BenchmarkConfig.from_file(benchmark_config_path)
-      rescue StandardError => e
-        say "❌ Failed to load benchmark config: #{e.message}", :red
-        say "Benchmark config file: #{benchmark_config_path}", :white
-        exit 1
-      end
-
-      def execute_asdf_benchmark(environment, config, benchmark_config_path)
-        say '🔧 Executing ASDF benchmark', :green
-
-        require_relative '../runners/asdf_runner'
-
-        environment_config_path = "config/environments/#{environment.name}.yml"
-        runner = Runners::AsdfRunner.new(environment, environment_config_path)
-
-        result_dir = "results/runs/#{environment.name}-results"
-        FileUtils.mkdir_p(result_dir)
-
-        runner.run_benchmark(config, benchmark_config_path, result_dir)
-
-        say '✅ ASDF benchmark completed successfully!', :green
-        say "Results saved to: #{result_dir}", :cyan
-      rescue StandardError => e
-        say "❌ ASDF benchmark failed: #{e.message}", :red
-        say "Details: #{e.backtrace.first(3).join("\n")}", :white if options[:verbose]
-        raise e
-      end
     end
   end
 end
