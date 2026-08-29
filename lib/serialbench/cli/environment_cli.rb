@@ -30,7 +30,7 @@ module Serialbench
                             desc: 'Default Docker image for docker environments'
       option :dockerfile, type: :string, default: 'Dockerfile', desc: 'Default Dockerfile for docker environments'
       def new(name, kind, ruby_build_tag)
-        validate_environment_name!(name)
+        validate_name(name)
 
         config_path = File.join(options[:dir], "#{name}.yml")
 
@@ -39,15 +39,15 @@ module Serialbench
           return unless yes?('Overwrite existing environment? (y/n)')
         end
 
-        FileUtils.mkdir_p('config/environments')
+        FileUtils.mkdir_p(options[:dir])
 
         kind_config = case kind
                       when 'docker'
-                        raise unless options[:docker_image] && options[:dockerfile]
+                        raise ArgumentError, '--docker_image and --dockerfile are required for docker environments' unless options[:docker_image] && options[:dockerfile]
 
                         Models::EnvironmentConfig.new(
                           name: name,
-                          type: kind,
+                          kind: kind,
                           ruby_build_tag: ruby_build_tag,
                           docker: Models::DockerEnvConfig.new(
                             image: options[:docker_image],
@@ -58,18 +58,24 @@ module Serialbench
                       when 'asdf'
                         Models::EnvironmentConfig.new(
                           name: name,
-                          type: kind,
+                          kind: kind,
                           ruby_build_tag: ruby_build_tag,
                           asdf: Models::AsdfEnvConfig.new(auto_install: true),
                           description: "ASDF environment for Ruby #{ruby_build_tag} benchmarks"
                         )
+                      when 'local'
+                        Models::EnvironmentConfig.new(
+                          name: name,
+                          kind: kind,
+                          ruby_build_tag: ruby_build_tag,
+                          description: "Local environment for Ruby #{ruby_build_tag} benchmarks"
+                        )
+                      else
+                        raise ArgumentError, "unknown environment kind: #{kind} (expected local, docker, or asdf)"
                       end
         File.write(config_path, kind_config.to_yaml)
 
         say "✅ Created environment template: #{config_path}", :green
-
-        # Show ruby-build tag suggestion for local environments
-        show_ruby_build_suggestion if kind == 'local'
 
         say ''
         say 'Next steps:', :white
@@ -99,7 +105,7 @@ module Serialbench
         FileUtils.mkdir_p(result_dir)
         say "Results will be saved to: #{result_dir}", :cyan
 
-        runner = create_environment_runner(environment_config, environment_path)
+        runner = Runners.for(environment_config, environment_path)
         runner.run_benchmark(benchmark_config, benchmark_config_path, result_dir)
 
         say '✅ Benchmark completed successfully!', :green
@@ -125,7 +131,7 @@ module Serialbench
 
         say "🔧 Preparing environment '#{environment_config.name}'...", :green
 
-        runner = create_environment_runner(environment_config, environment_config_path)
+        runner = Runners.for(environment_config, environment_config_path)
         runner.prepare
 
         say '✅ Environment prepared successfully!', :green
@@ -137,45 +143,8 @@ module Serialbench
 
       private
 
-      def load_benchmark_config(benchmark_config_path)
-        unless File.exist?(benchmark_config_path)
-          say "❌ Benchmark configuration file not found: #{benchmark_config_path}", :red
-          exit 1
-        end
 
-        Models::BenchmarkConfig.from_yaml(IO.read(benchmark_config_path))
-      rescue StandardError => e
-        say "❌ Failed to load benchmark config: #{e.message}", :red
-        exit 1
-      end
 
-      def load_environment_config(environment_config_path)
-        unless File.exist?(environment_config_path)
-          say "❌ Environment not found: #{environment_config_path}", :red
-          exit 1
-        end
-
-        Models::EnvironmentConfig.from_yaml(IO.read(environment_config_path))
-      rescue StandardError => e
-        say "❌ Failed to load environment config: #{e.message}", :red
-        exit 1
-      end
-
-      def create_environment_runner(environment_config, environment_config_path)
-        case environment_config.kind
-        when 'docker'
-          require_relative '../runners/docker_runner'
-          Runners::DockerRunner.new(environment_config, environment_config_path)
-        when 'asdf'
-          require_relative '../runners/asdf_runner'
-          Runners::AsdfRunner.new(environment_config, environment_config_path)
-        when 'local'
-          require_relative '../runners/local_runner'
-          Runners::LocalRunner.new(environment_config, environment_config_path)
-        else
-          raise "Unknown environment type: #{environment_config.kind}"
-        end
-      end
     end
   end
 end
