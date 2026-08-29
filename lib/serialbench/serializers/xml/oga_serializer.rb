@@ -38,17 +38,15 @@ module Serialbench
           handler.elements_processed
         end
 
-        def supports_xpath?
-          true
+        def capabilities
+          super | Set.new(%i[xpath sax])
         end
 
         def xpath_query(document, expression)
           document.xpath(expression).size
         end
 
-        def supports_streaming?
-          true
-        end
+
 
         def version
           return 'unknown' unless available?

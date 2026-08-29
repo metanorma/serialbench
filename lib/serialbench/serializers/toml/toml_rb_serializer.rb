@@ -31,22 +31,6 @@ module Serialbench
           require 'toml-rb'
           TomlRB.dump(object)
         end
-
-        def supports_comments?
-          false
-        end
-
-        def supports_arrays_of_tables?
-          true
-        end
-
-        def supports_inline_tables?
-          true
-        end
-
-        def supports_multiline_strings?
-          true
-        end
       end
     end
   end

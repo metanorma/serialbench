@@ -23,6 +23,10 @@ module Serialbench
           generate(document, options)
         end
 
+        def capabilities
+          super | Set.new(%i[namespaces])
+        end
+
         # XML-specific features derive from the capability set
         def features
           {
@@ -32,22 +36,6 @@ module Serialbench
             streaming: supports?(:sax) || supports?(:streaming),
             stax: supports?(:stax)
           }
-        end
-
-        def supports_generation?
-          true
-        end
-
-        def supports_xpath?
-          false
-        end
-
-        def supports_namespaces?
-          true
-        end
-
-        def supports_validation?
-          false
         end
 
         # Check if the XML library is available

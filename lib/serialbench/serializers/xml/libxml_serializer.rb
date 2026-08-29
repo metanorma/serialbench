@@ -38,17 +38,12 @@ module Serialbench
           handler.elements_processed
         end
 
-        def supports_xpath?
-          true
+        def capabilities
+          super | Set.new(%i[xpath stax sax])
         end
 
-        # The binding exposes a pull-parser cursor (XML::Reader)
-        def supports_stax?
-          true
-        end
-
-        def supports_streaming?
-          true
+        def xpath_query(document, expression)
+          document.find(expression).size
         end
 
         def version

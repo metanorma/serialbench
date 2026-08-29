@@ -44,8 +44,8 @@ module Serialbench
           end
         end
 
-        def supports_streaming?
-          true
+        def capabilities
+          super | Set.new(%i[sax])
         end
 
         def version

@@ -6,7 +6,6 @@ require_relative 'models/result'
 require_relative 'models/result_store'
 require_relative 'models/benchmark_config'
 require_relative 'models/environment_config'
-require_relative 'models/result_set'
 
 module Serialbench
   module Models
@@ -45,10 +44,6 @@ module Serialbench
 
     def self.create_run(platform_string, benchmark_data, metadata: {})
       Result.create(platform_string, benchmark_data, metadata: metadata)
-    end
-
-    def self.create_resultset(name, run_paths_or_objects, metadata: {})
-      ResultSet.create(name, run_paths_or_objects, metadata: metadata)
     end
   end
 end

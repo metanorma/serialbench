@@ -28,10 +28,6 @@ module Serialbench
           1 # Return 1 document processed
         end
 
-        def supports_streaming?
-          false # TOML is typically parsed as a whole document
-        end
-
         def version
           return 'unknown' unless available?
 

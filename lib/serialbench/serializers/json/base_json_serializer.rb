@@ -19,30 +19,18 @@ module Serialbench
           generate(object, options)
         end
 
+        def capabilities
+          super | Set.new(%i[pretty_print])
+        end
+
         # JSON-specific features
         def features
           {
-            pretty_print: supports_pretty_print?,
-            streaming: supports_streaming?,
-            symbol_keys: supports_symbol_keys?,
-            custom_types: supports_custom_types?
+            pretty_print: supports?(:pretty_print),
+            streaming: supports?(:sax) || supports?(:streaming),
+            symbol_keys: supports?(:symbol_keys),
+            custom_types: supports?(:custom_types)
           }
-        end
-
-        def supports_generation?
-          true
-        end
-
-        def supports_pretty_print?
-          true
-        end
-
-        def supports_symbol_keys?
-          false
-        end
-
-        def supports_custom_types?
-          false
         end
 
         # Subclasses should override this to specify their library name

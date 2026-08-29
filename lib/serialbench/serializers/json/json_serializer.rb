@@ -34,22 +34,6 @@ module Serialbench
             JSON.generate(object)
           end
         end
-
-        def supports_streaming?
-          false
-        end
-
-        def supports_pretty_print?
-          true
-        end
-
-        def supports_symbol_keys?
-          false
-        end
-
-        def supports_custom_types?
-          false
-        end
       end
     end
   end

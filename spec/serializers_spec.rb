@@ -76,7 +76,7 @@ RSpec.describe 'Serialbench Serializers' do
       end
 
       it 'does not support streaming' do
-        expect(serializer.supports_streaming?).to be false
+        expect(serializer.supports?(:sax)).to be false
       end
 
       it 'can stream parse' do
@@ -99,7 +99,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -115,7 +115,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -131,7 +131,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -147,7 +147,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -163,7 +163,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -222,7 +222,7 @@ RSpec.describe 'Serialbench Serializers' do
       end
 
       it 'does not support streaming' do
-        expect(serializer.supports_streaming?).to be false
+        expect(serializer.supports?(:sax)).to be false
       end
     end
 
@@ -237,7 +237,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -253,7 +253,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'does not support streaming' do
-          expect(serializer.supports_streaming?).to be false
+          expect(serializer.supports?(:sax)).to be false
         end
       end
     end
@@ -269,7 +269,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'supports streaming' do
-          expect(serializer.supports_streaming?).to be true
+          expect(serializer.supports?(:sax)).to be true
         end
       end
     end
@@ -322,7 +322,7 @@ RSpec.describe 'Serialbench Serializers' do
       end
 
       it 'does not support streaming' do
-        expect(serializer.supports_streaming?).to be false
+        expect(serializer.supports?(:sax)).to be false
       end
     end
 
@@ -337,7 +337,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'does not support streaming' do
-          expect(serializer.supports_streaming?).to be false
+          expect(serializer.supports?(:sax)).to be false
         end
       end
     end
@@ -380,7 +380,7 @@ RSpec.describe 'Serialbench Serializers' do
         end
 
         it 'does not support streaming' do
-          expect(serializer.supports_streaming?).to be false
+          expect(serializer.supports?(:sax)).to be false
         end
       end
     end
@@ -617,7 +617,7 @@ RSpec.describe 'Serialbench Serializers' do
 
     it 'streaming serializers report streaming support correctly' do
       streaming_serializers = Serialbench::Serializers.available.select do |serializer|
-        serializer.supports_streaming?
+        serializer.supports?(:sax)
       end
 
       expect(streaming_serializers).not_to be_empty

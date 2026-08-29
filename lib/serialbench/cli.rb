@@ -6,7 +6,6 @@ require_relative 'cli/environment_cli'
 require_relative 'cli/benchmark_cli'
 require_relative 'cli/ruby_build_cli'
 require_relative 'cli/validate_cli'
-require_relative 'cli/resultset_cli'
 
 module Serialbench
   # Main CLI entry point for the new object-oriented command structure
@@ -58,10 +57,6 @@ module Serialbench
             serialbench benchmark create my-benchmark
             serialbench benchmark execute my-benchmark.yml
 
-            # Create a result set for comparison
-
-            # Generate static sites
-            serialbench benchmark build-site results/my-benchmark
 
           For detailed help on any command, use:
             serialbench COMMAND help
