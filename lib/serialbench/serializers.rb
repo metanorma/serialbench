@@ -74,7 +74,8 @@ module Serialbench
         Models::SerializerInformation.new(
           name: serializer_singleton.name,
           format: serializer_singleton.format.to_s,
-          version: serializer_singleton.version
+          version: serializer_singleton.version,
+          features: serializer_singleton.features
         )
       end
 
