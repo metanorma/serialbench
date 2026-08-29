@@ -73,20 +73,13 @@ module Serialbench
           handler.result
         end
 
-        def supports_streaming?
-          false
+        def capabilities
+          super | Set.new(%i[xpath])
         end
 
-        def supports_xpath?
-          true
-        end
-
-        def supports_namespaces?
-          true
-        end
-
-        def supports_validation?
-          false
+        def xpath_query(document, expression)
+          require 'rexml/xpath'
+          REXML::XPath.match(document, expression).size
         end
 
         private

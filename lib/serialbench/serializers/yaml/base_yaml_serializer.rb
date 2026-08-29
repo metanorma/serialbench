@@ -11,12 +11,8 @@ module Serialbench
           :yaml
         end
 
-        def supports_streaming?
-          false # Most YAML parsers don't support streaming
-        end
-
         def features
-          { streaming: supports_streaming? }
+          { streaming: supports?(:sax) || supports?(:streaming) }
         end
 
         # Default YAML generation options
@@ -37,10 +33,6 @@ module Serialbench
         # Stream parse YAML (if supported)
         def stream_parse(yaml_string, &block)
           raise NotImplementedError, 'Streaming not supported by this YAML serializer'
-        end
-
-        def supports_generation?
-          true
         end
 
         private

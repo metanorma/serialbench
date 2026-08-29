@@ -39,11 +39,11 @@ module Serialbench
         end
 
         def capabilities
-          super | Set.new(%i[xpath namespaces stax])
+          super | Set.new(%i[xpath sax stax])
         end
 
-        def supports_streaming?
-          true
+        def xpath_query(document, expression)
+          document.xpath(expression).size
         end
 
         def version

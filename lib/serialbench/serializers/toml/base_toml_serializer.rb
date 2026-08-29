@@ -19,39 +19,18 @@ module Serialbench
           generate(object, options)
         end
 
+        def capabilities
+          super | Set.new(%i[arrays_of_tables inline_tables multiline_strings])
+        end
+
         # TOML-specific features
         def features
           {
-            comments: supports_comments?,
-            arrays_of_tables: supports_arrays_of_tables?,
-            inline_tables: supports_inline_tables?,
-            multiline_strings: supports_multiline_strings?
+            comments: supports?(:comments),
+            arrays_of_tables: supports?(:arrays_of_tables),
+            inline_tables: supports?(:inline_tables),
+            multiline_strings: supports?(:multiline_strings)
           }
-        end
-
-        def supports_generation?
-          true
-        end
-
-        def supports_streaming?
-          # TOML is typically not streamed due to its structure
-          false
-        end
-
-        def supports_comments?
-          false
-        end
-
-        def supports_arrays_of_tables?
-          true
-        end
-
-        def supports_inline_tables?
-          true
-        end
-
-        def supports_multiline_strings?
-          true
         end
 
         # Subclasses should override this to specify their library name

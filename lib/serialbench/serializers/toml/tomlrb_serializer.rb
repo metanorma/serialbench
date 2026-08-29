@@ -31,24 +31,8 @@ module Serialbench
           raise NotImplementedError, 'tomlrb gem does not support TOML generation/dumping'
         end
 
-        def supports_generation?
-          false
-        end
-
-        def supports_comments?
-          false
-        end
-
-        def supports_arrays_of_tables?
-          true
-        end
-
-        def supports_inline_tables?
-          true
-        end
-
-        def supports_multiline_strings?
-          true
+        def capabilities
+          Set.new(%i[dom parse arrays_of_tables inline_tables multiline_strings])
         end
       end
     end

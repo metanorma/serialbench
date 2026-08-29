@@ -46,23 +46,8 @@ module Serialbench
           super
         end
 
-        def supports_streaming?
-          require 'oj'
-          Oj.respond_to?(:saj_parse)
-        rescue LoadError
-          false
-        end
-
-        def supports_pretty_print?
-          true
-        end
-
-        def supports_symbol_keys?
-          true
-        end
-
-        def supports_custom_types?
-          true
+        def capabilities
+          super | Set.new(%i[symbol_keys custom_types sax])
         end
       end
 

@@ -68,14 +68,6 @@ module Serialbench
           end
         end
 
-        def supports_streaming?
-          false
-        end
-
-        def features
-          %w[parsing generation legacy]
-        end
-
         def description
           'Legacy YAML parser (Ruby < 1.9.3)'
         end

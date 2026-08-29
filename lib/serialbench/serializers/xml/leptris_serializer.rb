@@ -36,12 +36,8 @@ module Serialbench
           handler.elements_processed
         end
 
-        def supports_streaming?
-          true
-        end
-
         def capabilities
-          super | Set.new(%i[xpath namespaces sax stax])
+          super | Set.new(%i[xpath sax stax])
         end
 
         def xpath_query(document, expression)

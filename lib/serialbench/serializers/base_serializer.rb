@@ -46,10 +46,6 @@ module Serialbench
         capabilities.include?(capability)
       end
 
-      def supports_streaming?
-        supports?(:sax) || supports?(:streaming)
-      end
-
       def require_library(library_name)
         require library_name
         true
