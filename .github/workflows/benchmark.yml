@@ -3,7 +3,12 @@ name: benchmark-weekly
 on:
   push:
     branches: [main]
-  pull_request:
+    paths-ignore:
+      - 'README.md'
+      - 'CONTEXT.md'
+      - 'docs/**'
+      - 'lib/serialbench/version.rb'
+      - '**.md'
   schedule:
     # Run benchmarks weekly on Sundays at 2 AM UTC
     - cron: '0 2 * * 0'
@@ -34,6 +39,7 @@ jobs:
   benchmark:
     runs-on: ${{ matrix.platform }}
     needs: setup
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
