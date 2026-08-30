@@ -120,36 +120,6 @@ jobs:
           EOF
         shell: bash
 
-      # Each format is an independent checkpoint with its own upload.
-      # A failure in one format doesn't prevent the others from uploading.
-      - name: Benchmark xml
-        continue-on-error: true
-        shell: bash
-        env:
-          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
-        run: |
-          bundle exec serialbench environment execute \
-            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
-            config/benchmarks/full-xml.yml \
-            "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml"
-
-      - name: Upload xml
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-xml
-          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml
-          retention-days: 30
-          if-no-files-found: warn
-
-      - name: Push xml to data repo
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        env:
-          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
-        run: .github/scripts/push-to-data.sh xml ${{ matrix.ruby-version }} ${{ matrix.platform }}
-        shell: bash
-
       - name: Benchmark json
         continue-on-error: true
         shell: bash
@@ -233,6 +203,37 @@ jobs:
           DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
         run: .github/scripts/push-to-data.sh toml ${{ matrix.ruby-version }} ${{ matrix.platform }}
         shell: bash
+
+      # Each format is an independent checkpoint with its own upload.
+      # A failure in one format doesn't prevent the others from uploading.
+      - name: Benchmark xml
+        continue-on-error: true
+        shell: bash
+        env:
+          GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+        run: |
+          bundle exec serialbench environment execute \
+            config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
+            config/benchmarks/full-xml.yml \
+            "results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml"
+
+      - name: Upload xml
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.platform }}-ruby-${{ matrix.ruby-version }}-xml
+          path: results/runs/ci-ruby-${{ matrix.ruby-version }}-${{ matrix.platform }}/xml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Push xml to data repo
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        env:
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+        run: .github/scripts/push-to-data.sh xml ${{ matrix.ruby-version }} ${{ matrix.platform }}
+        shell: bash
+
 
   # Summary job
   summary:

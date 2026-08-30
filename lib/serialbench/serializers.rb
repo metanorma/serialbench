@@ -75,7 +75,7 @@ module Serialbench
           name: serializer_singleton.name,
           format: serializer_singleton.format.to_s,
           version: serializer_singleton.version,
-          features: serializer_singleton.features
+          features: serializer_singleton.features.transform_keys(&:to_s)
         )
       end
 

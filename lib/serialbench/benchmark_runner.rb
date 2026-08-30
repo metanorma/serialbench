@@ -135,6 +135,11 @@ module Serialbench
               results << result if result
             rescue StandardError => e
               puts "    #{format}/#{serializer.name}: ERROR - #{e.message}"
+            ensure
+              # Free the previous adapter's documents before the next one
+              # parses + profiles; without this, six adapters' trees coexist
+              # and windows runners OOM during the xml memory pass.
+              GC.start
             end
           end
         end

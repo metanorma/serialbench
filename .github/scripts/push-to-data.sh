@@ -23,7 +23,7 @@ fi
 
 DATE=$(date -u +%Y-%m-%d)
 TARGET_PATH="runs/${DATE}/${PLATFORM}-ruby-${RUBY_VERSION}.${FMT}.yaml"
-CONTENT=$(base64 < "$RESULTS_FILE")
+CONTENT=$(base64 < "$RESULTS_FILE" | tr -d '\r\n')
 
 echo "Pushing ${TARGET_PATH} to serialbench/data..."
 
