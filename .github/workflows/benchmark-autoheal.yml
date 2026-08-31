@@ -1,0 +1,54 @@
+name: benchmark-autoheal
+
+# Reruns failed legs (runner evictions, OOM blips) of the latest benchmark
+# matrix without human intervention. Capped: a run gets at most 5 attempts,
+# and deliberately cancelled runs are never resurrected.
+on:
+  schedule:
+    # hourly at :23 — off the busy top of the hour
+    - cron: '23 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+concurrency:
+  group: benchmark-autoheal
+  cancel-in-progress: false
+
+jobs:
+  rerun-failed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Rerun failed benchmark legs (capped)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID=$(gh run list -R "$GITHUB_REPOSITORY" --workflow=benchmark.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+          [ -n "$RUN_ID" ] || { echo "no benchmark run found"; exit 0; }
+
+          STATUS=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq '.status')
+          if [ "$STATUS" != "completed" ]; then
+            echo "latest run $RUN_ID still $STATUS — nothing to do"
+            exit 0
+          fi
+
+          CONCLUSION=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq '.conclusion // ""')
+          if [ "$CONCLUSION" != "failure" ]; then
+            echo "latest run concluded $CONCLUSION — nothing to rerun (cancelled runs are deliberate)"
+            exit 0
+          fi
+
+          ATTEMPT=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq '.run_attempt')
+          if [ "$ATTEMPT" -ge 5 ]; then
+            echo "attempt cap reached ($ATTEMPT) — leaving for humans"
+            exit 0
+          fi
+
+          FAILED=$(gh run view "$RUN_ID" -R "$GITHUB_REPOSITORY" --json jobs --jq '[.jobs[] | select(.conclusion == "failure")] | length')
+          [ "$FAILED" -gt 0 ] || { echo "no failed legs"; exit 0; }
+
+          echo "rerunning $FAILED failed legs (attempt $ATTEMPT -> $((ATTEMPT + 1)))"
+          gh run rerun "$RUN_ID" -R "$GITHUB_REPOSITORY" --failed
