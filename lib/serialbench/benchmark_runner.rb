@@ -65,9 +65,12 @@ module Serialbench
       return [] unless defined?(::MemoryProfiler)
 
       run_benchmark_iteration('memory') do |serializer, format, size, data|
-        # Memory profiling for parsing
+        # Memory profiling for parsing. MemoryProfiler disables GC while
+        # reporting, so every profiled parse accumulates: ten large-document
+        # trees exhaust the 16GB windows runners. One parse fully captures
+        # a large document's allocation and retention profile.
         report = ::MemoryProfiler.report do
-          10.times { serializer.parse(data) }
+          profile_iterations(size).times { serializer.parse(data) }
         end
 
         result = Models::MemoryPerformance.new(
@@ -171,6 +174,10 @@ module Serialbench
       when 'large' then iterations.large
       else raise ArgumentError, "no iteration count configured for #{size}"
       end
+    end
+
+    def profile_iterations(size)
+      size.to_s == 'large' ? 1 : 10
     end
 
     def validate_operations!
