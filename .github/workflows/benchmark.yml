@@ -25,6 +25,7 @@ concurrency:
 jobs:
   setup:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       ruby-versions: ${{ steps.set-matrix.outputs.ruby-versions }}
       platforms: ${{ steps.set-matrix.outputs.platforms }}
@@ -244,6 +245,7 @@ jobs:
   # Summary job
   summary:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [setup, benchmark]
     if: always()
     steps:
