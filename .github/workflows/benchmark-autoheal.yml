@@ -4,6 +4,11 @@ name: benchmark-autoheal
 # matrix without human intervention. Capped: a run gets at most 5 attempts,
 # and deliberately cancelled runs are never resurrected.
 on:
+  # Heal immediately when a matrix completes (reliable event seam); the
+  # hourly cron below is only a backstop — GitHub drops cron ticks freely.
+  workflow_run:
+    workflows: [benchmark-weekly]
+    types: [completed]
   schedule:
     # hourly at :23 — off the busy top of the hour
     - cron: '23 * * * *'
@@ -44,7 +49,7 @@ jobs:
           ATTEMPT=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN_ID" --jq '.run_attempt')
           if [ "$ATTEMPT" -ge 5 ]; then
             echo "attempt cap reached ($ATTEMPT) — leaving for humans"
-            exit 0
+            exit 1
           fi
 
           FAILED=$(gh run view "$RUN_ID" -R "$GITHUB_REPOSITORY" --json jobs --jq '[.jobs[] | select(.conclusion == "failure")] | length')

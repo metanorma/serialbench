@@ -29,12 +29,14 @@ jobs:
     outputs:
       ruby-versions: ${{ steps.set-matrix.outputs.ruby-versions }}
       platforms: ${{ steps.set-matrix.outputs.platforms }}
+      run-date: ${{ steps.set-matrix.outputs.run-date }}
     steps:
       - name: Set matrix configurations
         id: set-matrix
         run: |
           echo 'ruby-versions=["3.2", "3.3", "3.4", "4.0"]' >> $GITHUB_OUTPUT
           echo 'platforms=["ubuntu-24.04", "ubuntu-24.04-arm", "ubuntu-22.04", "ubuntu-22.04-arm", "macos-14", "macos-15", "macos-15-intel", "macos-26", "macos-26-intel", "windows-2022", "windows-2025", "windows-11-arm"]' >> $GITHUB_OUTPUT
+          echo "run-date=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
   # Cross-platform native benchmarks
   benchmark:
@@ -152,6 +154,7 @@ jobs:
         continue-on-error: true
         env:
           DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: .github/scripts/push-to-data.sh json ${{ matrix.ruby-version }} ${{ matrix.platform }}
         shell: bash
 
@@ -180,6 +183,7 @@ jobs:
         continue-on-error: true
         env:
           DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: .github/scripts/push-to-data.sh yaml ${{ matrix.ruby-version }} ${{ matrix.platform }}
         shell: bash
 
@@ -208,6 +212,7 @@ jobs:
         continue-on-error: true
         env:
           DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: .github/scripts/push-to-data.sh toml ${{ matrix.ruby-version }} ${{ matrix.platform }}
         shell: bash
 
@@ -238,6 +243,7 @@ jobs:
         continue-on-error: true
         env:
           DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: .github/scripts/push-to-data.sh xml ${{ matrix.ruby-version }} ${{ matrix.platform }}
         shell: bash
 

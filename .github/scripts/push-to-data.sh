@@ -21,7 +21,9 @@ if [ ! -f "$RESULTS_FILE" ]; then
   exit 0
 fi
 
-DATE=$(date -u +%Y-%m-%d)
+# The matrix start date (setup job output), so every push and rerun of one
+# matrix lands in one dated directory; wall clock is only a fallback.
+DATE="${DATA_RUN_DATE:-$(date -u +%Y-%m-%d)}"
 TARGET_PATH="runs/${DATE}/${PLATFORM}-ruby-${RUBY_VERSION}.${FMT}.yaml"
 CONTENT=$(base64 < "$RESULTS_FILE" | tr -d '\r\n')
 
