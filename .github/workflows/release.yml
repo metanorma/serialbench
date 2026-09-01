@@ -64,6 +64,9 @@ jobs:
           git tag "v${VERSION}" 2>/dev/null || true
           git push origin "v${VERSION}" 2>/dev/null || true
 
+      - name: Validate the bumped tree
+        run: bundle exec rspec --format progress
+
       - name: Build gem
         run: gem build serialbench.gemspec
 
