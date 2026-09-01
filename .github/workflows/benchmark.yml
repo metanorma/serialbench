@@ -134,7 +134,13 @@ jobs:
         shell: bash
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: |
+          if [ "${{ github.run_attempt }}" -gt 1 ] && .github/scripts/format-status.sh json ${{ matrix.ruby-version }} ${{ matrix.platform }}; then
+            echo "json already in the data repo — skipping (gap-filling rerun)"
+            exit 0
+          fi
           bundle exec serialbench environment execute \
             config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
             config/benchmarks/full-json.yml \
@@ -163,7 +169,13 @@ jobs:
         shell: bash
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: |
+          if [ "${{ github.run_attempt }}" -gt 1 ] && .github/scripts/format-status.sh yaml ${{ matrix.ruby-version }} ${{ matrix.platform }}; then
+            echo "yaml already in the data repo — skipping (gap-filling rerun)"
+            exit 0
+          fi
           bundle exec serialbench environment execute \
             config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
             config/benchmarks/full-yaml.yml \
@@ -192,7 +204,13 @@ jobs:
         shell: bash
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: |
+          if [ "${{ github.run_attempt }}" -gt 1 ] && .github/scripts/format-status.sh toml ${{ matrix.ruby-version }} ${{ matrix.platform }}; then
+            echo "toml already in the data repo — skipping (gap-filling rerun)"
+            exit 0
+          fi
           bundle exec serialbench environment execute \
             config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
             config/benchmarks/full-toml.yml \
@@ -223,7 +241,13 @@ jobs:
         shell: bash
         env:
           GITHUB_RUNNER_PLATFORM: ${{ matrix.platform }}
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
         run: |
+          if [ "${{ github.run_attempt }}" -gt 1 ] && .github/scripts/format-status.sh xml ${{ matrix.ruby-version }} ${{ matrix.platform }}; then
+            echo "xml already in the data repo — skipping (gap-filling rerun)"
+            exit 0
+          fi
           bundle exec serialbench environment execute \
             config/environments/ci-ruby-${{ matrix.ruby-version }}.yml \
             config/benchmarks/full-xml.yml \
@@ -247,6 +271,28 @@ jobs:
         run: .github/scripts/push-to-data.sh xml ${{ matrix.ruby-version }} ${{ matrix.platform }}
         shell: bash
 
+
+
+      - name: Verify leg completeness
+        if: ${{ !cancelled() }}
+        shell: bash
+        env:
+          DATA_REPO_TOKEN: ${{ secrets.DATA_REPO_TOKEN }}
+          DATA_RUN_DATE: ${{ needs.setup.outputs.run-date }}
+        run: |
+          MISSING=""
+          for FMT in json yaml toml xml; do
+            if .github/scripts/format-status.sh "$FMT" "${{ matrix.ruby-version }}" "${{ matrix.platform }}"; then
+              echo "$FMT: in data repo"
+            else
+              echo "$FMT: MISSING from data repo"
+              MISSING="$MISSING $FMT"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo "::error::formats never pushed:${MISSING} — failing the leg so autoheal fills the gap"
+            exit 1
+          fi
 
   # Summary job
   summary:
